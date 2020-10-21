@@ -6,3 +6,5 @@ Membres du projet:
 - Jérémy Bach
 - Nadjib Belaribi
 - François Grabenstaetter
+
+© 2020
