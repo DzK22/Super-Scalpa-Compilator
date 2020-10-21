@@ -1,2 +1,8 @@
 # Introduction Compilateur SCALPA
-Bonsoir
+
+Membres du projet:
+
+- Danyl El-Kabir
+- Jérémy Bach
+- Nadjib Belaribi
+- François Grabenstaetter
