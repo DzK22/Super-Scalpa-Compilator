@@ -14,4 +14,3 @@ all:
 
 clean:
 	rm -rf $(TMP) $(NAME).out
-
