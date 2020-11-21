@@ -4,30 +4,28 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "../headers/stable.h"
+#include "../headers/quad.h"
 #include <math.h>
 int yyerror (char *s);
 int yylex (void);
+symbol *stable = NULL;
 
 %}
 
 %union {
-    char    tid; //token ID
-    int     index; //token num
-    struct  symbol *label;
+    char    *tid;
+    int     value;
+    struct  symbol *s;
     struct {
-        struct symbol *res;
-        //Quad à rajouter quand gencode
-    } c_expr; // Pour les expressions
+        struct symbol   *res;
+        struct quad     *code;
+    } expr; // Pour les expressions
 }
 
-/*Pour tester*/
-%union {
-    int value;
-}
-
-%token PROGRAM ID EOF_ MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT
-%token <value> INTEGER
-%type <value> expr
+%token PROGRAM ID EOF_ INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT
+%type <value> INTEGER
+%type <tid> ID
+%type <expr>  expr
 %left PLUS MINUS
 %left MULT DIV
 %right EXP
@@ -41,16 +39,75 @@ program : %empty                        { }
         | program EOF_                  { }
         ;
 
-instr   : expr                          { fprintf(stdout, "résultat = %d\n", $1); }
+instr   : expr                          { fprintf(stdout, "résultat = %d\n", $1.res->value); }
         ;
 
-expr    : '(' expr ')'                  { $$ = $2; }
-        | expr PLUS expr                { $$ = $1 + $3; }
-        | expr MINUS expr               { $$ = $1 - $3; }
-        | expr MULT expr                { $$ = $1 * $3; }
-        | expr DIV expr                 { $$ = ($3 != 0) ? $1 / $3 : 0; }
-        | expr EXP expr                 { $$ = pow($1, $3); }
-        | INTEGER                       { $$ = $1;}
+expr    : '(' expr ')'
+        {
+            $$.code = $2.code;
+            $$.res = $2.res;
+        }
+        | expr PLUS expr
+        {
+            $$.res = newTemp(&stable);
+            $$.code = NULL;
+            quad *q = qGen(Q_PLUS, $1.res, $3.res, $$.res);
+            $$.code = concat($$.code, $1.code);
+            $$.code = concat($$.code, $3.code);
+            $$.code = concat($$.code, q);
+            qPrint($$.code);
+        }
+        | expr MINUS expr
+        {
+            $$.res = newTemp(&stable);
+            $$.code = NULL;
+            quad *q = qGen(Q_MINUS, $1.res, $3.res, $$.res);
+            $$.code = concat($$.code, $1.code);
+            $$.code = concat($$.code, $3.code);
+            $$.code = concat($$.code, q);
+        }
+        | expr MULT expr
+        {
+            $$.res = newTemp(&stable);
+            $$.code = NULL;
+            quad *q = qGen(Q_MULT, $1.res, $3.res, $$.res);
+            $$.code = concat($$.code, $1.code);
+            $$.code = concat($$.code, $3.code);
+            $$.code = concat($$.code, q);
+        }
+        | expr DIV expr
+        {
+            $$.res = newTemp(&stable);
+            $$.code = NULL;
+            quad *q = qGen(Q_DIV, $1.res, $3.res, $$.res);
+            $$.code = concat($$.code, $1.code);
+            $$.code = concat($$.code, $3.code);
+            $$.code = concat($$.code, q);
+        }
+        | expr EXP expr
+        {
+            $$.res = newTemp(&stable);
+            $$.code = NULL;
+            quad *q = qGen(Q_EXP, $1.res, $3.res, $$.res);
+            $$.code = concat($$.code, $1.code);
+            $$.code = concat($$.code, $3.code);
+            $$.code = concat($$.code, q);
+        }
+        | INTEGER
+        {
+            char id[LEN];
+            int res;
+            if ($1 >= 0)
+                res = snprintf(id, LEN, "cst_%d", $1);
+            else
+                res = snprintf(id, LEN, "neg_cst_%d", $1 * (-1));
+            if (res < 0 || res >= LEN)
+                exit(1);
+            struct symbol *s = search(stable, id);
+            if (s == NULL)
+                s = newCstInt(&stable, $1);
+            $$.res = s;
+        }
         ;
 
 %%

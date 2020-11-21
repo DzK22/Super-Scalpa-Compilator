@@ -47,7 +47,8 @@ eof [\n]
 {P}{R}{O}{G}{R}{A}{M}                       { return PROGRAM; }
 {eof}                                       { return EOF_;
                                               linecpt++; }
-{ident}                                     { return ID; }
+{ident}                                     { yylval.tid = strdup(yytext);
+                                              return ID; }
 "+"                                         { return PLUS; }
 "-"                                         { return MINUS; }
 "*"                                         { return MULT; }
