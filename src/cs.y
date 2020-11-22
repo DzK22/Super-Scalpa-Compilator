@@ -1,17 +1,17 @@
 %{
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include "../headers/stable.h"
-#include "../headers/quad.h"
-#include "../headers/mips.h"
-#include <math.h>
-int yyerror (char *s);
-int yylex (void);
-extern FILE *yyin;
-symbol *stable = NULL;
-quad *all_code = NULL;
+    #include <stdio.h>
+    #include <stdint.h>
+    #include <stdlib.h>
+    #include "../headers/stable.h"
+    #include "../headers/quad.h"
+    #include "../headers/mips.h"
+    #include <math.h>
+    int yyerror (char *s);
+    int yylex (void);
+    extern FILE *yyin;
+    symbol *stable = NULL;
+    quad *all_code = NULL;
 
 %}
 
@@ -25,7 +25,7 @@ quad *all_code = NULL;
     } gencode; // Pour les expressions
 }
 
-%token PROGRAM ID EOF_ INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT
+%token PROGRAM ID EOF_ END INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT
 %type <value> INTEGER
 %type <tid> ID
 %type <gencode>  expr program instr
@@ -43,18 +43,20 @@ program : %empty                        { }
             $$.code = NULL;
             $$.code = concat($$.code, $2.code);
             all_code = $$.code;
-            return 0;
-        }
-        | program EOF_
-        {
-            $$.code = NULL;
-            $$.code = concat($$.code, $1.code);
-            all_code = $$.code;
-            return 0;
+            qPrint(all_code);
+            //quad *last = getLast($2.code);
+            /*if (last->op != Q_END) {
+                fprintf(stderr, "programm shouldnt end with \"end\" keyword\n");
+                exit(EXIT_FAILURE);
+            }*/
         }
         ;
 
 instr   : expr                          {$$.res = $1.res; $$.code = $1.code; }
+        | END
+        {
+            $$.code = qGen(Q_END, NULL, NULL, NULL);
+        }
         ;
 
 expr    : '(' expr ')'
@@ -70,7 +72,7 @@ expr    : '(' expr ')'
             quad *code = concat($1.code, $3.code);
             code = concat(code, q);
             $$.code = code;
-            qPrint($$.code);
+            //qPrint($$.code);
         }
         | expr MINUS expr
         {
@@ -80,7 +82,7 @@ expr    : '(' expr ')'
             quad *code = concat($1.code, $3.code);
             code = concat(code, q);
             $$.code = code;
-            qPrint($$.code);
+            //qPrint($$.code);
         }
         | expr MULT expr
         {
@@ -90,7 +92,7 @@ expr    : '(' expr ')'
             quad *code = concat($1.code, $3.code);
             code = concat(code, q);
             $$.code = code;
-            qPrint($$.code);
+            //qPrint($$.code);
         }
         | expr DIV expr
         {
@@ -100,7 +102,7 @@ expr    : '(' expr ')'
             quad *code = concat($1.code, $3.code);
             code = concat(code, q);
             $$.code = code;
-            qPrint($$.code);
+            //qPrint($$.code);
         }
         | expr EXP expr
         {
@@ -110,7 +112,7 @@ expr    : '(' expr ')'
             quad *code = concat($1.code, $3.code);
             code = concat(code, q);
             $$.code = code;
-            qPrint($$.code);
+            //qPrint($$.code);
         }
         | INTEGER
         {

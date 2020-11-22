@@ -45,8 +45,10 @@ eof [\n]
 %%
 
 {P}{R}{O}{G}{R}{A}{M}                       { return PROGRAM; }
+{E}{N}{D}                                   { return END; }
 {eof}                                       { return EOF_;
                                               linecpt++; }
+" "*                                        {}
 {ident}                                     { yylval.tid = strdup(yytext);
                                               return ID; }
 "+"                                         { return PLUS; }
@@ -65,7 +67,6 @@ eof [\n]
 {hooks}                                     { return yytext[0]; }
 {cst_int}                                   { yylval.value = atoi(yytext);
                                               return INTEGER; }
-" "*                                        {}
 .                                           { fprintf(stderr, "Unrecognized character : %s at line %d\n", yytext, linecpt);
                                               return EXIT_FAILURE; }
 

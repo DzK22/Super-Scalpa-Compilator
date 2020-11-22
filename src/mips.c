@@ -23,13 +23,26 @@ void getMips (FILE *f, symbol *s, quad *q) {
         res = q->res;
         argv1 = q->argv1;
         argv2 = q->argv2;
-
         switch (q->op) {
             case Q_PLUS:
                 fprintf(stdout, "%s = %s + %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\taddu $t2, $t0, $t1\n");
+                fprintf(f, "\tadd $t2, $t0, $t1\n");
+                break;
+
+            case Q_MINUS:
+                fprintf(stdout, "%s = %s - %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tsub $t2, $t0, $t1\n");
+                break;
+
+            case Q_MULT:
+                fprintf(stdout, "%s = %s * %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tmult $t2, $t0, $t1\n");
                 break;
 
             default:
