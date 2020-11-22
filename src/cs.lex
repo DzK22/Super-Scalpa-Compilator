@@ -72,3 +72,8 @@ eof [\n]
                                               return EXIT_FAILURE; }
 
 %%
+
+void freeLex (void) {
+    yy_delete_buffer(YY_CURRENT_BUFFER);
+    free(yy_buffer_stack);
+}

@@ -44,18 +44,15 @@ symbol *sAdd (symbol **stable, char *id) {
 }
 
 void sFree (symbol *s) {
-    symbol *cur;
-    while (s != NULL) {
-        cur = s;
-        s = s->next;
-        if (cur) {
-            if (cur->id)
-                free(cur->id);
-            if (cur->type == STRING_);
-                free(cur->string);
-
-        }
-        free(cur);
+    symbol *cur = s;
+    symbol *prev;
+    while (cur != NULL) {
+        prev = cur;
+        cur = cur->next;
+        free(prev->id);
+        if (prev->type == STRING_)
+            free(prev->string);
+        free(prev);
     }
 }
 

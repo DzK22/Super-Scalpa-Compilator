@@ -9,6 +9,7 @@
     #include <math.h>
     int yyerror (char *s);
     int yylex (void);
+    void freeLex (void);
     extern FILE *yyin;
     symbol *stable = NULL;
     quad *all_code = NULL;
@@ -179,5 +180,8 @@ int main (int argc, char **argv) {
     yyparse();
     FILE *f_out = fopen("out.s", "w");
     getMips(f_out, stable, all_code);
+    freeLex();
+    qFree(all_code);
+    sFree(stable);
     return EXIT_SUCCESS;
 }
