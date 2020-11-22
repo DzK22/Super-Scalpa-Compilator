@@ -5,10 +5,13 @@
 #include <stdlib.h>
 #include "../headers/stable.h"
 #include "../headers/quad.h"
+#include "../headers/mips.h"
 #include <math.h>
 int yyerror (char *s);
 int yylex (void);
+extern FILE *yyin;
 symbol *stable = NULL;
+quad *all_code = NULL;
 
 %}
 
@@ -19,13 +22,13 @@ symbol *stable = NULL;
     struct {
         struct symbol   *res;
         struct quad     *code;
-    } expr; // Pour les expressions
+    } gencode; // Pour les expressions
 }
 
 %token PROGRAM ID EOF_ INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT
 %type <value> INTEGER
 %type <tid> ID
-%type <expr>  expr
+%type <gencode>  expr program instr
 %left PLUS MINUS
 %left MULT DIV
 %right EXP
@@ -35,11 +38,23 @@ symbol *stable = NULL;
 %%
 
 program : %empty                        { }
-        | program instr EOF_            { }
-        | program EOF_                  { }
+        | program instr EOF_
+        {
+            $$.code = NULL;
+            $$.code = concat($$.code, $2.code);
+            all_code = $$.code;
+            return 0;
+        }
+        | program EOF_
+        {
+            $$.code = NULL;
+            $$.code = concat($$.code, $1.code);
+            all_code = $$.code;
+            return 0;
+        }
         ;
 
-instr   : expr                          { fprintf(stdout, "résultat = %d\n", $1.res->value); }
+instr   : expr                          {$$.res = $1.res; $$.code = $1.code; }
         ;
 
 expr    : '(' expr ')'
@@ -49,67 +64,79 @@ expr    : '(' expr ')'
         }
         | expr PLUS expr
         {
-            $$.res = newTemp(&stable);
-            $$.code = NULL;
-            quad *q = qGen(Q_PLUS, $1.res, $3.res, $$.res);
-            $$.code = concat($$.code, $1.code);
-            $$.code = concat($$.code, $3.code);
-            $$.code = concat($$.code, q);
+            symbol *res = newTemp(&stable);
+            $$.res = res;
+            quad *q = qGen(Q_PLUS, res, $1.res, $3.res);
+            quad *code = concat($1.code, $3.code);
+            code = concat(code, q);
+            $$.code = code;
             qPrint($$.code);
         }
         | expr MINUS expr
         {
-            $$.res = newTemp(&stable);
-            $$.code = NULL;
-            quad *q = qGen(Q_MINUS, $1.res, $3.res, $$.res);
-            $$.code = concat($$.code, $1.code);
-            $$.code = concat($$.code, $3.code);
-            $$.code = concat($$.code, q);
+            symbol *res = newTemp(&stable);
+            $$.res = res;
+            quad *q = qGen(Q_MINUS, res, $1.res, $3.res);
+            quad *code = concat($1.code, $3.code);
+            code = concat(code, q);
+            $$.code = code;
+            qPrint($$.code);
         }
         | expr MULT expr
         {
-            $$.res = newTemp(&stable);
-            $$.code = NULL;
-            quad *q = qGen(Q_MULT, $1.res, $3.res, $$.res);
-            $$.code = concat($$.code, $1.code);
-            $$.code = concat($$.code, $3.code);
-            $$.code = concat($$.code, q);
+            symbol *res = newTemp(&stable);
+            $$.res = res;
+            quad *q = qGen(Q_MULT, res, $1.res, $3.res);
+            quad *code = concat($1.code, $3.code);
+            code = concat(code, q);
+            $$.code = code;
+            qPrint($$.code);
         }
         | expr DIV expr
         {
-            $$.res = newTemp(&stable);
-            $$.code = NULL;
-            quad *q = qGen(Q_DIV, $1.res, $3.res, $$.res);
-            $$.code = concat($$.code, $1.code);
-            $$.code = concat($$.code, $3.code);
-            $$.code = concat($$.code, q);
+            symbol *res = newTemp(&stable);
+            $$.res = res;
+            quad *q = qGen(Q_DIV, res, $1.res, $3.res);
+            quad *code = concat($1.code, $3.code);
+            code = concat(code, q);
+            $$.code = code;
+            qPrint($$.code);
         }
         | expr EXP expr
         {
-            $$.res = newTemp(&stable);
-            $$.code = NULL;
-            quad *q = qGen(Q_EXP, $1.res, $3.res, $$.res);
-            $$.code = concat($$.code, $1.code);
-            $$.code = concat($$.code, $3.code);
-            $$.code = concat($$.code, q);
+            symbol *res = newTemp(&stable);
+            $$.res = res;
+            quad *q = qGen(Q_EXP, res, $1.res, $3.res);
+            quad *code = concat($1.code, $3.code);
+            code = concat(code, q);
+            $$.code = code;
+            qPrint($$.code);
         }
         | INTEGER
         {
-            char id[LEN];
-            int res;
-            if ($1 >= 0)
-                res = snprintf(id, LEN, "cst_%d", $1);
-            else
-                res = snprintf(id, LEN, "neg_cst_%d", $1 * (-1));
-            if (res < 0 || res >= LEN)
-                exit(1);
-            struct symbol *s = search(stable, id);
-            if (s == NULL)
-                s = newCstInt(&stable, $1);
-            $$.res = s;
+            symbol *res = newTemp(&stable);
+            res->cst = true;
+            res->value = $1;
+            $$.res = res;
+            $$.code = NULL;
         }
         ;
-
+        | ID
+        {
+            symbol *res = search(stable, $1);
+            if (res == NULL) {
+                fprintf(stderr, "ID %s doesnt exist\n", $1);
+                exit(EXIT_FAILURE);
+            }
+            if (!res->init) {
+                fprintf(stderr, "token with ID %s doesnt init\n", $1);
+                exit(EXIT_FAILURE);
+            }
+            $$.res = res;
+            $$.code = NULL;
+            free($1);
+        }
+        ;
 %%
 
 int yyerror (char *s)
@@ -121,4 +148,21 @@ int yyerror (char *s)
 int yywrap (void)
 {
   return 1;
+}
+
+int main (int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage %s scalpa_file\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+    FILE *f_in = fopen(argv[1], "r");
+    if (f_in == NULL) {
+        fprintf(stderr, "fopen error\n");
+        return EXIT_FAILURE;
+    }
+    yyin = f_in;
+    yyparse();
+    FILE *f_out = fopen("out.s", "w");
+    getMips(f_out, stable, all_code);
+    return EXIT_SUCCESS;
 }

@@ -70,10 +70,3 @@ eof [\n]
                                               return EXIT_FAILURE; }
 
 %%
-
-int main (void) {
-    printf("=> Waiting for instructions...\n");
-    yyparse();
-    printf("End\n");
-    return 0;
-}

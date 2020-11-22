@@ -9,8 +9,9 @@
 typedef enum {INTEGER_, STRING_, NONE_} stype;
 
 typedef struct symbol {
-    bool cst;
     char *id;
+    bool cst;
+    bool init;
     stype type;
     union {
         int value;
@@ -19,6 +20,8 @@ typedef struct symbol {
     struct symbol *next;
 } symbol;
 
+symbol *sAlloc ();
+symbol *sAdd (symbol **, char *);
 symbol *newTemp (symbol **);
 void   sFree (symbol *);
 symbol *newCstInt (symbol **, int);

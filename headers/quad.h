@@ -11,14 +11,17 @@ typedef enum {Q_PLUS, Q_MINUS, Q_MULT, Q_DIV, Q_EXP} qop;
 
 typedef struct quad {
     qop             op;
+    int             num;
+    bool            nlab;
+    symbol          *res;
     symbol          *argv1;
     symbol          *argv2;
-    symbol          *res;
     struct quad     *next;
 } quad;
 
 quad *qGen (qop, symbol *, symbol *, symbol *);
 void qFree (quad *);
 quad *concat (quad *, quad *);
-void qPrint (quad *q);
+quad *getLast (quad *);
+void qPrint (quad *);
 #endif

@@ -1,15 +1,18 @@
 #include "../headers/quad.h"
 
-quad *qGen (qop op, symbol *argv1, symbol *argv2, symbol *res) {
+quad *qGen (qop op, symbol *res, symbol *argv1, symbol *argv2) {
+    static int nquad = 0;
     quad *nq = malloc(sizeof(struct quad));
     if (nq == NULL) {
         fprintf(stderr, "malloc error\n");
         return NULL;
     }
     nq->op = op;
+    nq->res = res;
     nq->argv1 = argv1;
     nq->argv2 = argv2;
-    nq->res = res;
+    nq->num = nquad++;
+    nq->nlab = false;
     nq->next = NULL;
     return nq;
 }
@@ -24,15 +27,24 @@ void qFree (quad *q) {
 }
 
 quad *concat (quad *q1, quad *q2) {
-    if (!q1)
-        return q2;
-    if (!q2)
-        return q1;
-    quad *cur = q1;
-    while (cur->next != NULL)
-        cur = cur->next;
-    cur->next = q2;
-    return q1;
+    quad *res = NULL;
+    if (q1 != NULL) {
+        res = q1;
+        while (q1->next != NULL)
+            q1 = q1->next;
+        q1->next = q2;
+    }
+    else if (q2 != NULL)
+        res = q2;
+    return res;
+}
+
+quad *getLast (quad *q) {
+    if (q == NULL)
+        return NULL;
+    while (q->next != NULL)
+        q = q->next;
+    return q;
 }
 
 void qPrint (quad *q) {
@@ -83,7 +95,7 @@ void qPrint (quad *q) {
             if (cur->res->cst)
                 fprintf(stdout, "%10d\t\t", cur->res->value);
             else
-                fprintf(stdout, "%10s\t\t", cur->res->string);
+                fprintf(stdout, "%10s\t\t", cur->res->id);
         }
 
         fprintf(stdout, "\n");
