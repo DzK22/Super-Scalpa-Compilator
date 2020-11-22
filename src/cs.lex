@@ -45,12 +45,13 @@ eof [\n]
 %%
 
 {P}{R}{O}{G}{R}{A}{M}                       { return PROGRAM; }
+{W}{R}{I}{T}{E}                             { return WRITE; }
 {E}{N}{D}                                   { return END; }
 {eof}                                       { return EOF_;
                                               linecpt++; }
 " "*                                        {}
 {ident}                                     { yylval.tid = strdup(yytext);
-                                              return ID; }
+                                                return ID; }
 "+"                                         { return PLUS; }
 "-"                                         { return MINUS; }
 "*"                                         { return MULT; }

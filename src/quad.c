@@ -68,6 +68,8 @@ void qPrint (quad *q) {
             case Q_EXP:
                 fprintf(stdout, "EXP\t\t");
                 break;
+            case Q_WRITE:
+                fprintf(stdout, "WRITE\t\t");
             default:
                 break;
         }

@@ -25,25 +25,33 @@ void getMips (FILE *f, symbol *s, quad *q) {
         argv2 = q->argv2;
         switch (q->op) {
             case Q_PLUS:
-                fprintf(stdout, "%s = %s + %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\t\t\t\t#%s = %s + %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tadd $t2, $t0, $t1\n");
                 break;
 
             case Q_MINUS:
-                fprintf(stdout, "%s = %s - %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\t\t\t\t#%s = %s - %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tsub $t2, $t0, $t1\n");
                 break;
 
             case Q_MULT:
-                fprintf(stdout, "%s = %s * %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\t\t\t\t#%s = %s * %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tmult $t2, $t0, $t1\n");
                 break;
+
+            case Q_WRITE:
+                fprintf(f, "\t\t\t\t#print integer %s\n", res->id);
+                fprintf(f, "\tlw $a0, %s\n", res->id);
+                fprintf(f, "\tli $v0, 1\n");
+                fprintf(f, "\tsyscall\n");
+                break;
+
 
             default:
                 fprintf(stderr, "unknown\n");

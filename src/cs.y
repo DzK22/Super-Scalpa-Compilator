@@ -25,7 +25,7 @@
     } gencode; // Pour les expressions
 }
 
-%token PROGRAM ID EOF_ END INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT
+%token PROGRAM ID EOF_ END WRITE INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT
 %type <value> INTEGER
 %type <tid> ID
 %type <gencode>  expr program instr
@@ -56,6 +56,12 @@ instr   : expr                          {$$.res = $1.res; $$.code = $1.code; }
         | END
         {
             $$.code = qGen(Q_END, NULL, NULL, NULL);
+        }
+        | WRITE expr
+        {
+            $$.res = $2.res;
+            quad *q = qGen(Q_WRITE, $$.res, NULL, NULL);
+            $$.code = concat($2.code, q);
         }
         ;
 
@@ -116,13 +122,20 @@ expr    : '(' expr ')'
         }
         | INTEGER
         {
-            symbol *res = newTemp(&stable);
-            res->cst = true;
-            res->value = $1;
+            symbol *res = newCstInt(&stable, $1);
             $$.res = res;
             $$.code = NULL;
         }
         ;
+        | MINUS expr
+        {
+            symbol *res = newTemp(&stable);
+            symbol *tmp = newCstInt(&stable, 0);
+            $$.res = res;
+            quad *q = qGen(Q_MINUS, res, tmp, $2.res);
+            quad *code = concat($2.code, q);
+            $$.code = code;
+        }
         | ID
         {
             symbol *res = search(stable, $1);
