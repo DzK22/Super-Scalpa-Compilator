@@ -8,5 +8,8 @@
 #include "stable.h"
 
 void getMips (FILE *, symbol *, quad *);
+void getData (FILE *f, symbol *s);
+void getText (FILE *f, quad *s);
+void ferr (char *s);
 
 #endif

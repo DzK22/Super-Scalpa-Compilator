@@ -1,0 +1,30 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/a3c87ab5/
+HEADERS	Makefile	/^HEADERS=headers\/$/;"	m
+Introduction Compilateur SCALPA	README.md	/^# Introduction Compilateur SCALPA$/;"	c
+NAME	Makefile	/^NAME=cs$/;"	m
+SRC	Makefile	/^SRC=src\/$/;"	m
+TMP	Makefile	/^TMP=tmp\/$/;"	m
+Welcome to Floobits!	FLOOBITS_README.md	/^# Welcome to Floobits!$/;"	c
+all	Makefile	/^all:$/;"	t
+clean	Makefile	/^clean:$/;"	t
+exit	out.s	/^exit: $/;"	l
+main	out.s	/^main: 				#temp_11 = temp_9 - temp_10$/;"	l
+temp_0	out.s	/^temp_0:	.word 5$/;"	l
+temp_1	out.s	/^temp_1:	.word 4$/;"	l
+temp_10	out.s	/^temp_10:	.word 10$/;"	l
+temp_11	out.s	/^temp_11:	.word 0$/;"	l
+temp_2	out.s	/^temp_2:	.word 0$/;"	l
+temp_3	out.s	/^temp_3:	.word 1$/;"	l
+temp_4	out.s	/^temp_4:	.word 2$/;"	l
+temp_5	out.s	/^temp_5:	.word 0$/;"	l
+temp_6	out.s	/^temp_6:	.word 5$/;"	l
+temp_7	out.s	/^temp_7:	.word 3$/;"	l
+temp_8	out.s	/^temp_8:	.word 0$/;"	l
+temp_9	out.s	/^temp_9:	.word 5$/;"	l

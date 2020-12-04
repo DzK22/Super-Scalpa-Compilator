@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#define LEN 64
+#define LEN 128
 
 typedef enum {INTEGER_, STRING_, NONE_} stype;
 
@@ -27,5 +27,6 @@ void   sFree (symbol *);
 symbol *newCstInt (symbol **, int);
 symbol *newCstString (symbol **, char *);
 symbol *search (symbol *, char *);
+void ferr (char *s);
 
 #endif
