@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include "../headers/stable.h"
 #include "../tmp/cs.tab.h"
 int linecpt = 1;
 %}
@@ -41,7 +42,9 @@ cst_char  \'[^\']+\'
 parens    [()]
 hooks     [\[\]]
 newline   \n
-type      "int"
+type_int  "int"
+type_str  "string"
+type      {type_int}|{type_str}
 var       "var"
 
 %%
@@ -57,7 +60,11 @@ var       "var"
 
 " "*                                        {}
 
-{type}                                      { return TYPE; }
+{type_int}                                  { yylval.type = S_INTEGER;
+                                              return TYPE; }
+
+{type_str}                                  { yylval.type = S_STRING;
+                                              return TYPE; }
 
 {var}                                       { return VAR; }
 
@@ -94,7 +101,7 @@ var       "var"
 
 {hooks}                                     { return yytext[0]; }
 
-{cst_int}                                   { yylval.value = atoi(yytext);
+{cst_int}                                   { yylval.val = atoi(yytext);
                                               return INTEGER; }
 
 .                                           { fprintf(stderr, "Unrecognized character : %s at line %d\n", yytext, linecpt);

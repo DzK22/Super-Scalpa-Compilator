@@ -83,29 +83,19 @@ void qPrint (quad *q) {
         }
 
         if (cur->argv1 == NULL)
-            fprintf(stdout, "%10s\t\t", "NULL");
-        else if (cur->argv1->cst) {
-            if (cur->argv1->type == INTEGER_)
-                fprintf(stdout, "%10d\t\t", cur->argv1->value);
-            else if (cur->argv1->type == STRING_)
-                fprintf(stdout, "%10s\t\t", cur->argv1->string);
-        }
+            fprintf(stdout, "%s\t\t", "NULL");
+        else
+            fprintf(stdout, "%s\t\t", cur->argv1->id);
 
         if (cur->argv2 == NULL)
-            fprintf(stdout, "%10s\t\t", "NULL");
-        else if (cur->argv2->cst) {
-            if (cur->argv2->type == INTEGER_)
-                fprintf(stdout, "%10d\t\t", cur->argv2->value);
-            else if (cur->argv2->type == STRING_)
-                fprintf(stdout, "%10s\t\t", cur->argv2->string);
-        }
+            fprintf(stdout, "%s\t\t", "NULL");
+        else
+            fprintf(stdout, "%s\t\t", cur->argv2->id);
 
         if (cur->res == NULL)
-            fprintf(stdout, "%10s\t\t", "NULL");
-        else if (cur->res->cst)
-            fprintf(stdout, "%10d\t\t", cur->res->value);
+            fprintf(stdout, "%s\t\t", "NULL");
         else
-            fprintf(stdout, "%10s\t\t", cur->res->id);
+            fprintf(stdout, "%s\t\t", cur->res->id);
 
         fprintf(stdout, "\n");
         cur = cur->next;

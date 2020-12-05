@@ -2,32 +2,21 @@
 
 symbol *sAlloc () {
     symbol *ns = malloc(sizeof(struct symbol));
-    if (ns == NULL) {
-        fprintf(stderr, "malloc error\n");
-        return NULL;
-    }
+    if (ns == NULL)
+        ferr("stable.c sAlloc malloc");
 
-    ns->id     = NULL;
-    ns->cst    = false;
-    ns->init   = false;
-    ns->value  = 0;
-    ns->string = NULL;
-    ns->next   = NULL;
+    ns->id   = NULL;
+    ns->tmp  = false;
+    ns->type = S_NONE;
+    ns->val  = 0;
+    ns->str  = NULL;
+    ns->next = NULL;
     return ns;
 }
 
-symbol *sAdd (symbol **stable, char *id) {
+symbol *sAdd (symbol **stable) {
     if (*stable == NULL) {
         *stable = sAlloc();
-        if (*stable == NULL)
-            return NULL;
-
-        if (((*stable)->id = strdup(id)) == NULL) {
-            fprintf(stderr, "strdup error\n");
-            return NULL;
-        }
-
-        (*stable)->init = false;
         return *stable;
 
     } else {
@@ -36,15 +25,6 @@ symbol *sAdd (symbol **stable, char *id) {
             cur = cur->next;
 
         cur->next = sAlloc();
-        if (cur->next == NULL)
-            return NULL;
-
-        if ((cur->next->id = strdup(id)) == NULL) {
-            fprintf(stderr, "strdup error\n");
-            return NULL;
-        }
-
-        cur->next->init = false;
         return cur->next;
     }
 }
@@ -58,47 +38,62 @@ void sFree (symbol *s) {
         cur = cur->next;
         free(prev->id);
 
-        if (prev->type == STRING_)
-            free(prev->string);
+        if (prev->type == S_STRING)
+            free(prev->str);
 
         free(prev);
     }
 }
 
-symbol *newTemp (symbol **stable) {
+// ID == NULL => var temporaire
+// data auto cast in the good type
+// do not call this function directry, use helpers
+symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     static int nsym = 0;
+    bool isTmp      = id ? false : true;
+    char *finalID   = id;
     char tid[LEN];
-    int res = snprintf(tid, LEN, "temp_%d", nsym++);
 
-    if (res < 0 || res >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        return NULL;
+    if (isTmp) { // is tmp var
+        int res = snprintf(tid, LEN, "temp_%d", nsym ++);
+        if (res < 0 || res >= LEN)
+            ferr("stable.c newVar snprintf");
+        finalID = tid;
     }
 
-    return sAdd(stable, tid);
-}
+    symbol *nt = sAdd(stable);
+    if ((nt->id = strdup(finalID)) == NULL)
+        ferr("stable.c newVar strdup data ID");
 
-symbol *newCstInt (symbol **stable, int cst) {
-    symbol *nt = newTemp(stable);
-    if (nt == NULL)
-        return NULL;
+    nt->type = type;
+    nt->tmp  = isTmp;
 
-    nt->cst   = true;
-    nt->init  = true;
-    nt->value = cst;
-
-    return nt;
-}
-
-symbol *newCstString (symbol **stable, char *cst) {
-    symbol *nt = newTemp(stable);
-    nt->cst    = true;
-    nt->init   = true;
-
-    if ((nt->string = strdup(cst)) == NULL)
-        ferr("stable.c newCstString strdup");
+    if (type == S_INTEGER)
+        nt->val = *((int *) data);
+    else if (type == S_STRING) {
+        if ((nt->str = strdup((char *) data)) == NULL)
+            ferr("stable.c newVar strdup data");
+    }
 
     return nt;
+}
+
+// helpers functions which call newVar
+
+symbol *newTmpInt (symbol **stable, int val) {
+    return newVar(stable, S_INTEGER, NULL, &val);
+}
+
+symbol *newTmpStr (symbol **stable, char *str) {
+    return newVar(stable, S_STRING, NULL, str);
+}
+
+symbol *newVarInt (symbol **stable, char *id, int val) {
+    return newVar(stable, S_INTEGER, id, &val);
+}
+
+symbol *newVarStr (symbol **stable, char *id, char *str) {
+    return newVar(stable, S_STRING, id, str);
 }
 
 symbol *search (symbol *s, char *id) {

@@ -22,15 +22,14 @@ void getMips (FILE *f, symbol *s, quad *q) {
 
 void getData (FILE *f, symbol *s) {
     while (s != NULL) {
-        if (s->cst) {
-            switch (s->type) {
-                case INTEGER_:
-                    fprintf(f, "%s:\t.word %d\n", s->id, s->value);
-                    break;
-            }
-
-        } else
-            fprintf(f, "%s:\t.word 0\n", s->id);
+        switch (s->type) {
+            case S_INTEGER:
+                fprintf(f, "%s:\t.word %d\n", s->id, s->val);
+                break;
+            case S_STRING:
+                fprintf(f, "%s:\t.ascii %s\n", s->id, s->str);
+                break;
+        }
 
         s = s->next;
     }
@@ -50,6 +49,7 @@ void getText (FILE *f, quad *q) {
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tadd $t2, $t0, $t1\n");
+                fprintf(f, "\tsw $t2, %s\n", res->id);
                 break;
 
             case Q_MINUS:
@@ -57,6 +57,7 @@ void getText (FILE *f, quad *q) {
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tsub $t2, $t0, $t1\n");
+                fprintf(f, "\tsw $t2, %s\n", res->id);
                 break;
 
             case Q_MULT:
@@ -64,6 +65,7 @@ void getText (FILE *f, quad *q) {
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tmult $t2, $t0, $t1\n");
+                fprintf(f, "\tsw $t2, %s\n", res->id);
                 break;
 
             case Q_WRITE:
@@ -82,9 +84,6 @@ void getText (FILE *f, quad *q) {
             default:
                 ferr("mips.c getText unknown op");
         }
-
-        if (q->op == Q_PLUS || q->op == Q_MINUS || q->op == Q_MULT || q->op == Q_DIV || q->op == Q_EXP)
-            fprintf(f, "\tsw $t2, %s\n", res->id);
 
         q = q->next;
     }

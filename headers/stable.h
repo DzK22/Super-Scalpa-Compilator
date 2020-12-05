@@ -6,27 +6,33 @@
 #include <stdbool.h>
 #define LEN 128
 
-typedef enum {INTEGER_, STRING_, NONE_} stype;
+typedef enum stype {
+    S_INTEGER,
+    S_STRING,
+    S_NONE
+} stype;
 
 typedef struct symbol {
     char *id;
-    bool cst;
-    bool init;
+    bool tmp; // is tmp var ? (true = cannot be modified by user)
     stype type;
     union {
-        int value;
-        char *string;
+        int val;
+        char *str;
     };
     struct symbol *next;
 } symbol;
 
-symbol *sAlloc ();
-symbol *sAdd (symbol **, char *);
-symbol *newTemp (symbol **);
-void   sFree (symbol *);
-symbol *newCstInt (symbol **, int);
-symbol *newCstString (symbol **, char *);
-symbol *search (symbol *, char *);
 void ferr (char *s);
+void   sFree (symbol *);
+symbol *sAlloc ();
+symbol *sAdd (symbol **);
+symbol *search (symbol *, char *);
+
+symbol *newVar (symbol **, stype, char *, void *);
+symbol *newTmpInt (symbol **, int);
+symbol *newTmpStr (symbol **, char *);
+symbol *newVarInt (symbol **, char *, int);
+symbol *newVarStr (symbol **, char *, char *);
 
 #endif

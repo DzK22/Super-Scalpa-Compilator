@@ -11,14 +11,25 @@
     int yylex (void);
     void freeLex (void);
     extern FILE *yyin;
+
     symbol *stable = NULL;
     quad *all_code = NULL;
+    int instr_cnt  = 0;
+
+    void testID (symbol *s, char *name) {
+        if (s == NULL) {
+            char s[LEN];
+            snprintf(s, LEN, "cs.y ID \"%s\" not exists", name);
+            ferr(s);
+        }
+    }
 %}
 
 %union {
-    char    *tid;
-    int     value;
-    struct  symbol *s;
+    char *tid;
+    int  val;
+    struct symbol *s;
+    stype type;
     struct {
         struct symbol   *res;
         struct quad     *code;
@@ -26,8 +37,9 @@
 }
 
 %token  PROGRAM ID NEWLINE END WRITE INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT TYPE VAR
-%type   <value> INTEGER
+%type   <val> INTEGER
 %type   <tid> ID
+%type   <type> TYPE
 %type   <gencode>  expr program instr
 %left   PLUS MINUS
 %left   MULT DIV
@@ -40,14 +52,11 @@
 program : %empty                        { }
         | program instr NEWLINE
             {
-                $$.code = concat(NULL, $2.code);
+                if (instr_cnt ++ == 0)
+                    $$.code = NULL;
+
+                $$.code = concat($$.code, $2.code);
                 all_code = $$.code;
-                qPrint(all_code);
-                //quad *last = getLast($2.code);
-                /*if (last->op != Q_END) {
-                    fprintf(stderr, "programm shouldnt end with \"end\" keyword\n");
-                    exit(EXIT_FAILURE);
-                }*/
             }
         ;
 
@@ -68,28 +77,18 @@ instr   : expr
             }
         | VAR ID ':' TYPE
             {
-                symbol *res = sAdd(&stable, $2);
-                res->cst    = true;
-                res->init   = true;
-                res->value  = 0;
-                res->type   = INTEGER_;
-                $$.res      = res;
+                symbol *res;
+                if ($4 == S_INTEGER)
+                    res = newVarInt(&stable, $2, 0);
+                else if ($4 == S_STRING)
+                    res = newVarStr(&stable, $2, "");
+
+                $$.res = res;
             }
         | ID AFFEC expr
             {
                 symbol *res = search(stable, $1);
-
-                if (res == NULL) {
-                    char s[LEN];
-                    snprintf(s, LEN, "cs.y expr ID \"%s\" not exists", $1);
-                    ferr(s);
-                }
-
-                if (!res->init) {
-                    char s[LEN];
-                    snprintf(s, LEN, "cs.y expr ID \"%s\" is not init", $1);
-                    ferr(s);
-                }
+                testID(res, $1);
 
                 quad *q    = qGen(Q_AFFEC, res, $3.res, NULL);
                 quad *code = concat($3.code, q);
@@ -104,64 +103,59 @@ expr    : '(' expr ')'
             }
         | expr PLUS expr
             {
-                symbol *res = newTemp(&stable);
+                symbol *res = newTmpInt(&stable, 0);
                 $$.res      = res;
                 quad *q     = qGen(Q_PLUS, res, $1.res, $3.res);
                 quad *code  = concat($1.code, $3.code);
                 code        = concat(code, q);
                 $$.code     = code;
-                //qPrint($$.code);
             }
         | expr MINUS expr
             {
-                symbol *res = newTemp(&stable);
+                symbol *res = newTmpInt(&stable, 0);
                 $$.res      = res;
                 quad *q     = qGen(Q_MINUS, res, $1.res, $3.res);
                 quad *code  = concat($1.code, $3.code);
                 code        = concat(code, q);
                 $$.code     = code;
-                //qPrint($$.code);
             }
         | expr MULT expr
             {
-                symbol *res = newTemp(&stable);
+                symbol *res = newTmpInt(&stable, 0);
                 $$.res      = res;
                 quad *q     = qGen(Q_MULT, res, $1.res, $3.res);
                 quad *code  = concat($1.code, $3.code);
                 code        = concat(code, q);
                 $$.code     = code;
-                //qPrint($$.code);
             }
         | expr DIV expr
             {
-                symbol *res = newTemp(&stable);
+                symbol *res = newTmpInt(&stable, 0);
                 $$.res      = res;
                 quad *q     = qGen(Q_DIV, res, $1.res, $3.res);
                 quad *code  = concat($1.code, $3.code);
                 code        = concat(code, q);
                 $$.code     = code;
-                //qPrint($$.code);
             }
         | expr EXP expr
             {
-                symbol *res = newTemp(&stable);
+                symbol *res = newTmpInt(&stable, 0);
                 $$.res      = res;
                 quad *q     = qGen(Q_EXP, res, $1.res, $3.res);
                 quad *code  = concat($1.code, $3.code);
                 code        = concat(code, q);
                 $$.code     = code;
-                //qPrint($$.code);
             }
         | INTEGER
             {
-                symbol *res = newCstInt(&stable, $1);
+                symbol *res = newTmpInt(&stable, $1);
                 $$.res      = res;
                 $$.code     = NULL;
             }
         | MINUS expr
             {
-                symbol *res = newTemp(&stable);
-                symbol *tmp = newCstInt(&stable, 0);
+                symbol *res = newTmpInt(&stable, 0);
+                symbol *tmp = newTmpInt(&stable, 0);
                 $$.res     = res;
                 quad *q    = qGen(Q_MINUS, res, tmp, $2.res);
                 quad *code = concat($2.code, q);
@@ -170,18 +164,7 @@ expr    : '(' expr ')'
         | ID
             {
                 symbol *res = search(stable, $1);
-
-                if (res == NULL) {
-                    char s[LEN];
-                    snprintf(s, LEN, "cs.y expr ID \"%s\" not exists", $1);
-                    ferr(s);
-                }
-
-                if (!res->init) {
-                    char s[LEN];
-                    snprintf(s, LEN, "cs.y expr ID \"%s\" is not init", $1);
-                    ferr(s);
-                }
+                testID(res, $1);
 
                 $$.res = res;
                 $$.code = NULL;
@@ -212,6 +195,7 @@ int main (int argc, char **argv) {
 
     yyin = f_in;
     yyparse();
+    qPrint(all_code);
 
     FILE *f_out = fopen("out.s", "w");
     getMips(f_out, stable, all_code);
