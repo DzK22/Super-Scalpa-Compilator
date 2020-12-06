@@ -55,8 +55,7 @@ var       "var"
 
 {E}{N}{D}                                   { return END; }
 
-{newline}                                   { return NEWLINE;
-                                              linecpt++; }
+{newline}                                   { linecpt++; }
 
 " "*                                        {}
 

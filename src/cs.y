@@ -6,7 +6,7 @@
     #include "../headers/stable.h"
     #include "../headers/quad.h"
     #include "../headers/mips.h"
-
+    #define YYDEBUG 1
     int yyerror (char *s);
     int yylex (void);
     void freeLex (void);
@@ -40,7 +40,7 @@
 %type   <val> INTEGER
 %type   <tid> ID
 %type   <type> TYPE
-%type   <gencode>  expr program instr
+%type   <gencode>  expr instr program
 %left   PLUS MINUS
 %left   MULT DIV
 %right  EXP
@@ -49,8 +49,14 @@
 %start  program
 %%
 
-program : %empty                        { }
-        | program instr NEWLINE
+program : PROGRAM ID vardeclist fundeclist instr
+            {
+                if (instr_cnt ++ == 0)
+                    $$.code = NULL;
+                $$.code = concat($$.code, $5.code);
+                all_code = $$.code;
+            }
+        | program instr
             {
                 if (instr_cnt ++ == 0)
                     $$.code = NULL;
@@ -60,15 +66,18 @@ program : %empty                        { }
             }
         ;
 
+vardeclist : %empty                        { }
+           ;
+
+fundeclist : %empty                        { }
+           ;
+
 instr   : expr
             {
                 $$.res = $1.res;
                 $$.code = $1.code;
             }
-        | END
-            {
-                $$.code = qGen(Q_END, NULL, NULL, NULL);
-            }
+
         | WRITE expr
             {
                 $$.res  = $2.res;
@@ -188,7 +197,9 @@ int main (int argc, char **argv) {
         fprintf(stderr, "Usage: %s <scalpa_file>\n", argv[0]);
         return EXIT_FAILURE;
     }
-
+    #if YYDEBUG
+        yydebug = 1;
+    #endif
     FILE *f_in = fopen(argv[1], "r");
     if (f_in == NULL)
         ferr("cs.y main fopen");

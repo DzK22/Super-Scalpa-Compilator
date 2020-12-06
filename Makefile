@@ -5,7 +5,7 @@ TMP=tmp/
 
 all:
 	mkdir -p $(TMP)
-	bison -d $(SRC)$(NAME).y
+	bison -d -t $(SRC)$(NAME).y
 	mv $(NAME).tab.c $(TMP)
 	mv $(NAME).tab.h $(TMP)
 
