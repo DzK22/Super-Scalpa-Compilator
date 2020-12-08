@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #define LEN 128
 
-typedef enum stype { S_NONE, S_INT, S_BOOL, S_STRING } stype;
+typedef enum stype { S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT } stype;
 
 typedef struct symbol {
     char *id;
@@ -15,6 +15,7 @@ typedef struct symbol {
     union {
         int val;
         char *str;
+        bool bol;
     };
     struct symbol *next;
 } symbol;
@@ -28,7 +29,11 @@ symbol *search (symbol *, char *);
 symbol *newVar (symbol **, stype, char *, void *);
 symbol *newTmpInt (symbol **, int);
 symbol *newTmpStr (symbol **, char *);
+symbol *newTmpBool (symbol **, bool);
+
 symbol *newVarInt (symbol **, char *, int);
 symbol *newVarStr (symbol **, char *, char *);
+symbol *newVarBool (symbol **, char *, bool);
+symbol *newVarUnit (symbol **, char *);
 
 #endif

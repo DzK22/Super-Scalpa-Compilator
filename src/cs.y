@@ -58,6 +58,7 @@
 %type   <tid> IDENT_
 %type   <gencode>  expr instr program
 %type   <list>  vardecllist fundecllist identlist varsdecl fundecl lvalue sequence
+%type   <type> typename atomictype
 
 %left   PLUS_ MINUS_
 %left   MULT_ DIV_
@@ -67,27 +68,40 @@
 %start  program
 %%
 
-program: PROGRAM_ IDENT_ vardecllist fundecllist instr  { }
+program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
+        newVarInt(&stable, $2, 0);
+        $$.code = $5.code;
+        all_code = $$.code;
+    }
+
     ;
 
 vardecllist : %empty                       {  }
-           | varsdecl                      {  }
-           | varsdecl DOTCOMMA_ vardecllist      {  }
+           | varsdecl                      {
+               $$.id = $1.id;
+               $$.next = NULL;
+           }
+           | varsdecl DOTCOMMA_ vardecllist      {
+            }
            ;
 
-varsdecl: VAR_ identlist ':' typename {  }
+varsdecl: VAR_ identlist ':' typename {
+            //$$.res = newVar
+          }
           ;
 
 identlist : IDENT_  {  }
          | IDENT_ COMMA_ identlist  {  }
          ;
 
-typename : atomictype {}
+typename : atomictype {
+            $$ = $1;
+          }
          ;
 
-atomictype : UNIT_ {}
-           | BOOL_ {}
-           | INT_ {}
+atomictype : UNIT_ { $$ = S_UNIT; }
+           | BOOL_ { $$ = S_BOOL; }
+           | INT_  { $$ = S_INT;  }
            ;
 
 fundecllist : %empty                        {  }

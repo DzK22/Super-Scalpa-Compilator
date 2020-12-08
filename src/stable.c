@@ -8,9 +8,12 @@ symbol *sAlloc () {
     ns->id   = NULL;
     ns->tmp  = false;
     ns->type = S_NONE;
+    ns->next = NULL;
+
     ns->val  = 0;
     ns->str  = NULL;
-    ns->next = NULL;
+    ns->bol  = false;
+
     return ns;
 }
 
@@ -70,6 +73,8 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
 
     if (type == S_INT)
         nt->val = *((int *) data);
+    else if (type == S_BOOL)
+        nt->bol = *((bool *) data);
     else if (type == S_STRING) {
         if ((nt->str = strdup((char *) data)) == NULL)
             ferr("stable.c newVar strdup data");
@@ -88,12 +93,24 @@ symbol *newTmpStr (symbol **stable, char *str) {
     return newVar(stable, S_STRING, NULL, str);
 }
 
+symbol *newTmpBool (symbol **stable, bool bol) {
+    return newVar(stable, S_BOOL, NULL, &bol);
+}
+
 symbol *newVarInt (symbol **stable, char *id, int val) {
     return newVar(stable, S_INT, id, &val);
 }
 
 symbol *newVarStr (symbol **stable, char *id, char *str) {
     return newVar(stable, S_STRING, id, str);
+}
+
+symbol *newVarBool (symbol **stable, char *id, bool bol) {
+    return newVar(stable, S_BOOL, id, &bol);
+}
+
+symbol *newVarUnit (symbol **stable, char *id) {
+    return newVar(stable, S_UNIT, id, NULL);
 }
 
 symbol *search (symbol *s, char *id) {
