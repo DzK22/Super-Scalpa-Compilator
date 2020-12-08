@@ -1,12 +1,10 @@
 %{
-
-#include <stdio.h>
-#include <ctype.h>
-#include "../headers/stable.h"
-#include "../tmp/cs.tab.h"
-int linecpt = 1;
+    #include <stdio.h>
+    #include <ctype.h>
+    #include "../headers/stable.h"
+    #include "../tmp/cs.tab.h"
+    int linecpt = 1;
 %}
-
 A [aA]
 B [bB]
 C [cC]
@@ -38,70 +36,92 @@ letter    [a-zA-Z]
 ident     {letter}("'"|"_"|{letter}|{digit})*
 cst_int   {digit}+
 cst_bool  "true"|"false"
-cst_char  \'[^\']+\'
+cst_string  "[^\"]+"
+cte      {cst_int}|{cst_bool}|{cst_string}
 parens    [()]
 hooks     [\[\]]
 newline   \n
-type_int  "int"
-type_str  "string"
-type      {type_int}|{type_str}
-var       "var"
+int  "int"
+bool "bool"
+unit "unit"
+atomic_type      {type_int}|{type_bool}|{type_unit}
 
 %%
 
-{P}{R}{O}{G}{R}{A}{M}                       { return PROGRAM; }
-
-{W}{R}{I}{T}{E}                             { return WRITE; }
-
-{E}{N}{D}                                   { return END; }
-
 {newline}                                   { linecpt++; }
+
+{P}{R}{O}{G}{R}{A}{M}                       { return PROGRAM_; }
+
+{W}{R}{I}{T}{E}                             { return WRITE_; }
+
+{R}{E}{A}{D}                                { return READ_; }
+
+{B}{E}{G}{I}{N}                             { return BEGIN_; }
+
+{E}{N}{D}                                   { return END_; }
+
+{V}{A}{R}                                   { return VAR_; }
+
+{R}{E}{T}{U}{R}{N}                          { return RETURN_; }
+
+{R}{E}{F}                                   { return REF_;}
+
+{int}                                  { return INT_; }
+
+{bool}                                 { return BOOL_; }
+
+{unit}                                 { return UNIT_;}
 
 " "*                                        {}
 
-{type_int}                                  { yylval.type = S_INTEGER;
-                                              return TYPE; }
+{cst_int}                                   { yylval.type = S_INT;
+                                              yylval.val = atoi(yytext);
+                                              return CTE_; }
 
-{type_str}                                  { yylval.type = S_STRING;
-                                              return TYPE; }
+{cst_bool}                                  { yylval.type = S_BOOL;
+                                              yylval.bol = strcmp(yytext, "true") ? false : true;
+                                              return CTE_;}
 
-{var}                                       { return VAR; }
+{cst_string}                                  { yylval.type = S_STRING;
+                                              yylval.str = strdup(yytext);
+                                              return CTE_;}
 
 ":"                                         { return yytext[0]; }
 
-{ident}                                     { yylval.tid = strdup(yytext);
-                                                return ID; }
+"+"                                         { return PLUS_; }
 
-"+"                                         { return PLUS; }
+"-"                                         { return MINUS_; }
 
-"-"                                         { return MINUS; }
+"*"                                         { return MULT_; }
 
-"*"                                         { return MULT; }
+"/"                                         { return DIV_; }
 
-"/"                                         { return DIV; }
+"^"                                         { return EXP_; }
 
-"^"                                         { return EXP; }
+"<"                                         { return INF_; }
 
-"<"                                         { return INF; }
+"<="                                        { return INF_EQ_; }
 
-"<="                                        { return INF_EQ; }
+">"                                         { return SUP_; }
 
-">"                                         { return SUP; }
+">="                                        { return SUP_EQ_; }
 
-">="                                        { return SUP_EQ; }
+"="                                         { return EQUAL_; }
 
-"="                                         { return EQUAL; }
+"<>"                                        { return DIFF_; }
 
-"<>"                                        { return DIFF; }
+":="                                        { return AFFEC_; }
 
-":="                                        { return AFFEC; }
+";"                                        { return DOTCOMMA_; }
+
+","                                        { return COMMA_; }
 
 {parens}                                    { return yytext[0]; }
 
 {hooks}                                     { return yytext[0]; }
 
-{cst_int}                                   { yylval.val = atoi(yytext);
-                                              return INTEGER; }
+{ident}                                     { yylval.tid = strdup(yytext);
+                                              return IDENT_; }
 
 .                                           { fprintf(stderr, "Unrecognized character : %s at line %d\n", yytext, linecpt);
                                               return EXIT_FAILURE; }

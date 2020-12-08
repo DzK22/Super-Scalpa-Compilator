@@ -7,7 +7,10 @@
 #include <stdbool.h>
 #include "stable.h"
 
-typedef enum {Q_PLUS, Q_MINUS, Q_MULT, Q_DIV, Q_EXP, Q_END, Q_WRITE, Q_AFFEC} qop;
+typedef enum {
+  Q_END, Q_WRITE, Q_READ, Q_AFFEC,
+  Q_PLUS, Q_MINUS, Q_MULT, Q_DIV, Q_EXP,
+} qop;
 
 typedef struct quad {
     qop             op;

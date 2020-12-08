@@ -6,11 +6,7 @@
 #include <stdbool.h>
 #define LEN 128
 
-typedef enum stype {
-    S_INTEGER,
-    S_STRING,
-    S_NONE
-} stype;
+typedef enum stype { S_NONE, S_INT, S_BOOL, S_STRING } stype;
 
 typedef struct symbol {
     char *id;

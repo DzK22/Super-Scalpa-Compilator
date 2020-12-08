@@ -23,7 +23,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
 void getData (FILE *f, symbol *s) {
     while (s != NULL) {
         switch (s->type) {
-            case S_INTEGER:
+            case S_INT:
                 fprintf(f, "%s:\t.word %d\n", s->id, s->val);
                 break;
             case S_STRING:

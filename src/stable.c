@@ -68,7 +68,7 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     nt->type = type;
     nt->tmp  = isTmp;
 
-    if (type == S_INTEGER)
+    if (type == S_INT)
         nt->val = *((int *) data);
     else if (type == S_STRING) {
         if ((nt->str = strdup((char *) data)) == NULL)
@@ -81,7 +81,7 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
 // helpers functions which call newVar
 
 symbol *newTmpInt (symbol **stable, int val) {
-    return newVar(stable, S_INTEGER, NULL, &val);
+    return newVar(stable, S_INT, NULL, &val);
 }
 
 symbol *newTmpStr (symbol **stable, char *str) {
@@ -89,7 +89,7 @@ symbol *newTmpStr (symbol **stable, char *str) {
 }
 
 symbol *newVarInt (symbol **stable, char *id, int val) {
-    return newVar(stable, S_INTEGER, id, &val);
+    return newVar(stable, S_INT, id, &val);
 }
 
 symbol *newVarStr (symbol **stable, char *id, char *str) {

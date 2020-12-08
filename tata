@@ -1,6 +1,7 @@
 program tata
-var a : int
-a := 3 + 5
-write a
-a := a + 2
-write a
+    var a,b : int
+    begin
+      a := a + 2;
+      a := 5 + a;
+      write a;
+    end

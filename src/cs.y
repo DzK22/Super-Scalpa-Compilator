@@ -17,7 +17,7 @@
     int instr_cnt  = 0;
 
     void testID (symbol *s, char *name) {
-        if (s == NULL) {
+        if(s == NULL) {
             char s[LEN];
             snprintf(s, LEN, "cs.y ID \"%s\" not exists", name);
             ferr(s);
@@ -28,158 +28,118 @@
 %union {
     char *tid;
     int  val;
+    bool bol;
+    char *str;
+
     struct symbol *s;
     stype type;
     struct {
         struct symbol   *res;
         struct quad     *code;
     } gencode; // Pour les expressions
+
+    struct li {
+      struct li *next;
+      char *id;
+    } list;
+
+    struct typ {
+      stype type;
+      char cha;
+      int val;
+      bool bol;
+    } cte_type;
 }
 
-%token  PROGRAM ID NEWLINE END WRITE INTEGER MULT DIV PLUS MINUS EXP INF INF_EQ SUP SUP_EQ EQUAL DIFF AFFEC AND OR XOR NOT TYPE VAR
-%type   <val> INTEGER
-%type   <tid> ID
-%type   <type> TYPE
+%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_  MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ BEGIN_ READ_
+%token SUP_ SUP_EQ_ EQUAL_ DIFF_ AFFEC_ AND_ OR_ XOR_ NOT_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ CTE_ DOTCOMMA_ COMMA_
+
+%type   <cte_type> CTE_
+%type   <tid> IDENT_
 %type   <gencode>  expr instr program
-%left   PLUS MINUS
-%left   MULT DIV
-%right  EXP
-%left   NOT
+%type   <list>  vardecllist fundecllist identlist varsdecl fundecl lvalue sequence
+
+%left   PLUS_ MINUS_
+%left   MULT_ DIV_
+%right  EXP_
+%left   NOT_
 
 %start  program
 %%
 
-program : PROGRAM ID vardeclist fundeclist instr
-            {
-                if (instr_cnt ++ == 0)
-                    $$.code = NULL;
-                $$.code = concat($$.code, $5.code);
-                all_code = $$.code;
-            }
-        | program instr
-            {
-                if (instr_cnt ++ == 0)
-                    $$.code = NULL;
+program: PROGRAM_ IDENT_ vardecllist fundecllist instr  { }
+    ;
 
-                $$.code = concat($$.code, $2.code);
-                all_code = $$.code;
-            }
-        ;
-
-vardeclist : %empty                        { }
+vardecllist : %empty                       {  }
+           | varsdecl                      {  }
+           | varsdecl DOTCOMMA_ vardecllist      {  }
            ;
 
-fundeclist : %empty                        { }
+varsdecl: VAR_ identlist ':' typename {  }
+          ;
+
+identlist : IDENT_  {  }
+         | IDENT_ COMMA_ identlist  {  }
+         ;
+
+typename : atomictype {}
+         ;
+
+atomictype : UNIT_ {}
+           | BOOL_ {}
+           | INT_ {}
            ;
 
-instr   : expr
-            {
-                $$.res = $1.res;
-                $$.code = $1.code;
-            }
-
-        | WRITE expr
-            {
-                $$.res  = $2.res;
-                quad *q = qGen(Q_WRITE, $$.res, NULL, NULL);
-                $$.code = concat($2.code, q);
-            }
-        | VAR ID ':' TYPE
-            {
-                symbol *res;
-                if ($4 == S_INTEGER)
-                    res = newVarInt(&stable, $2, 0);
-                else if ($4 == S_STRING)
-                    res = newVarStr(&stable, $2, "");
-
-                $$.res = res;
-            }
-        | ID AFFEC expr
-            {
-                symbol *res = search(stable, $1);
-                testID(res, $1);
-
-                quad *q    = qGen(Q_AFFEC, res, $3.res, NULL);
-                quad *code = concat($3.code, q);
-                $$.code    = code;
-            }
+fundecllist : %empty                        {  }
+            | fundecl DOTCOMMA_ fundecllist       {  }
+           ;
+/* REGLE BIDON , A SUPPRIMER APRES mdr */
+fundecl : %empty                            {}
         ;
 
-expr    : '(' expr ')'
-            {
-                $$.code = $2.code;
-                $$.res = $2.res;
-            }
-        | expr PLUS expr
-            {
-                symbol *res = newTmpInt(&stable, 0);
-                $$.res      = res;
-                quad *q     = qGen(Q_PLUS, res, $1.res, $3.res);
-                quad *code  = concat($1.code, $3.code);
-                code        = concat(code, q);
-                $$.code     = code;
-            }
-        | expr MINUS expr
-            {
-                symbol *res = newTmpInt(&stable, 0);
-                $$.res      = res;
-                quad *q     = qGen(Q_MINUS, res, $1.res, $3.res);
-                quad *code  = concat($1.code, $3.code);
-                code        = concat(code, q);
-                $$.code     = code;
-            }
-        | expr MULT expr
-            {
-                symbol *res = newTmpInt(&stable, 0);
-                $$.res      = res;
-                quad *q     = qGen(Q_MULT, res, $1.res, $3.res);
-                quad *code  = concat($1.code, $3.code);
-                code        = concat(code, q);
-                $$.code     = code;
-            }
-        | expr DIV expr
-            {
-                symbol *res = newTmpInt(&stable, 0);
-                $$.res      = res;
-                quad *q     = qGen(Q_DIV, res, $1.res, $3.res);
-                quad *code  = concat($1.code, $3.code);
-                code        = concat(code, q);
-                $$.code     = code;
-            }
-        | expr EXP expr
-            {
-                symbol *res = newTmpInt(&stable, 0);
-                $$.res      = res;
-                quad *q     = qGen(Q_EXP, res, $1.res, $3.res);
-                quad *code  = concat($1.code, $3.code);
-                code        = concat(code, q);
-                $$.code     = code;
-            }
-        | INTEGER
-            {
-                symbol *res = newTmpInt(&stable, $1);
-                $$.res      = res;
-                $$.code     = NULL;
-            }
-        | MINUS expr
-            {
-                symbol *res = newTmpInt(&stable, 0);
-                symbol *tmp = newTmpInt(&stable, 0);
-                $$.res     = res;
-                quad *q    = qGen(Q_MINUS, res, tmp, $2.res);
-                quad *code = concat($2.code, q);
-                $$.code    = code;
-            }
-        | ID
-            {
-                symbol *res = search(stable, $1);
-                testID(res, $1);
+instr: lvalue AFFEC_ expr   {}
+      | RETURN_ expr {}
+      | BEGIN_ sequence END_ {}
+      | BEGIN_ END_ {}
+      | WRITE_ expr {}
+      ;
 
-                $$.res = res;
-                $$.code = NULL;
-                free($1);
-            }
+sequence : instr DOTCOMMA_ sequence  {}
+         | instr DOTCOMMA_ {}
+         | instr  {}
         ;
+
+lvalue: IDENT_ {}
+      ;
+
+exprlist : expr {}
+        |  expr COMMA_ exprlist {}
+        ;
+
+expr : CTE_                                  { }
+      | '(' expr ')'                          { }
+      | expr opb expr                         { }
+      | opu expr                              { }
+      | IDENT_                                { }
+      | IDENT_ '(' exprlist ')'                { }
+      ;
+
+opb : MULT_                                    {}
+    | DIV_                                     {}
+    | PLUS_                                    {}
+    | MINUS_                                   {}
+    | EXP_                                     {}
+    | INF_                                     {}
+    | INF_EQ_                                  {}
+    | SUP_                                     {}
+    | SUP_EQ_                                  {}
+    | EQUAL_                                   {}
+    | DIFF_                                    {}
+    ;
+
+opu : MINUS_                                   {}
+    | NOT_                                     {}
+    ;
 %%
 
 int yyerror (char *s)
@@ -198,22 +158,9 @@ int main (int argc, char **argv) {
         return EXIT_FAILURE;
     }
     #if YYDEBUG
-        yydebug = 1;
+         yydebug = 1;
     #endif
-    FILE *f_in = fopen(argv[1], "r");
-    if (f_in == NULL)
-        ferr("cs.y main fopen");
+	yyin = fopen(argv[1], "r");
+	return yyparse();
 
-    yyin = f_in;
-    yyparse();
-    qPrint(all_code);
-
-    FILE *f_out = fopen("out.s", "w");
-    getMips(f_out, stable, all_code);
-
-    freeLex();
-    qFree(all_code);
-    sFree(stable);
-
-    return EXIT_SUCCESS;
 }
