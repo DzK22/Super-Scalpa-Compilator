@@ -1,7 +1,5 @@
 program tata
-    var a,b : int; var i,j : bool
+    var a,b : int
     begin
-      a := a + 2;
-      a := 5 + a;
-      write a;
+      a := 1 + 2
     end

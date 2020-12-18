@@ -42,7 +42,6 @@ void getText (FILE *f, quad *q) {
         res = q->res;
         argv1 = q->argv1;
         argv2 = q->argv2;
-
         switch (q->op) {
             case Q_PLUS:
                 fprintf(f, "\t\t\t\t#%s = %s + %s\n", res->id, argv1->id, argv2->id);

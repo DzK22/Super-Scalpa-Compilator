@@ -37,7 +37,6 @@ ident     {letter}("'"|"_"|{letter}|{digit})*
 cst_int   {digit}+
 cst_bool  "true"|"false"
 cst_string  "[^\"]+"
-cte      {cst_int}|{cst_bool}|{cst_string}
 parens    [()]
 hooks     [\[\]]
 newline   \n
@@ -75,20 +74,17 @@ atomic_type      {type_int}|{type_bool}|{type_unit}
 
 " "*                                        {}
 
-{cst_int}                                   { yylval.type = S_INT;
-                                              yylval.val = atoi(yytext);
-                                              return CTE_; }
+{cst_int}                                   { yylval.val = atoi(yytext);
+                                              return INTEGER_; }
 
-{cst_bool}                                  { yylval.type = S_BOOL;
-                                              yylval.bol = strcmp(yytext, "true") ? false : true;
-                                              return CTE_;}
+{cst_bool}                                  { yylval.bol = strcmp(yytext, "true") ? false : true;
+                                              return BOOLEAN_;}
 
-{cst_string}                                  { yylval.type = S_STRING;
-                                              yylval.str = strdup(yytext);
-                                              return CTE_;}
-
+{cst_string}                                  { yylval.str = strdup(yytext);
+                                              return STRING_;}
+                                              
 {ident}                                     { yylval.str = strdup(yytext);
-                                            return IDENT_; }
+                                              return IDENT_; }
 
 ":"                                         { return yytext[0]; }
 

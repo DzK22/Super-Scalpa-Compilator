@@ -41,19 +41,14 @@
     struct listIdents *listID;
     struct listDecls *listDecl;
 
-    struct typ {
-      stype type;
-      char cha;
-      int val;
-      bool bol;
-    } cte_type;
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_  MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ BEGIN_ READ_
-%token SUP_ SUP_EQ_ EQUAL_ DIFF_ AFFEC_ AND_ OR_ XOR_ NOT_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ CTE_ DOTCOMMA_ COMMA_
+%token SUP_ SUP_EQ_ EQUAL_ DIFF_ AFFEC_ AND_ OR_ XOR_ NOT_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ DOTCOMMA_ COMMA_ BOOLEAN_ INTEGER_ STRING_
 
-%type   <cte_type> CTE_
-%type   <str> IDENT_
+%type   <str> IDENT_ STRING_
+%type   <val> INTEGER_
+%type   <bol> BOOLEAN_
 %type   <gencode>  expr instr program lvalue sequence
 %type   <listDecl> fundecllist  vardecllist fundecl
 %type   <listID> identlist varsdecl
@@ -73,7 +68,6 @@ program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         newVarInt(&stable, $2, 0);
         $$.code = $5.code;
         all_code = $$.code;
-        qPrint(all_code);
     }
     ;
 
@@ -142,6 +136,7 @@ fundecl : %empty                            {}
 instr: lvalue AFFEC_ expr   {
             symbol *res = search(stable, $1.res->id);
             testID(stable, $1.res->id);
+            printf("resid = %s, 3res = %s\n", res->id, $3.res->id);
             quad *q  = qGen(Q_AFFEC, res, $3.res, NULL);
             quad *code = concat($3.code, q);
         }
@@ -160,7 +155,7 @@ instr: lvalue AFFEC_ expr   {
 
 sequence : instr DOTCOMMA_ sequence  {
             $$.code = concat($3.code, $1.code);
-            $$.res = $3.res;
+            $$.res = $1.res;
          }
          | instr DOTCOMMA_ {
              $$.res = $1.res;
@@ -185,7 +180,15 @@ exprlist : expr {}
         |  expr COMMA_ exprlist {}
         ;
 
-expr : CTE_                                  { }
+expr : INTEGER_                                 {
+        symbol *res = newTmpInt(&stable, 0);
+        res->type = S_INT;
+        res->val = $1;
+        //printf("yoo = %d\n", res->val);
+        $$.res = res;
+        $$.code = NULL;
+      }
+
       | '(' expr ')'                          { }
       | expr PLUS_ expr                         {
            symbol *res = newTmpInt(&stable, 0);
@@ -194,7 +197,7 @@ expr : CTE_                                  { }
            quad *code = concat($1.code, $3.code);
            code = concat(code, q);
            $$.code = code;
-           //qPrint($$.code);
+           qPrint($$.code);
 
       }
       | opu expr                              { }
@@ -232,12 +235,9 @@ int main (int argc, char **argv) {
         // yydebug = 1;
     #endif
 	yyin = fopen(argv[1], "r");
-    if (yyin == NULL) {
-        fprintf(stderr, "fopen error\n");
-        return EXIT_FAILURE;
-    }
 	yyparse();
     FILE *output = fopen("out.s", "w");
+    qPrint(all_code);
     getMips(output, stable, all_code);
     freeLex();
     qFree(all_code);
