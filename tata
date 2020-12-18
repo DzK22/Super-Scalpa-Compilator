@@ -1,7 +1,6 @@
 program tata
-    var a : int
+    var c, a, x, z, t : int
     begin
-      a := 1 + 2;
+      a := 10 * 5;
       write a;
-      write 3 + 5;
     end

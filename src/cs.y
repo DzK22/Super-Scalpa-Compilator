@@ -86,7 +86,6 @@ vardecllist : %empty                       { }
 varsdecl: VAR_ identlist ':' typename {
         /* Creer une entree dans la table des symboles avec
          le type des variables dans identlist  */
-         printID($2);
          $$->type = $4 ;
 
           listIdents *cur = $2;
@@ -98,6 +97,7 @@ varsdecl: VAR_ identlist ':' typename {
                       break;
                   case S_INT:
                       res = newVarInt(&stable, cur->tid, 0);
+                      printf("=> %s\n", cur->tid);
                       break;
 
               }
@@ -197,6 +197,23 @@ expr : INTEGER_                                 {
            symbol *res = newTmpInt(&stable, 0);
            $$.res = res;
            quad *q = qGen(Q_PLUS, res, $1.res, $3.res);
+           quad *code = concat($1.code, $3.code);
+           code = concat(code, q);
+           $$.code = code;
+      }
+      | expr MINUS_ expr                         {
+           symbol *res = newTmpInt(&stable, 0);
+           $$.res = res;
+           quad *q = qGen(Q_MINUS, res, $1.res, $3.res);
+           quad *code = concat($1.code, $3.code);
+           code = concat(code, q);
+           $$.code = code;
+
+      }
+      | expr MULT_ expr                         {
+           symbol *res = newTmpInt(&stable, 0);
+           $$.res = res;
+           quad *q = qGen(Q_MULT, res, $1.res, $3.res);
            quad *code = concat($1.code, $3.code);
            code = concat(code, q);
            $$.code = code;
