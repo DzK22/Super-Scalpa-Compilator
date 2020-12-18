@@ -44,7 +44,7 @@ int  "int"
 bool "bool"
 unit "unit"
 atomic_type      {type_int}|{type_bool}|{type_unit}
-
+comment \(\*([^*]|\*+[^*)]|\n)*\*+\)
 %%
 
 {newline}                                   { linecpt++; }
@@ -82,10 +82,10 @@ atomic_type      {type_int}|{type_bool}|{type_unit}
 
 {cst_string}                                  { yylval.str = strdup(yytext);
                                               return STRING_;}
-                                              
+
 {ident}                                     { yylval.str = strdup(yytext);
                                               return IDENT_; }
-
+{comment}                                    {/* ignore comments*/ }
 ":"                                         { return yytext[0]; }
 
 "+"                                         { return PLUS_; }

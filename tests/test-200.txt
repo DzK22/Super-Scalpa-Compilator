@@ -1,0 +1,11 @@
+(* Test des opérations arithmetiques  *)
+program tata
+   var c, a, x, z, t : int
+   begin
+     a := 10 * 5;
+     x := a - 10;
+     t := 9 + 4 + 60 - x;
+     write a;
+     write t;
+     write x;
+   end

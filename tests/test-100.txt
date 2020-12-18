@@ -1,0 +1,8 @@
+(* Test basique de
+            déclarations types *)
+
+program tata
+   var c, a, x, z, t : int;
+   var condition : bool
+   begin
+   end
