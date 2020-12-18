@@ -49,7 +49,7 @@
 %type   <str> IDENT_ STRING_
 %type   <val> INTEGER_
 %type   <bol> BOOLEAN_
-%type   <gencode>  expr instr program lvalue sequence
+%type   <gencode>  expr instr program sequence //lvalue
 %type   <listDecl> fundecllist  vardecllist fundecl
 %type   <listID> identlist varsdecl
 %type   <type> typename atomictype
@@ -133,12 +133,14 @@ fundecllist : %empty                        {  }
 fundecl : %empty                            {}
         ;
 
-instr: lvalue AFFEC_ expr   {
-            symbol *res = search(stable, $1.res->id);
-            testID(stable, $1.res->id);
-            printf("resid = %s, 3res = %s\n", res->id, $3.res->id);
+instr: IDENT_ AFFEC_ expr   {
+            symbol *res = search(stable, $1);
+            testID(stable, $1);
+            $$.res = res;
             quad *q  = qGen(Q_AFFEC, res, $3.res, NULL);
             quad *code = concat($3.code, q);
+            $$.code = code;
+            free($1);
         }
       | RETURN_ expr {}
       | BEGIN_ sequence END_ {
@@ -166,7 +168,7 @@ sequence : instr DOTCOMMA_ sequence  {
              $$.code = $1.code;
          }
         ;
-
+/*
 lvalue: IDENT_ {
             symbol *res = search(stable, $1);
             testID(stable, $1);
@@ -174,7 +176,7 @@ lvalue: IDENT_ {
             $$.code = NULL;
             free($1);
         }
-      ;
+      ;*/
 
 exprlist : expr {}
         |  expr COMMA_ exprlist {}
@@ -197,7 +199,6 @@ expr : INTEGER_                                 {
            quad *code = concat($1.code, $3.code);
            code = concat(code, q);
            $$.code = code;
-           qPrint($$.code);
 
       }
       | opu expr                              { }

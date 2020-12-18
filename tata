@@ -1,5 +1,5 @@
 program tata
-    var a,b : int
     begin
-      a := 1 + 2
+      write 1 + 2;
+      write 3 + 5;
     end
