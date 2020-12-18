@@ -6,6 +6,7 @@
     #include "../headers/stable.h"
     #include "../headers/quad.h"
     #include "../headers/mips.h"
+    #include "../headers/list.h"
     #define YYDEBUG 1
     int yyerror (char *s);
     int yylex (void);
@@ -37,7 +38,8 @@
         struct quad_list *false_list;
     } gencode; // Pour les expressions
 
-    struct list list;
+    struct listIdents *listID;
+    struct listDecls *listDecl;
 
     struct typ {
       stype type;
@@ -52,9 +54,12 @@
 
 %type   <cte_type> CTE_
 %type   <str> IDENT_
-%type   <gencode>  expr instr program
-%type   <list>  vardecllist fundecllist identlist varsdecl fundecl lvalue sequence
+%type   <gencode>  expr instr program lvalue sequence
+%type   <listDecl> fundecllist  vardecllist fundecl
+%type   <listID> identlist varsdecl
 %type   <type> typename atomictype
+
+
 
 %left   PLUS_ MINUS_
 %left   MULT_ DIV_
@@ -68,34 +73,52 @@ program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         newVarInt(&stable, $2, 0);
         $$.code = $5.code;
         all_code = $$.code;
+        qPrint(all_code);
     }
-
     ;
 
-vardecllist : %empty                       {  }
+vardecllist : %empty                       { }
            | varsdecl                      {
-             $$ = newList();
-             addList($$, &($1));
+             $$ = newList($1);
+             addList($$, $1);
            }
            | varsdecl DOTCOMMA_ vardecllist      {
-               addList($3, &($1));
+               addList($3, $1);
                $$ = $3;
             }
            ;
 
 varsdecl: VAR_ identlist ':' typename {
-          $2.type = $4 ;
-          $$ = $2 ;
+        /* Creer une entree dans la table des symboles avec
+         le type des variables dans identlist  */
+         printID($2);
+         $$->type = $4 ;
+
+          listIdents *cur = $2;
+          symbol *res;
+          while (cur != NULL) {
+              switch ($4) {
+                  case S_BOOL:
+                      res = newVarBool(&stable, cur->tid, false);
+                      break;
+                  case S_INT:
+                      res = newVarInt(&stable, cur->tid, 0);
+                      break;
+
+              }
+              cur = cur->next;
+          }
           }
           ;
 
 identlist : IDENT_  {
-            $$.tid = $1;
-            $$.next = NULL;
+            $$->tid = strdup($1);
+            $$->type = S_NONE ;
+            $$->next = NULL;
         }
          | IDENT_ COMMA_ identlist  {
-            $$.tid = $1;
-            $$.next = &($3);
+            $$->tid = strdup($1);
+            $$->next = $3;
           }
          ;
 
@@ -116,19 +139,46 @@ fundecllist : %empty                        {  }
 fundecl : %empty                            {}
         ;
 
-instr: lvalue AFFEC_ expr   {}
+instr: lvalue AFFEC_ expr   {
+            symbol *res = search(stable, $1.res->id);
+            testID(stable, $1.res->id);
+            quad *q  = qGen(Q_AFFEC, res, $3.res, NULL);
+            quad *code = concat($3.code, q);
+        }
       | RETURN_ expr {}
-      | BEGIN_ sequence END_ {}
+      | BEGIN_ sequence END_ {
+          $$.res = $2.res;
+          $$.code = $2.code;
+      }
       | BEGIN_ END_ {}
-      | WRITE_ expr {}
+      | WRITE_ expr {
+          $$.res = $2.res;
+          quad *q = qGen(Q_WRITE, $$.res, NULL, NULL);
+          $$.code = concat($2.code, q);
+      }
       ;
 
-sequence : instr DOTCOMMA_ sequence  {}
-         | instr DOTCOMMA_ {}
-         | instr  {}
+sequence : instr DOTCOMMA_ sequence  {
+            $$.code = concat($3.code, $1.code);
+            $$.res = $3.res;
+         }
+         | instr DOTCOMMA_ {
+             $$.res = $1.res;
+             $$.code = $1.code;
+         }
+         | instr  {
+             $$.res = $1.res;
+             $$.code = $1.code;
+         }
         ;
 
-lvalue: IDENT_ {}
+lvalue: IDENT_ {
+            symbol *res = search(stable, $1);
+            testID(stable, $1);
+            $$.res = res;
+            $$.code = NULL;
+            free($1);
+        }
       ;
 
 exprlist : expr {}
@@ -137,24 +187,26 @@ exprlist : expr {}
 
 expr : CTE_                                  { }
       | '(' expr ')'                          { }
-      | expr opb expr                         { }
+      | expr PLUS_ expr                         {
+           symbol *res = newTmpInt(&stable, 0);
+           $$.res = res;
+           quad *q = qGen(Q_PLUS, res, $1.res, $3.res);
+           quad *code = concat($1.code, $3.code);
+           code = concat(code, q);
+           $$.code = code;
+           //qPrint($$.code);
+
+      }
       | opu expr                              { }
-      | IDENT_                                { }
+      | IDENT_                                {
+          symbol *res = search(stable, $1);
+          testID(stable, $1);
+          $$.res = res;
+          $$.code = NULL;
+          free($1);
+      }
       | IDENT_ '(' exprlist ')'                { }
       ;
-
-opb : MULT_                                    {}
-    | DIV_                                     {}
-    | PLUS_                                    {}
-    | MINUS_                                   {}
-    | EXP_                                     {}
-    | INF_                                     {}
-    | INF_EQ_                                  {}
-    | SUP_                                     {}
-    | SUP_EQ_                                  {}
-    | EQUAL_                                   {}
-    | DIFF_                                    {}
-    ;
 
 opu : MINUS_                                   {}
     | NOT_                                     {}
@@ -177,9 +229,18 @@ int main (int argc, char **argv) {
         return EXIT_FAILURE;
     }
     #if YYDEBUG
-         yydebug = 1;
+        // yydebug = 1;
     #endif
 	yyin = fopen(argv[1], "r");
-	return yyparse();
-
+    if (yyin == NULL) {
+        fprintf(stderr, "fopen error\n");
+        return EXIT_FAILURE;
+    }
+	yyparse();
+    FILE *output = fopen("out.s", "w");
+    getMips(output, stable, all_code);
+    freeLex();
+    qFree(all_code);
+    sFree(stable);
+    return EXIT_SUCCESS;
 }

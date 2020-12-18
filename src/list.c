@@ -1,20 +1,27 @@
 #include "../headers/list.h"
 
-list* newList (void) {
-	return NULL;
+listDecls *newList (listIdents *list) {
+	listDecls *l = malloc(sizeof(listDecls));
+	if (l != NULL) {
+		l->next = NULL;
+		l->list = list;
+	}
+	return l;
 }
 
-list *addList (list *list, char *data) {
-	list *item = malloc(sizeof(struct list));
-	if (item == NULL) {
-		fprintf(stderr, "malloc error\n");
-		return NULL;
+listDecls *addList (listDecls *listDecl, listIdents *listID) {
+	listDecls *node = newList(listID);
+	if (node) {
+		node->next = listDecl->next;
+		listDecl->next = node;
 	}
-	if ((item->tid = strdup(data)) == NULL) {
-		fprintf(stderr, "strdup error\n");
-		return NULL;
+	return node;
+}
+
+void printID (listIdents *list) {
+	listIdents *cur = list;
+	while (cur != NULL) {
+		fprintf(stdout, "%s\n", cur->tid);
+		cur = cur->next;
 	}
-	item->next = NULL;
-	list->next = item;
-	return list;
 }
