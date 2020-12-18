@@ -66,7 +66,8 @@
 
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         newVarInt(&stable, $2, 0);
-        $$.code = $5.code;
+        $$.code = NULL;
+        $$.code = concat($$.code, $5.code);
         all_code = $$.code;
     }
     ;
@@ -156,7 +157,7 @@ instr: IDENT_ AFFEC_ expr   {
       ;
 
 sequence : instr DOTCOMMA_ sequence  {
-            $$.code = concat($3.code, $1.code);
+            $$.code = concat($1.code, $3.code);
             $$.res = $1.res;
          }
          | instr DOTCOMMA_ {
