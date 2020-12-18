@@ -37,10 +37,7 @@
         struct quad_list *false_list;
     } gencode; // Pour les expressions
 
-    struct li {
-      struct li *next;
-      char *id;
-    } list;
+    struct list list;
 
     struct typ {
       stype type;
@@ -77,19 +74,29 @@ program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
 
 vardecllist : %empty                       {  }
            | varsdecl                      {
-               $$.id = $1.id;
-               $$.next = NULL;
+             $$ = newList();
+             addList($$, &($1));
            }
            | varsdecl DOTCOMMA_ vardecllist      {
+               addList($3, &($1));
+               $$ = $3;
             }
            ;
 
 varsdecl: VAR_ identlist ':' typename {
+          $2.type = $4 ;
+          $$ = $2 ;
           }
           ;
 
-identlist : IDENT_  {  }
-         | IDENT_ COMMA_ identlist  {  }
+identlist : IDENT_  {
+            $$.tid = $1;
+            $$.next = NULL;
+        }
+         | IDENT_ COMMA_ identlist  {
+            $$.tid = $1;
+            $$.next = &($3);
+          }
          ;
 
 typename : atomictype {
