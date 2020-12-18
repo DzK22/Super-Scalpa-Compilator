@@ -120,7 +120,7 @@ atomic_type      {type_int}|{type_bool}|{type_unit}
 
 {hooks}                                     { return yytext[0]; }
 
-{ident}                                     { yylval.tid = strdup(yytext);
+{ident}                                     { yylval.str = strdup(yytext);
                                               return IDENT_; }
 
 .                                           { fprintf(stderr, "Unrecognized character : %s at line %d\n", yytext, linecpt);

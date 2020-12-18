@@ -26,7 +26,6 @@
 %}
 
 %union {
-    char *tid;
     int  val;
     bool bol;
     char *str;
@@ -55,7 +54,7 @@
 %token SUP_ SUP_EQ_ EQUAL_ DIFF_ AFFEC_ AND_ OR_ XOR_ NOT_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ CTE_ DOTCOMMA_ COMMA_
 
 %type   <cte_type> CTE_
-%type   <tid> IDENT_
+%type   <str> IDENT_
 %type   <gencode>  expr instr program
 %type   <list>  vardecllist fundecllist identlist varsdecl fundecl lvalue sequence
 %type   <type> typename atomictype
