@@ -72,6 +72,7 @@ atomic_type      {type_int}|{type_bool}|{type_unit}
 
 {unit}                                 { return UNIT_;}
 
+
 " "*                                        {}
 
 {cst_int}                                   { yylval.type = S_INT;
@@ -85,6 +86,9 @@ atomic_type      {type_int}|{type_bool}|{type_unit}
 {cst_string}                                  { yylval.type = S_STRING;
                                               yylval.str = strdup(yytext);
                                               return CTE_;}
+
+{ident}                                     { yylval.str = strdup(yytext);
+                                            return IDENT_; }
 
 ":"                                         { return yytext[0]; }
 
@@ -119,9 +123,6 @@ atomic_type      {type_int}|{type_bool}|{type_unit}
 {parens}                                    { return yytext[0]; }
 
 {hooks}                                     { return yytext[0]; }
-
-{ident}                                     { yylval.str = strdup(yytext);
-                                              return IDENT_; }
 
 .                                           { fprintf(stderr, "Unrecognized character : %s at line %d\n", yytext, linecpt);
                                               return EXIT_FAILURE; }
