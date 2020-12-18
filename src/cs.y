@@ -29,12 +29,12 @@
     int  val;
     bool bol;
     char *str;
-
-    struct symbol *s;
     stype type;
     struct {
         struct symbol   *res;
         struct quad     *code;
+        struct quad_list *true_list;
+        struct quad_list *false_list;
     } gencode; // Pour les expressions
 
     struct li {
@@ -85,7 +85,6 @@ vardecllist : %empty                       {  }
            ;
 
 varsdecl: VAR_ identlist ':' typename {
-            //$$.res = newVar
           }
           ;
 
