@@ -15,6 +15,7 @@
 
     symbol *stable = NULL;
     quad *all_code = NULL;
+    char *progName = NULL;
     int instr_cnt  = 0;
 
     void testID (symbol *s, char *name) {
@@ -66,6 +67,7 @@
 
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         newVarInt(&stable, $2, 0);
+        progName = strdup($2);
         $$.code = NULL;
         $$.code = concat($$.code, $5.code);
         all_code = $$.code;
@@ -260,7 +262,13 @@ int main (int argc, char **argv) {
     #endif
 	yyin = fopen(argv[1], "r");
 	yyparse();
-    FILE *output = fopen("out.s", "w");
+    char out[LEN];
+    int res = snprintf(out, LEN, "%s.s", *progName ? progName : "out");
+    if (res < 0 || res >= LEN) {
+        fprintf(stderr, "snprintf error\n");
+        return EXIT_FAILURE;
+    }
+    FILE *output = fopen(out, "w");
     qPrint(all_code);
     getMips(output, stable, all_code);
     freeLex();
