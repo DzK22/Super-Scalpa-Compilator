@@ -24,10 +24,10 @@ void getData (FILE *f, symbol *s) {
     while (s != NULL) {
         switch (s->type) {
             case S_INT:
-                fprintf(f, "%s:\t.word %d\n", s->id, s->val);
+                fprintf(f, "%s:\t.word %d\n", s->id, s->ival);
                 break;
             case S_STRING:
-                fprintf(f, "%s:\t.ascii %s\n", s->id, s->str);
+                fprintf(f, "%s:\t.ascii %s\n", s->id, s->sval);
                 break;
         }
 
@@ -45,6 +45,9 @@ void getText (FILE *f, quad *q) {
 
         switch (q->op) {
             case Q_PLUS:
+                if (!res || !argv1 || !argv2)
+                    ferr("mips.c getText Q_PLUS Quad error");
+
                 fprintf(f, "\t\t\t\t#%s = %s + %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
@@ -53,6 +56,9 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_MINUS:
+                if (!res || !argv1 || !argv2)
+                    ferr("mips.c getText Q_MINUS Quad error");
+
                 fprintf(f, "\t\t\t\t#%s = %s - %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
@@ -61,6 +67,9 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_MULT:
+                if (!res || !argv1 || !argv2)
+                    ferr("mips.c getText Q_MULT Quad error");
+
                 fprintf(f, "\t\t\t\t#%s = %s * %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
@@ -69,6 +78,9 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_WRITE:
+                if (!res)
+                    ferr("mips.c getText Q_WRITE Quad error");
+
                 fprintf(f, "\t\t\t\t#print integer %s\n", res->id);
                 fprintf(f, "\tlw $a0, %s\n", res->id);
                 fprintf(f, "\tli $v0, 1\n");
@@ -76,6 +88,9 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_AFFEC:
+                if (!res || !argv1)
+                    ferr("mips.c getText Q_AFFEC Quad error");
+
                 fprintf(f, "\t\t\t\t#%s := %s\n", res->id, argv1->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tsw $t0, %s\n", res->id);

@@ -8,9 +8,9 @@ typedef struct quad_list {
     struct quad_list *next;
 } quad_list;
 
-quad_list *newQuadList (quad *);
+quad_list *newQuadList    (quad *);
 quad_list *concatQuadList (quad_list *, quad_list *);
-void completeQuadList (quad_list *, symbol *);
-void qlFree(quad_list *);
+void completeQuadList     (quad_list *, symbol *);
+void qlFree               (quad_list *);
 
 #endif

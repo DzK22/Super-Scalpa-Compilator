@@ -8,8 +8,8 @@
 #include "stable.h"
 
 typedef enum {
-  Q_END, Q_WRITE, Q_READ, Q_AFFEC,
-  Q_PLUS, Q_MINUS, Q_MULT, Q_DIV, Q_EXP,
+  Q_END, Q_WRITE, Q_READ, Q_AFFEC,       // divers
+  Q_PLUS, Q_MINUS, Q_MULT, Q_DIV, Q_EXP, Q_INF, Q_INFEQ, Q_SUP, Q_SUPEQ, Q_EQUAL, Q_DIFF, Q_AND, Q_OR, Q_XOR, Q_NOT, // operators (binary or unary)
 } qop;
 
 typedef struct quad {
@@ -22,11 +22,11 @@ typedef struct quad {
     struct quad     *next;
 } quad;
 
-quad *qGen (qop, symbol *, symbol *, symbol *);
-void qFree (quad *);
-quad *concat (quad *, quad *);
+quad *qGen    (qop, symbol *, symbol *, symbol *);
+void qFree    (quad *);
+quad *concat  (quad *, quad *);
 quad *getLast (quad *);
-void qPrint (quad *);
-void ferr (char *s);
+void qPrint   (quad *);
+void ferr     (char *s);
 
 #endif

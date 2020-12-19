@@ -10,9 +10,9 @@ symbol *sAlloc () {
     ns->type = S_NONE;
     ns->next = NULL;
 
-    ns->val  = 0;
-    ns->str  = NULL;
-    ns->bol  = false;
+    ns->ival = 0;
+    ns->sval = NULL;
+    ns->bval = false;
 
     return ns;
 }
@@ -42,7 +42,7 @@ void sFree (symbol *s) {
         free(prev->id);
 
         if (prev->type == S_STRING)
-            free(prev->str);
+            free(prev->sval);
 
         free(prev);
     }
@@ -72,11 +72,11 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     nt->tmp  = isTmp;
 
     if (type == S_INT)
-        nt->val = *((int *) data);
+        nt->ival = *((int *) data);
     else if (type == S_BOOL)
-        nt->bol = *((bool *) data);
+        nt->bval = *((bool *) data);
     else if (type == S_STRING) {
-        if ((nt->str = strdup((char *) data)) == NULL)
+        if ((nt->sval = strdup((char *) data)) == NULL)
             ferr("stable.c newVar strdup data");
     }
 

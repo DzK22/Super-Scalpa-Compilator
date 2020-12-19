@@ -2,123 +2,138 @@
     #include <stdio.h>
     #include <ctype.h>
     #include "../headers/stable.h"
+    #include "../headers/quad.h"
     #include "../tmp/cs.tab.h"
     int linecpt = 1;
 %}
-A [aA]
-B [bB]
-C [cC]
-D [dD]
-E [eE]
-F [fF]
-G [gG]
-H [hH]
-I [iI]
-J [jJ]
-K [kK]
-L [lL]
-M [mM]
-N [nN]
-O [oO]
-P [pP]
-Q [qQ]
-R [rR]
-S [sS]
-T [tT]
-U [uU]
-V [vV]
-W [wW]
-X [xX]
-Y [yY]
-Z [zZ]
-digit     [0-9]
-letter    [a-zA-Z]
-ident     {letter}("'"|"_"|{letter}|{digit})*
-cst_int   {digit}+
-cst_bool  "true"|"false"
-cst_string  "[^\"]+"
-parens    [()]
-hooks     [\[\]]
-newline   \n
-int  "int"
-bool "bool"
-unit "unit"
-atomic_type      {type_int}|{type_bool}|{type_unit}
-comment \(\*([^*]|\*+[^*)]|\n)*\*+\)
+
+A                  [aA]
+B                  [bB]
+C                  [cC]
+D                  [dD]
+E                  [eE]
+F                  [fF]
+G                  [gG]
+H                  [hH]
+I                  [iI]
+J                  [jJ]
+K                  [kK]
+L                  [lL]
+M                  [mM]
+N                  [nN]
+O                  [oO]
+P                  [pP]
+Q                  [qQ]
+R                  [rR]
+S                  [sS]
+T                  [tT]
+U                  [uU]
+V                  [vV]
+W                  [wW]
+X                  [xX]
+Y                  [yY]
+Z                  [zZ]
+
+digit              [0-9]
+letter             [a-zA-Z]
+ident              {letter}("'"|"_"|{letter}|{digit})*
+
+cst_int            {digit}+
+cst_bool           "true"|"false"
+cst_string         "[^\"]+"
+
+atomic_type        {type_int}|{type_bool}|{type_unit}
+comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
+
 %%
 
-{newline}                                   { linecpt++; }
+"\n"                                        { linecpt ++;                       }
 
-{P}{R}{O}{G}{R}{A}{M}                       { return PROGRAM_; }
+{P}{R}{O}{G}{R}{A}{M}                       { return PROGRAM_;                  }
 
-{W}{R}{I}{T}{E}                             { return WRITE_; }
+{W}{R}{I}{T}{E}                             { return WRITE_;                    }
 
-{R}{E}{A}{D}                                { return READ_; }
+{R}{E}{A}{D}                                { return READ_;                     }
 
-{B}{E}{G}{I}{N}                             { return BEGIN_; }
+{B}{E}{G}{I}{N}                             { return BEGIN_;                    }
 
-{E}{N}{D}                                   { return END_; }
+{E}{N}{D}                                   { return END_;                      }
 
-{V}{A}{R}                                   { return VAR_; }
+{V}{A}{R}                                   { return VAR_;                      }
 
-{R}{E}{T}{U}{R}{N}                          { return RETURN_; }
+{R}{E}{T}{U}{R}{N}                          { return RETURN_;                   }
 
-{R}{E}{F}                                   { return REF_;}
+{R}{E}{F}                                   { return REF_;                      }
 
-{int}                                  { return INT_; }
+{A}{N}{D}                                   { return AND_;                      }
 
-{bool}                                 { return BOOL_; }
+{O}{R}                                      { return OR_;                       }
 
-{unit}                                 { return UNIT_;}
+{X}{O}{R}                                   { return XOR_;                      }
 
+
+{I}{N}{T}                                   { return INT_;                      }
+
+{B}{O}{O}{L}                                { return BOOL_;                     }
+
+{U}{N}{I}{T}                                { return UNIT_;                     }
 
 " "*                                        {}
 
-{cst_int}                                   { yylval.val = atoi(yytext);
-                                              return INTEGER_; }
+{cst_int}                                   { yylval.cte.type = S_INT;
+                                              yylval.cte.ival = atoi(yytext);
+                                              return CTE_;                  }
 
-{cst_bool}                                  { yylval.bol = strcmp(yytext, "true") ? false : true;
-                                              return BOOLEAN_;}
+{cst_bool}                                  { yylval.cte.type = S_BOOL;
+                                              yylval.cte.bval = strcmp(yytext, "true") ? false : true;
+                                              return CTE_;                  }
 
-{cst_string}                                  { yylval.str = strdup(yytext);
-                                              return STRING_;}
+{cst_string}                                { yylval.cte.type = S_STRING;
+                                              yylval.cte.sval = strdup(yytext);
+                                              return CTE_;                   }
 
 {ident}                                     { yylval.str = strdup(yytext);
-                                              return IDENT_; }
-{comment}                                    {/* ignore comments*/ }
-":"                                         { return yytext[0]; }
+                                              return IDENT_;                    }
 
-"+"                                         { return PLUS_; }
+{comment}                                   { /* ignore comments*/              }
 
-"-"                                         { return MINUS_; }
+":"                                         { return yytext[0];                 }
 
-"*"                                         { return MULT_; }
+"+"                                         { return PLUS_;                     }
 
-"/"                                         { return DIV_; }
+"-"                                         { return MINUS_;                    }
 
-"^"                                         { return EXP_; }
+"*"                                         { return MULT_;                     }
 
-"<"                                         { return INF_; }
+"/"                                         { return DIV_;                      }
 
-"<="                                        { return INF_EQ_; }
+"^"                                         { return EXP_;                      }
 
-">"                                         { return SUP_; }
+"<"                                         { return INF_;                      }
 
-">="                                        { return SUP_EQ_; }
+"<="                                        { return INF_EQ_;                   }
 
-"="                                         { return EQUAL_; }
+">"                                         { return SUP_;                      }
 
-"<>"                                        { return DIFF_; }
+">="                                        { return SUP_EQ_;                   }
 
-":="                                        { return AFFEC_; }
+"="                                         { return EQUAL_;                    }
 
-";"                                        { return DOTCOMMA_; }
+"<>"                                        { return DIFF_;                     }
 
-","                                        { return COMMA_; }
+":="                                        { return AFFEC_;                    }
 
-{parens}                                    { return yytext[0]; }
+";"                                         { return DOTCOMMA_;                 }
 
-{hooks}                                     { return yytext[0]; }
+","                                         { return COMMA_;                    }
+
+"("                                         { return PARLEFT_;                  }
+
+")"                                         { return PARRIGHT_;                 }
+
+"["                                         { return BRALEFT_;                  }
+
+"]"                                         { return BRARIGHT_;                 }
 
 .                                           { fprintf(stderr, "Unrecognized character : %s at line %d\n", yytext, linecpt);
                                               return EXIT_FAILURE; }

@@ -1,5 +1,6 @@
 #ifndef MIPS_H
 #define MIPS_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,6 @@
 void getMips (FILE *, symbol *, quad *);
 void getData (FILE *f, symbol *s);
 void getText (FILE *f, quad *s);
-void ferr (char *s);
+void ferr    (char *s);
 
 #endif

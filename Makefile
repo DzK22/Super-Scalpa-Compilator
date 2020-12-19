@@ -20,7 +20,7 @@ all:
 	mv mips.o $(TMP)
 	mv list.o $(TMP)
 	mv quad_list.o $(TMP)
-	gcc -o $(NAME).out $(TMP)stable.o $(TMP)quad.o $(TMP)list.o $(TMP)quad_list.o $(TMP)mips.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra
+	gcc -o $(NAME).out $(TMP)stable.o $(TMP)quad.o $(TMP)list.o $(TMP)quad_list.o $(TMP)mips.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 
 clean:
 	rm -rf $(TMP) $(NAME).out
