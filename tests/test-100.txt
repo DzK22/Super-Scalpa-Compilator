@@ -4,6 +4,8 @@
 program tata
    var c, a, x, z, t : int;
    begin
-    c := -(10 * -5);
-    write c
+    (* write "tata"; *)
+    write "titi";
+    a := 5 * -4;
+    write a;
    end

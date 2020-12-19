@@ -81,9 +81,19 @@ void getText (FILE *f, quad *q) {
                 if (!res)
                     ferr("mips.c getText Q_WRITE Quad error");
 
-                fprintf(f, "\t\t\t\t#print integer %s\n", res->id);
-                fprintf(f, "\tlw $a0, %s\n", res->id);
-                fprintf(f, "\tli $v0, 1\n");
+                switch (res->type) {
+                    case S_INT:
+                        fprintf(f, "\t\t\t\t#print integer %s\n", res->id);
+                        fprintf(f, "\tlw $a0, %s\n", res->id);
+                        fprintf(f, "\tli $v0, 1\n");
+                        break;
+
+                    case S_STRING:
+                        fprintf(f, "\t\t\t\t#print string %s\n", res->id);
+                        fprintf(f, "\tli $v0, 4\n");
+                        fprintf(f, "\tla $a0, %s\n", res->id);
+                        break;
+                }
                 fprintf(f, "\tsyscall\n");
                 break;
 

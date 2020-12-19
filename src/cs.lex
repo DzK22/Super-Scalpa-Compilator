@@ -40,7 +40,7 @@ ident              {letter}("'"|"_"|{letter}|{digit})*
 
 cst_int            {digit}+
 cst_bool           "true"|"false"
-cst_string         "[^\"]+"
+cst_string         ["][^'\n]*["]
 
 atomic_type        {type_int}|{type_bool}|{type_unit}
 comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
