@@ -1,0 +1,9 @@
+(* Test des opérations booléènnes  *)
+program test_bool
+   var a, c, z : int
+   begin
+     a := 2;
+     c := 5;
+     if c > a then write "c'est c le plus grand";
+     write a + c;
+   end

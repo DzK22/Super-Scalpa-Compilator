@@ -53,14 +53,22 @@ void sFree (symbol *s) {
 // do not call this function directry, use helpers
 symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     static int nsym = 0;
+    static int nlabels = 0;
     bool isTmp      = id ? false : true;
     char *finalID   = id;
     char tid[LEN];
-
+    int res;
     if (isTmp) { // is tmp var
-        int res = snprintf(tid, LEN, "temp_%d", nsym ++);
-        if (res < 0 || res >= LEN)
-            ferr("stable.c newVar snprintf");
+        if (type != S_LABEL) {
+            res = snprintf(tid, LEN, "temp_%d", nsym ++);
+            if (res < 0 || res >= LEN)
+                ferr("stable.c newVar snprintf");
+        }
+        else {
+            res = snprintf(tid, LEN, "label%d", nlabels ++);
+            if (res < 0 || res >= LEN)
+                ferr("stable.c newVar snprintf");
+        }
         finalID = tid;
     }
 
@@ -76,6 +84,10 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     else if (type == S_BOOL)
         nt->bval = *((bool *) data);
     else if (type == S_STRING) {
+        if ((nt->sval = strdup((char *) data)) == NULL)
+            ferr("stable.c newVar strdup data");
+    }
+    else if (type == S_LABEL) {
         if ((nt->sval = strdup((char *) data)) == NULL)
             ferr("stable.c newVar strdup data");
     }
@@ -95,6 +107,10 @@ symbol *newTmpStr (symbol **stable, char *str) {
 
 symbol *newTmpBool (symbol **stable, bool bol) {
     return newVar(stable, S_BOOL, NULL, &bol);
+}
+
+symbol *newLabel (symbol **stable, char *str) {
+    return newVar(stable, S_LABEL, NULL, str);
 }
 
 symbol *newVarInt (symbol **stable, char *id, int val) {

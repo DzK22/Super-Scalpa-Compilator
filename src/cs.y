@@ -5,6 +5,7 @@
     #include <math.h>
     #include "../headers/stable.h"
     #include "../headers/quad.h"
+    #include "../headers/quad_list.h"
     #include "../headers/mips.h"
     #include "../headers/list.h"
     #define YYDEBUG 1
@@ -56,7 +57,7 @@
 
 }
 
-%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
+%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
 
 %type <str>      IDENT_
@@ -96,8 +97,7 @@ vardecllist : %empty                       { }
                 }
            ;
 
-varsdecl: VAR_ identlist ':' typename
-            {
+varsdecl: VAR_ identlist ':' typename {
             /* Creer une entree dans la table des symboles avec
              le type des variables dans identlist  */
              $$->type = $4 ;
@@ -120,14 +120,12 @@ varsdecl: VAR_ identlist ':' typename
           }
           ;
 
-identlist : IDENT_
-            {
+identlist : IDENT_ {
                 $$->tid  = strdup($1);
                 $$->type = S_NONE;
                 $$->next = NULL;
             }
-         | IDENT_ COMMA_ identlist
-            {
+         | IDENT_ COMMA_ identlist {
                 $$->tid  = strdup($1);
                 $$->next = $3;
             }
@@ -151,8 +149,7 @@ fundecllist : %empty                        {  }
 fundecl : "BOUMBOUM"                            {}
         ;
 
-instr: lvalue AFFEC_ expr
-            {
+instr: lvalue AFFEC_ expr {
                 quad *q    = qGen(Q_AFFEC, $1.res, $3.res, NULL);
                 quad *code = concat($3.code, q);
                 $$.code    = code;
@@ -162,24 +159,32 @@ instr: lvalue AFFEC_ expr
         | RETURN_ {}
         | IDENT_ PARLEFT_ exprlist PARRIGHT_ {}
         | IDENT_ PARLEFT_ PARRIGHT_ {}
-        | BEGIN_ sequence END_
-            {
+        | BEGIN_ sequence END_ {
                 $$.res  = $2.res;
                 $$.code = $2.code;
             }
         | BEGIN_ END_ {}
-        | READ_ expr
-            {
+        | READ_ expr {
                 $$.res  = $2.res;
                 quad *q = qGen(Q_READ, $$.res, NULL, NULL);
                 $$.code = concat($2.code, q);
             }
-        | WRITE_ expr
-            {
+        | WRITE_ expr {
                 $$.res  = $2.res;
                 quad *q = qGen(Q_WRITE, $$.res, NULL, NULL);
                 $$.code = concat($2.code, q);
             }
+        | IF_ expr THEN_ instr {
+            symbol *goto_true = newLabel(&stable, "");
+            symbol *goto_false = newLabel(&stable, "");
+            quad *true_label = qGen(Q_LABEL, goto_true, NULL, NULL);
+            quad *false_label = qGen(Q_LABEL, goto_false, NULL, NULL);
+            completeQuadList($2.true_list, goto_true);
+            completeQuadList($2.false_list, goto_false);
+            $$.code = concat($2.code, true_label);
+            $$.code = concat($$.code, $4.code);
+            $$.code = concat($$.code, false_label);
+        }
       ;
 
 sequence : instr DOTCOMMA_ sequence  {
@@ -196,8 +201,7 @@ sequence : instr DOTCOMMA_ sequence  {
          }
         ;
 
-lvalue: IDENT_
-            {
+lvalue: IDENT_ {
                 symbol *res = search(stable, $1);
                 testID(res, $1);
                 $$.res  = res;
@@ -205,8 +209,7 @@ lvalue: IDENT_
                 free($1);
             }
 
-        | IDENT_ BRALEFT_ exprlist BRARIGHT_
-            {
+        | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
 
             }
       ;
@@ -215,8 +218,7 @@ exprlist : expr {}
         |  expr COMMA_ exprlist {}
         ;
 
-expr : CTE_
-            {
+expr : CTE_ {
                 symbol *res;
                 switch ($1.type) {
                     case S_INT    : res = newTmpInt (&stable, $1.ival);
@@ -232,13 +234,13 @@ expr : CTE_
                 $$.res  = res;
                 $$.code = NULL;
             }
-      | PARLEFT_ expr PARRIGHT_
-            {
+      | PARLEFT_ expr PARRIGHT_ {
                 $$.res  = $2.res;
                 $$.code = $2.code;
+                $$.true_list = $2.true_list;
+                $$.false_list = $2.false_list;
             }
-      | expr opb expr
-            {
+      | expr opb expr {
                 if ($1.res->type != $3.res->type)
                     ferr("cs.y expr : expr opb expr Different types");
 
@@ -258,15 +260,38 @@ expr : CTE_
                     case S_BOOL : res = newTmpBool(&stable, false) ; break;
                     // no operations on S_STRING are allowed
                 }
-                $$.res = res;
-
-                quad *q = qGen(op, res, $1.res, $3.res);
-                $$.code = $1.code;
-                $$.code = concat($$.code, $3.code);
-                $$.code = concat($$.code, q);
+                quad *q_true, *q_false, *q;
+                switch (op) {
+                    case Q_MINUS:
+                    case Q_PLUS:
+                    case Q_MULT:
+                    case Q_DIV:
+                    case Q_EXP:
+                        $$.res = res;
+                        q = qGen(op, res, $1.res, $3.res);
+                        $$.code = $1.code;
+                        $$.code = concat($$.code, $3.code);
+                        $$.code = concat($$.code, q);
+                        break;
+                    case Q_EQUAL:
+                    case Q_DIFF:
+                    case Q_SUP:
+                    case Q_SUPEQ:
+                    case Q_INF:
+                    case Q_INFEQ:
+                        q_true = qGen(op, NULL, $1.res, $3.res);
+                        q_false = qGen(Q_GOTO, NULL, NULL, NULL);
+                        $$.code = NULL;
+                        $$.code = concat($$.code, $1.code);
+                        $$.code = concat($$.code, $3.code);
+                        $$.code = concat($$.code, q_true);
+                        $$.code = concat($$.code, q_false);
+                        $$.true_list = newQuadList(q_true);
+                        $$.false_list = newQuadList(q_false);
+                        break;
+                }
             }
-      | opu expr
-            {
+      | opu expr {
                 // verify type and opb correct
                 stype type = $2.res->type;
                 qop op = $1;
@@ -291,20 +316,16 @@ expr : CTE_
                 $$.code = $2.code;
                 $$.code = concat($$.code, q);
             }
-      | IDENT_ PARLEFT_ exprlist PARRIGHT_
-            {
+      | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 // function call (with parameters)
             }
-      | IDENT_ PARLEFT_ PARRIGHT_
-            {
+      | IDENT_ PARLEFT_ PARRIGHT_ {
                 // procedure call (no parameters)
             }
-      | IDENT_ BRALEFT_ exprlist BRARIGHT_
-            {
+      | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
                 // array with indexes
             }
-      | IDENT_
-            {
+      | IDENT_ {
                 symbol *res = search(stable, $1);
                 testID(res, $1);
                 $$.res  = res;

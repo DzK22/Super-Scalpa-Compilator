@@ -106,6 +106,56 @@ void getText (FILE *f, quad *q) {
                 fprintf(f, "\tsw $t0, %s\n", res->id);
                 break;
 
+            case Q_LABEL:
+                fprintf(f, "%s:\n", res->id);
+                break;
+
+            case Q_GOTO:
+                fprintf(f, "\tj %s\n", res->id);
+                break;
+
+            case Q_EQUAL:
+                fprintf(f, "\t\t\t\t#goto %s if %s == %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tbeq $t0, $t1, %s\n", res->id);
+                break;
+
+            case Q_INF:
+                fprintf(f, "\t\t\t\t#goto %s if %s < %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tblt $t0, $t1, %s\n", res->id);
+                break;
+
+            case Q_INFEQ:
+                fprintf(f, "\t\t\t\t#goto %s if %s <= %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tble $t0, $t1, %s\n", res->id);
+                break;
+
+            case Q_SUP:
+                fprintf(f, "\t\t\t\t#goto %s if %s > %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tbgt $t0, $t1, %s\n", res->id);
+                break;
+
+            case Q_SUPEQ:
+                fprintf(f, "\t\t\t\t#goto %s if %s >= %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tbge $t0, $t1, %s\n", res->id);
+                break;
+
+            case Q_DIFF:
+                fprintf(f, "\t\t\t\t#goto %s if %s != %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tlw $t1, %s\n", argv2->id);
+                fprintf(f, "\tbne $t0, $t1, %s\n", res->id);
+                break;
+
             default:
                 ferr("mips.c getText unknown op");
         }

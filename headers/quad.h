@@ -10,7 +10,10 @@
 typedef enum {
   Q_END, Q_WRITE, Q_READ, Q_AFFEC,       // divers
   Q_PLUS, Q_MINUS, Q_MULT, Q_DIV, Q_EXP, Q_INF, Q_INFEQ, Q_SUP, Q_SUPEQ, Q_EQUAL, Q_DIFF, Q_AND, Q_OR, Q_XOR, Q_NOT, // operators (binary or unary)
+  Q_LABEL, Q_GOTO,
 } qop;
+
+typedef struct gotoLst gotoLst;
 
 typedef struct quad {
     qop             op;

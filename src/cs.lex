@@ -40,7 +40,7 @@ ident              {letter}("'"|"_"|{letter}|{digit})*
 
 cst_int            {digit}+
 cst_bool           "true"|"false"
-cst_string         ["][^'\n]*["]
+cst_string         ["][^\"\n]*["]
 
 atomic_type        {type_int}|{type_bool}|{type_unit}
 comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
@@ -64,6 +64,10 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 {R}{E}{T}{U}{R}{N}                          { return RETURN_;                   }
 
 {R}{E}{F}                                   { return REF_;                      }
+
+{I}{F}                                      { return IF_; }
+
+{T}{H}{E}{N}                                { return THEN_; }
 
 {A}{N}{D}                                   { return AND_;                      }
 
