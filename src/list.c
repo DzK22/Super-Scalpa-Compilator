@@ -20,8 +20,12 @@ listDecls *addList (listDecls *listDecl, listIdents *listID) {
 
 void printID (listIdents *list) {
 	listIdents *cur = list;
+	fprintf(stdout, "vars : [ ");
 	while (cur != NULL) {
-		fprintf(stdout, "%s\n", cur->tid);
+		if (cur->next != NULL)
+			fprintf(stdout, "%s, ", cur->tid);
+		else
+			fprintf(stdout, "%s ]\n", cur->tid);
 		cur = cur->next;
 	}
 }

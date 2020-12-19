@@ -87,7 +87,7 @@ varsdecl: VAR_ identlist ':' typename {
         /* Creer une entree dans la table des symboles avec
          le type des variables dans identlist  */
          $$->type = $4 ;
-
+         printID($2);
           listIdents *cur = $2;
           symbol *res;
           while (cur != NULL) {
@@ -97,7 +97,6 @@ varsdecl: VAR_ identlist ':' typename {
                       break;
                   case S_INT:
                       res = newVarInt(&stable, cur->tid, 0);
-                      printf("=> %s\n", cur->tid);
                       break;
 
               }
@@ -187,12 +186,14 @@ expr : INTEGER_                                 {
         symbol *res = newTmpInt(&stable, 0);
         res->type = S_INT;
         res->val = $1;
-        //printf("yoo = %d\n", res->val);
         $$.res = res;
         $$.code = NULL;
       }
 
-      | '(' expr ')'                          { }
+      | '(' expr ')'                          {
+          $$.res = $2.res;
+          $$.code = $2.code;
+      }
       | expr PLUS_ expr                         {
            symbol *res = newTmpInt(&stable, 0);
            $$.res = res;
@@ -219,7 +220,15 @@ expr : INTEGER_                                 {
            $$.code = code;
 
       }
-      | opu expr                              { }
+      | MINUS_ expr {
+          symbol *res = newTmpInt(&stable, 0);
+          symbol *tmp = newTmpInt(&stable, 0);
+          $$.res = res;
+          quad *q = qGen(Q_MINUS, res, tmp, $2.res);
+          quad *code = concat($2.code, q);
+          $$.code = code;
+      }
+      | NOT_ expr {}
       | IDENT_                                {
           symbol *res = search(stable, $1);
           testID(stable, $1);
@@ -229,10 +238,6 @@ expr : INTEGER_                                 {
       }
       | IDENT_ '(' exprlist ')'                { }
       ;
-
-opu : MINUS_                                   {}
-    | NOT_                                     {}
-    ;
 %%
 
 int yyerror (char *s)
