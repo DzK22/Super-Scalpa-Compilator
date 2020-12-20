@@ -202,6 +202,7 @@ instr: lvalue AFFEC_ expr {
             $$.code = concat($$.code, $6.code); // else code
             $$.code = concat($$.code, next_label); // skip the label
         }
+        // Normalement il va falloir différencier expr des expressions booléènnes qui renvoie true ou false mais je vois pas trop comment faire (Genre while true do devrait fonctionner si je dis pas de betises)
         | WHILE_ expr DO_ instr {
             symbol *goto_while = newLabel(&stable, "");
             symbol *goto_true = newLabel(&stable, "");
