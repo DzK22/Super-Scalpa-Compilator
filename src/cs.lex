@@ -69,6 +69,8 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 {T}{H}{E}{N}                                { return THEN_; }
 
+{E}{L}{S}{E}                                { return ELSE_; }
+
 {A}{N}{D}                                   { return AND_;                      }
 
 {O}{R}                                      { return OR_;                       }
