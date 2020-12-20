@@ -35,20 +35,53 @@ void getData (FILE *f, symbol *s) {
     }
 }
 
+char * opstr (qop op) {
+    static char str[LEN]; // NOT THREAD SAFE
+    switch (op) {
+            case Q_EQUAL : sprintf(str, "=")   ; break ;
+            case Q_DIFF  : sprintf(str, "!=")  ; break ;
+            case Q_INF   : sprintf(str, "<")   ; break ;
+            case Q_INFEQ : sprintf(str, "<=")  ; break ;
+            case Q_SUP   : sprintf(str, ">")   ; break ;
+            case Q_SUPEQ : sprintf(str, ">=")  ; break ;
+            case Q_AND   : sprintf(str, "AND") ; break ;
+            case Q_OR    : sprintf(str, "OR")  ; break ;
+            case Q_XOR   : sprintf(str, "XOR") ; break ;
+    }
+
+    return str;
+}
+
+char * nextTmpLabel () {
+    static int nlabel = 0;
+    char tmplabel[LEN];
+    sprintf(tmplabel, "tmplabel_%d", nlabel ++);
+
+    char *res = strdup(tmplabel);
+    if (res == NULL)
+        ferr("mips.c nextTmpLabel strdup");
+
+    return res;
+}
+
 void getText (FILE *f, quad *q) {
-    symbol *res, *argv1, *argv2;
+    symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
+    char *label, *label2;
 
     while (q != NULL) {
-        res = q->res;
-        argv1 = q->argv1;
-        argv2 = q->argv2;
+        res    = q->res;
+        argv1  = q->argv1;
+        argv2  = q->argv2;
+        gtrue  = q->gtrue;
+        gfalse = q->gfalse;
+        gnext  = q->gnext;
 
         switch (q->op) {
             case Q_PLUS:
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText Q_PLUS Quad error");
 
-                fprintf(f, "\t\t\t\t#%s = %s + %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\t\t\t\t# %s = %s + %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tadd $t2, $t0, $t1\n");
@@ -59,7 +92,7 @@ void getText (FILE *f, quad *q) {
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText Q_MINUS Quad error");
 
-                fprintf(f, "\t\t\t\t#%s = %s - %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\t\t\t\t# %s = %s - %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tsub $t2, $t0, $t1\n");
@@ -70,7 +103,7 @@ void getText (FILE *f, quad *q) {
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText Q_MULT Quad error");
 
-                fprintf(f, "\t\t\t\t#%s = %s * %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\t\t\t\t# %s = %s * %s\n", res->id, argv1->id, argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
                 fprintf(f, "\tmul $t2, $t0, $t1\n");
@@ -83,13 +116,13 @@ void getText (FILE *f, quad *q) {
 
                 switch (res->type) {
                     case S_INT:
-                        fprintf(f, "\t\t\t\t#print integer %s\n", res->id);
+                        fprintf(f, "\t\t\t\t# print integer %s\n", res->id);
                         fprintf(f, "\tlw $a0, %s\n", res->id);
                         fprintf(f, "\tli $v0, 1\n");
                         break;
 
                     case S_STRING:
-                        fprintf(f, "\t\t\t\t#print string %s\n", res->id);
+                        fprintf(f, "\t\t\t\t# print string %s\n", res->id);
                         fprintf(f, "\tli $v0, 4\n");
                         fprintf(f, "\tla $a0, %s\n", res->id);
                         break;
@@ -101,59 +134,73 @@ void getText (FILE *f, quad *q) {
                 if (!res || !argv1)
                     ferr("mips.c getText Q_AFFEC Quad error");
 
-                fprintf(f, "\t\t\t\t#%s := %s\n", res->id, argv1->id);
+                fprintf(f, "\t\t\t\t# %s := %s\n", res->id, argv1->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tsw $t0, %s\n", res->id);
                 break;
 
             case Q_LABEL:
-                fprintf(f, "%s:\n", res->id);
+                fprintf(f, "\n%s:\n", res->id);
                 break;
 
             case Q_GOTO:
+                fprintf(f, "\t\t\t\t# goto %s\n", res->id);
                 fprintf(f, "\tj %s\n", res->id);
                 break;
 
+            case Q_IF:
+                if (!gtrue || !gfalse || !gnext)
+                    ferr("mips.c getText Q_IF error");
+
+                fprintf(f, "\t\t\t\t# if %s is false then goto %s\n", argv1->id, gfalse->sval);
+
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tbeq $t0, $zero, %s\n", gfalse->sval);
+                break;
+
             case Q_EQUAL:
-                fprintf(f, "\t\t\t\t#goto %s if %s == %s\n", res->id, argv1->id, argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tbeq $t0, $t1, %s\n", res->id);
-                break;
-
-            case Q_INF:
-                fprintf(f, "\t\t\t\t#goto %s if %s < %s\n", res->id, argv1->id, argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tblt $t0, $t1, %s\n", res->id);
-                break;
-
-            case Q_INFEQ:
-                fprintf(f, "\t\t\t\t#goto %s if %s <= %s\n", res->id, argv1->id, argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tble $t0, $t1, %s\n", res->id);
-                break;
-
-            case Q_SUP:
-                fprintf(f, "\t\t\t\t#goto %s if %s > %s\n", res->id, argv1->id, argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tbgt $t0, $t1, %s\n", res->id);
-                break;
-
-            case Q_SUPEQ:
-                fprintf(f, "\t\t\t\t#goto %s if %s >= %s\n", res->id, argv1->id, argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tbge $t0, $t1, %s\n", res->id);
-                break;
-
             case Q_DIFF:
-                fprintf(f, "\t\t\t\t#goto %s if %s != %s\n", res->id, argv1->id, argv2->id);
+            case Q_INF:
+            case Q_INFEQ:
+            case Q_SUP:
+            case Q_SUPEQ:
+            case Q_AND:
+            case Q_OR:
+            case Q_XOR:
+                label  = nextTmpLabel();
+                label2 = nextTmpLabel();
+
+                fprintf(f, "\t\t\t\t# %s := %s %s %s\n", res->id, argv1->id, opstr(q->op), argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tbne $t0, $t1, %s\n", res->id);
+
+                switch (q->op) {
+                    case Q_EQUAL : fprintf(f, "\tbne $t0, $t1, %s\n", label); break;
+                    case Q_DIFF  : fprintf(f, "\tbeq $t0, $t1, %s\n", label); break;
+                    case Q_INF   : fprintf(f, "\tbge $t0, $t1, %s\n", label); break;
+                    case Q_INFEQ : fprintf(f, "\tbgt $t0, $t1, %s\n", label); break;
+                    case Q_SUP   : fprintf(f, "\tble $t0, $t1, %s\n", label); break;
+                    case Q_SUPEQ : fprintf(f, "\tblt $t0, $t1, %s\n", label); break;
+                    case Q_AND   : fprintf(f, "\tand $t2, $t0, $t1");
+                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
+                                   break;
+                    case Q_OR    : fprintf(f, "\tor $t2, $t0, $t1");
+                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
+                                   break;
+                    case Q_XOR   : fprintf(f, "\txor $t2, $t0, $t1");
+                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
+                                   break;
+                }
+
+                fprintf(f, "\tli $t3 1\n");
+                fprintf(f, "\tj %s\n", label2);
+                fprintf(f, "\n%s:\n", label);
+                fprintf(f, "\tli $t3 0\n");
+                fprintf(f, "\n%s:\n", label2);
+                fprintf(f, "\tsw $t3 %s\n", res->id);
+
+                free(label);
+                free(label2);
                 break;
 
             default:

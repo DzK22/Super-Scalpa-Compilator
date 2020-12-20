@@ -102,7 +102,7 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
                                               yylval.cte.sval = strdup(yytext);
                                               return CTE_;                   }
 
-{ident}                                     { yylval.str = strdup(yytext);
+{ident}                                     { yylval.sval = strdup(yytext);
                                               return IDENT_;                    }
 
 {comment}                                   { /* ignore comments*/              }

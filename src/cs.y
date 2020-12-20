@@ -5,7 +5,6 @@
     #include <math.h>
     #include "../headers/stable.h"
     #include "../headers/quad.h"
-    #include "../headers/quad_list.h"
     #include "../headers/mips.h"
     #include "../headers/list.h"
     #define YYDEBUG 1
@@ -30,25 +29,25 @@
 %}
 
 %union {
-    int  val;
-    bool bol;
-    char *str;
+    int   ival;
+    bool  bval;
+    char  *sval;
     stype type;
     qop   op;
 
     struct {
-        struct symbol    *res;
-        struct quad      *code;
-        struct quad_list *true_list;
-        struct quad_list *false_list;
+        struct symbol    *ptr;
+        struct quad      *quad;
+        struct quad      *ltrue;
+        struct quad      *lfalse;
     } gencode; // Pour les expressions
 
     struct {
         stype type;
         union {
             int  ival;
-            char *sval;
             bool bval;
+            char *sval;
         };
     } cte;
 
@@ -60,9 +59,9 @@
 %token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
 
-%type <str>      IDENT_
+%type <sval>     IDENT_
 %type <cte>      CTE_
-%type <gencode>  expr instr program sequence lvalue
+%type <gencode>  expr instr program sequence lvalue m
 %type <listDecl> fundecllist  vardecllist fundecl
 %type <listID>   identlist varsdecl
 %type <type>     typename atomictype
@@ -79,8 +78,8 @@
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         newVarInt(&stable, $2, 0);
         progName = strdup($2);
-        $$.code  = concat(NULL, $5.code);
-        all_code = $$.code;
+        $$.quad  = concat(NULL, $5.quad);
+        all_code = $$.quad;
     }
     ;
 
@@ -103,15 +102,15 @@ varsdecl: VAR_ identlist ':' typename {
              $$->type = $4 ;
              printID($2);
              listIdents *cur = $2;
-             symbol *res;
+             symbol *ptr;
 
               while (cur != NULL) {
                   switch ($4) {
                       case S_BOOL:
-                          res = newVarBool(&stable, cur->tid, false);
+                          ptr = newVarBool(&stable, cur->tid, false);
                           break;
                       case S_INT:
-                          res = newVarInt(&stable, cur->tid, 0);
+                          ptr = newVarInt(&stable, cur->tid, 0);
                           break;
 
                   }
@@ -150,97 +149,94 @@ fundecl : "BOUMBOUM"                            {}
         ;
 
 instr: lvalue AFFEC_ expr {
-                quad *q    = qGen(Q_AFFEC, $1.res, $3.res, NULL);
-                quad *code = concat($3.code, q);
-                $$.code    = code;
-                $$.res     = $1.res;
+                quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
+                quad *quad = concat($3.quad, q);
+                $$.quad    = quad;
+                $$.ptr     = $1.ptr;
             }
         | RETURN_ expr {}
         | RETURN_ {}
         | IDENT_ PARLEFT_ exprlist PARRIGHT_ {}
         | IDENT_ PARLEFT_ PARRIGHT_ {}
         | BEGIN_ sequence END_ {
-                $$.res  = $2.res;
-                $$.code = $2.code;
+                $$.ptr  = $2.ptr;
+                $$.quad = $2.quad;
             }
         | BEGIN_ END_ {}
         | READ_ expr {
-                $$.res  = $2.res;
-                quad *q = qGen(Q_READ, $$.res, NULL, NULL);
-                $$.code = concat($2.code, q);
+                $$.ptr  = $2.ptr;
+                quad *q = qGen(Q_READ, $$.ptr, NULL, NULL);
+                $$.quad = concat($2.quad, q);
             }
         | WRITE_ expr {
-                $$.res  = $2.res;
-                quad *q = qGen(Q_WRITE, $$.res, NULL, NULL);
-                $$.code = concat($2.code, q);
+                $$.ptr  = $2.ptr;
+                quad *q = qGen(Q_WRITE, $$.ptr, NULL, NULL);
+                $$.quad = concat($2.quad, q);
             }
-        | IF_ expr THEN_ instr {
-            symbol *goto_true = newLabel(&stable, "");
-            symbol *goto_false = newLabel(&stable, "");
-            quad *true_label = qGen(Q_LABEL, goto_true, NULL, NULL);
-            quad *false_label = qGen(Q_LABEL, goto_false, NULL, NULL);
-            completeQuadList($2.true_list, goto_true);
-            completeQuadList($2.false_list, goto_false);
-            $$.code = concat($2.code, true_label);
-            $$.code = concat($$.code, $4.code);
-            $$.code = concat($$.code, false_label);
+        | IF_ expr THEN_ m instr m {
+            quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
+            qif->gtrue  = $4.quad->res;
+            qif->gfalse = $6.quad->res;
+            qif->gnext  = $6.quad->res;
+
+            $$.quad = concat($2.quad, qif);
+            $$.quad = concat($$.quad, $4.quad);
+            $$.quad = concat($$.quad, $5.quad);
+            $$.quad = concat($$.quad, $6.quad);
         }
-        | IF_ expr THEN_ instr ELSE_ instr {
-            symbol *goto_true = newLabel(&stable, "");
-            symbol *goto_false = newLabel(&stable, "");
-            symbol *goto_next = newLabel(&stable, "");
-            completeQuadList($2.true_list, goto_true);
-            completeQuadList($2.false_list, goto_false);
-            quad *true_label = qGen(Q_LABEL, goto_true, NULL, NULL);
-            quad *false_label = qGen(Q_LABEL, goto_false, NULL, NULL);
-            quad *next_label = qGen(Q_LABEL, goto_next, NULL, NULL);
-            quad *g_next = qGen(Q_GOTO, goto_next, NULL, NULL);
-            $$.code = concat($2.code, true_label); // goto true
-            $$.code = concat($$.code, $4.code); // code if true
-            $$.code = concat($$.code, g_next); // skip else
-            $$.code = concat($$.code, false_label); // goto else
-            $$.code = concat($$.code, $6.code); // else code
-            $$.code = concat($$.code, next_label); // skip the label
+        | IF_ expr THEN_ m instr ELSE_ m instr m {
+            quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
+            qif->gtrue  = $4.quad->res;
+            qif->gfalse = $7.quad->res;
+            qif->gnext  = $9.quad->res;
+
+            quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
+
+            $$.quad = concat($2.quad, qif);
+            $$.quad = concat($$.quad, $4.quad);
+            $$.quad = concat($$.quad, $5.quad);
+            $$.quad = concat($$.quad, go);
+            $$.quad = concat($$.quad, $7.quad);
+            $$.quad = concat($$.quad, $8.quad);
+            $$.quad = concat($$.quad, $9.quad);
         }
         // Normalement il va falloir différencier expr des expressions booléènnes qui renvoie true ou false mais je vois pas trop comment faire (Genre while true do devrait fonctionner si je dis pas de betises)
-        | WHILE_ expr DO_ instr {
-            symbol *goto_while = newLabel(&stable, "");
-            symbol *goto_true = newLabel(&stable, "");
-            symbol *goto_false = newLabel(&stable, "");
-            quad *true_label = qGen(Q_LABEL, goto_true, NULL, NULL);
-            quad *false_label = qGen(Q_LABEL, goto_false, NULL, NULL);
-            quad *while_label = qGen(Q_LABEL, goto_while, NULL, NULL);
-            quad *g_while = qGen(Q_GOTO, goto_while, NULL, NULL);
-            completeQuadList($2.true_list, goto_true);
-            completeQuadList($2.false_list, goto_false);
-            $$.code = NULL;
-            $$.code = concat(while_label, $2.code);
-            $$.code = concat($$.code, true_label);
-            $$.code = concat($$.code, $4.code);
-            $$.code = concat($$.code, g_while);
-            $$.code = concat($$.code, false_label);
+        | WHILE_ m expr DO_ m instr m {
+            quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
+            qif->gtrue  = $5.quad->res;
+            qif->gfalse = $7.quad->res;
+            qif->gnext  = $2.quad->res;
+
+            quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
+
+            $$.quad = concat($2.quad, $3.quad);
+            $$.quad = concat($$.quad, qif);
+            $$.quad = concat($$.quad, $5.quad);
+            $$.quad = concat($$.quad, $6.quad);
+            $$.quad = concat($$.quad, go);
+            $$.quad = concat($$.quad, $7.quad);
         }
       ;
 
 sequence : instr DOTCOMMA_ sequence  {
-            $$.code = concat($1.code, $3.code);
-            $$.res  = $1.res;
+            $$.quad = concat($1.quad, $3.quad);
+            $$.ptr  = $1.ptr;
          }
          | instr DOTCOMMA_ {
-             $$.res  = $1.res;
-             $$.code = $1.code;
+             $$.ptr  = $1.ptr;
+             $$.quad = $1.quad;
          }
          | instr  {
-             $$.res  = $1.res;
-             $$.code = $1.code;
+             $$.ptr  = $1.ptr;
+             $$.quad = $1.quad;
          }
         ;
 
 lvalue: IDENT_ {
-                symbol *res = search(stable, $1);
-                testID(res, $1);
-                $$.res  = res;
-                $$.code = NULL;
+                symbol *ptr = search(stable, $1);
+                testID(ptr, $1);
+                $$.ptr  = ptr;
+                $$.quad = NULL;
                 free($1);
             }
 
@@ -254,33 +250,35 @@ exprlist : expr {}
         ;
 
 expr : CTE_ {
-                symbol *res;
+                symbol *ptr;
                 switch ($1.type) {
-                    case S_INT    : res = newTmpInt (&stable, $1.ival);
+                    case S_INT    : ptr = newTmpInt (&stable, $1.ival);
                                     break;
-                    case S_BOOL   : res = newTmpBool(&stable, $1.bval);
+                    case S_BOOL   : ptr = newTmpBool(&stable, $1.bval);
                                     break;
-                    case S_STRING : res = newTmpStr (&stable, $1.sval);
+                    case S_STRING : ptr = newTmpStr (&stable, $1.sval);
                                     free($1.sval);
                                     break;
                     default: ferr("cs.y expr : CTE_ Unknow cte type");
                 }
 
-                $$.res  = res;
-                $$.code = NULL;
+                $$.ptr  = ptr;
+                $$.quad = NULL;
+                $$.ltrue = NULL;
+                $$.lfalse = NULL;
             }
       | PARLEFT_ expr PARRIGHT_ {
-                $$.res  = $2.res;
-                $$.code = $2.code;
-                $$.true_list = $2.true_list;
-                $$.false_list = $2.false_list;
+                $$.ptr    = $2.ptr;
+                $$.quad   = $2.quad;
+                $$.ltrue  = $2.ltrue;
+                $$.lfalse = $2.lfalse;
             }
-      | expr opb expr {
-                if ($1.res->type != $3.res->type)
+      | expr opb m expr {
+                if ($1.ptr->type != $4.ptr->type)
                     ferr("cs.y expr : expr opb expr Different types");
 
                 // verify type and opb correct
-                stype type = $1.res->type;
+                stype type = $1.ptr->type;
                 qop op = $2;
 
                 if ((type == S_INT && !(op == Q_PLUS || op == Q_MINUS || op == Q_MULT || op == Q_DIV || op == Q_EXP || op == Q_INF || op == Q_INFEQ || op == Q_SUP || op == Q_SUPEQ || op == Q_EQUAL || op == Q_DIFF))
@@ -289,67 +287,85 @@ expr : CTE_ {
                     ferr("cs.y expr opb expr Incorrect type/opb");
 
                 // OK
-                symbol *res;
+                symbol *ptr;
+                quad *q;
+
                 switch (type) {
-                    case S_INT  : res = newTmpInt (&stable, 0)     ; break;
-                    case S_BOOL : res = newTmpBool(&stable, false) ; break;
+                    case S_INT  : ptr = newTmpInt (&stable, 0)     ; break;
+                    case S_BOOL : ptr = newTmpBool(&stable, false) ; break;
                     // no operations on S_STRING are allowed
                 }
-                quad *q_true, *q_false, *q;
+
                 switch (op) {
                     case Q_MINUS:
                     case Q_PLUS:
                     case Q_MULT:
                     case Q_DIV:
                     case Q_EXP:
-                        $$.res = res;
-                        q = qGen(op, res, $1.res, $3.res);
-                        $$.code = $1.code;
-                        $$.code = concat($$.code, $3.code);
-                        $$.code = concat($$.code, q);
-                        break;
                     case Q_EQUAL:
                     case Q_DIFF:
-                    case Q_SUP:
-                    case Q_SUPEQ:
                     case Q_INF:
                     case Q_INFEQ:
-                        q_true = qGen(op, NULL, $1.res, $3.res);
-                        q_false = qGen(Q_GOTO, NULL, NULL, NULL);
-                        $$.code = NULL;
-                        $$.code = concat($$.code, $1.code);
-                        $$.code = concat($$.code, $3.code);
-                        $$.code = concat($$.code, q_true);
-                        $$.code = concat($$.code, q_false);
-                        $$.true_list = newQuadList(q_true);
-                        $$.false_list = newQuadList(q_false);
+                    case Q_SUP:
+                    case Q_SUPEQ:
+                        $$.ptr = ptr;
+                        q = qGen(op, ptr, $1.ptr, $4.ptr);
+
+                        $$.quad = concat($1.quad, $4.quad);
+                        $$.quad = concat($$.quad, q);
+                        qFree($3.quad);
+                        break;
+
+                    case Q_AND:
+                        complete($1.ltrue, true, $3.quad->res);
+                        $$.lfalse = concat($1.lfalse, $4.lfalse);
+                        $$.ltrue = $4.ltrue;
+
+                        q = qGen(op, ptr, $1.ptr, $4.ptr);
+                        $$.quad = concat($1.quad, $3.quad);
+                        $$.quad = concat($$.quad, $4.quad);
+                        $$.quad = concat($$.quad, q);
+                        break;
+
+                    case Q_OR:
+                        complete($1.lfalse, false, $3.quad->res);
+                        $$.lfalse = $4.lfalse;
+                        $$.ltrue = concat($1.ltrue, $4.ltrue);
+
+                        q = qGen(op, ptr, $1.ptr, $4.ptr);
+                        $$.quad = concat($1.quad, $3.quad);
+                        $$.quad = concat($$.quad, $4.quad);
+                        $$.quad = concat($$.quad, q);
+                        break;
+
+                    case Q_XOR:
                         break;
                 }
             }
       | opu expr {
                 // verify type and opb correct
-                stype type = $2.res->type;
+                stype type = $2.ptr->type;
                 qop op = $1;
 
                 if ((type == S_INT && op != Q_MINUS) || (type == S_BOOL && op != Q_NOT) || (type == S_STRING))
                     ferr("cs.y opu expr Incorrect type/opu");
 
-                symbol *res;
+                symbol *ptr;
                 switch (type) {
-                    case S_INT  : res = newTmpInt (&stable, 0)     ; break;
-                    case S_BOOL : res = newTmpBool(&stable, false) ; break;
+                    case S_INT  : ptr = newTmpInt (&stable, 0)     ; break;
+                    case S_BOOL : ptr = newTmpBool(&stable, false) ; break;
                     // no operations on S_STRING are allowed
                 }
-                $$.res = res;
+                $$.ptr = ptr;
 
                 quad *q;
                 if (op == Q_MINUS)
-                    q = qGen(op, res, res, $2.res);
+                    q = qGen(op, ptr, ptr, $2.ptr);
                 else
-                    q = qGen(op, res, $2.res, NULL);
+                    q = qGen(op, ptr, $2.ptr, NULL);
 
-                $$.code = $2.code;
-                $$.code = concat($$.code, q);
+                $$.quad = $2.quad;
+                $$.quad = concat($$.quad, q);
             }
       | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 // function call (with parameters)
@@ -361,13 +377,20 @@ expr : CTE_ {
                 // array with indexes
             }
       | IDENT_ {
-                symbol *res = search(stable, $1);
-                testID(res, $1);
-                $$.res  = res;
-                $$.code = NULL;
+                symbol *ptr = search(stable, $1);
+                testID(ptr, $1);
+                $$.ptr  = ptr;
+                $$.quad = NULL;
+                $$.ltrue = NULL;
+                $$.lfalse = NULL;
                 free($1);
             }
       ;
+
+m : %empty {
+          $$.quad = qGen(Q_LABEL, newTmpLabel(&stable), NULL, NULL);
+      }
+  ;
 
 opb : PLUS_   { $$ = Q_PLUS   ; }
     | MINUS_  { $$ = Q_MINUS  ; }

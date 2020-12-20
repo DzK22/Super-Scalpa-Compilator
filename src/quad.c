@@ -1,18 +1,22 @@
 #include "../headers/quad.h"
+int nextquad = 0;
 
 quad *qGen (qop op, symbol *res, symbol *argv1, symbol *argv2) {
-    static int nquad = 0;
+
     quad *nq = malloc(sizeof(struct quad));
     if (nq == NULL)
         ferr("quad.c qGen malloc");
 
     nq->op    = op;
-    nq->res   = res;
-    nq->argv1 = argv1;
-    nq->argv2 = argv2;
-    nq->num   = nquad++;
-    nq->nlab  = false;
+    nq->num   = nextquad ++;
     nq->next  = NULL;
+
+    nq->res    = res;
+    nq->argv1  = argv1;
+    nq->argv2  = argv2;
+    nq->gtrue  = NULL;
+    nq->gfalse = NULL;
+    nq->gnext  = NULL;
 
     return nq;
 }
@@ -25,6 +29,17 @@ void qFree (quad *q) {
         q = q->next;
         free(cur);
     }
+}
+
+quad *qGet (quad *list, int num) {
+    quad *q = list;
+    while (q != NULL) {
+        if (q->num == num)
+            return q;
+        q = q->next;
+    }
+
+    return NULL;
 }
 
 quad *concat (quad *q1, quad *q2) {
@@ -40,6 +55,21 @@ quad *concat (quad *q1, quad *q2) {
         res = q2;
 
     return res;
+}
+
+void complete (quad *list, bool type, symbol *sym) {
+    quad *cur = list;
+
+    while (cur != NULL) {
+        if (type)
+            cur->gtrue = sym;
+        else
+            cur->gfalse = sym;
+
+        cur = cur->next;
+    }
+
+    qFree(list);
 }
 
 quad *getLast (quad *q) {

@@ -12,5 +12,7 @@ void getMips (FILE *, symbol *, quad *);
 void getData (FILE *f, symbol *s);
 void getText (FILE *f, quad *s);
 void ferr    (char *s);
+char * nextTmpLabel ();
+char * opstr (qop);
 
 #endif

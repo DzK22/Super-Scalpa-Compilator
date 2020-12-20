@@ -62,13 +62,13 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
         if (type != S_LABEL) {
             res = snprintf(tid, LEN, "temp_%d", nsym ++);
             if (res < 0 || res >= LEN)
-                ferr("stable.c newVar snprintf");
-        }
-        else {
-            res = snprintf(tid, LEN, "label%d", nlabels ++);
+                ferr("stable.c newVar temp snprintf");
+        } else {
+            res = snprintf(tid, LEN, "label_%d", nlabels ++);
             if (res < 0 || res >= LEN)
-                ferr("stable.c newVar snprintf");
+                ferr("stable.c newVar label snprintf");
         }
+
         finalID = tid;
     }
 
@@ -86,9 +86,8 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     else if (type == S_STRING) {
         if ((nt->sval = strdup((char *) data)) == NULL)
             ferr("stable.c newVar strdup data");
-    }
-    else if (type == S_LABEL) {
-        if ((nt->sval = strdup((char *) data)) == NULL)
+    } else if (type == S_LABEL) {
+        if ((nt->sval = strdup(finalID)) == NULL)
             ferr("stable.c newVar strdup data");
     }
 
@@ -109,8 +108,8 @@ symbol *newTmpBool (symbol **stable, bool bol) {
     return newVar(stable, S_BOOL, NULL, &bol);
 }
 
-symbol *newLabel (symbol **stable, char *str) {
-    return newVar(stable, S_LABEL, NULL, str);
+symbol *newTmpLabel (symbol **stable) {
+    return newVar(stable, S_LABEL, NULL, NULL);
 }
 
 symbol *newVarInt (symbol **stable, char *id, int val) {

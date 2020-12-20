@@ -22,21 +22,20 @@ typedef struct symbol {
     struct symbol *next;
 } symbol;
 
-void ferr          (char *s);
-void   sFree       (symbol *);
-symbol *sAlloc     ();
-symbol *sAdd       (symbol **);
-symbol *search     (symbol *, char *);
+void   ferr         (char *s);
+void   sFree        (symbol *);
+symbol *sAlloc      ();
+symbol *sAdd        (symbol **);
+symbol *search      (symbol *, char *);
 
-symbol *newVar     (symbol **, stype, char *, void *);
-symbol *newTmpInt  (symbol **, int);
-symbol *newTmpStr  (symbol **, char *);
-symbol *newTmpBool (symbol **, bool);
-symbol *newLabel   (symbol **, char *);
-
-symbol *newVarInt  (symbol **, char *, int);
-symbol *newVarStr  (symbol **, char *, char *);
-symbol *newVarBool (symbol **, char *, bool);
-symbol *newVarUnit (symbol **, char *);
+symbol *newVar      (symbol **, stype, char *, void *);
+symbol *newTmpInt   (symbol **, int);
+symbol *newTmpStr   (symbol **, char *);
+symbol *newTmpBool  (symbol **, bool);
+symbol *newTmpLabel (symbol **);
+symbol *newVarInt   (symbol **, char *, int);
+symbol *newVarStr   (symbol **, char *, char *);
+symbol *newVarBool  (symbol **, char *, bool);
+symbol *newVarUnit  (symbol **, char *);
 
 #endif
