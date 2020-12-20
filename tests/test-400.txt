@@ -1,0 +1,11 @@
+(* Test divers *)
+
+program tata
+   var pd : bool;
+   begin
+    write "titi";
+    pd := true;
+    write " pd = ";
+    write pd
+   end
+

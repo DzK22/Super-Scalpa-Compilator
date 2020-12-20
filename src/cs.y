@@ -150,13 +150,11 @@ instr: lvalue AFFEC_ expr {
             }
         | BEGIN_ END_ {}
         | READ_ expr {
-                $$.ptr  = $2.ptr;
-                quad *q = qGen(Q_READ, $$.ptr, NULL, NULL);
+                quad *q = qGen(Q_READ, $2.ptr, NULL, NULL);
                 $$.quad = concat($2.quad, q);
             }
         | WRITE_ expr {
-                $$.ptr  = $2.ptr;
-                quad *q = qGen(Q_WRITE, $$.ptr, NULL, NULL);
+                quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
                 $$.quad = concat($2.quad, q);
             }
         | IF_ expr THEN_ m instr m {
@@ -219,8 +217,11 @@ sequence : instr DOTCOMMA_ sequence  {
         ;
 
 lvalue: IDENT_ {
-                symbol *ptr = search(stable, $1);
+                char s[LEN];
+                sprintf(s, "var_%s", $1);
+                symbol *ptr = search(stable, s);
                 testID(ptr, $1);
+
                 $$.ptr  = ptr;
                 $$.quad = NULL;
                 free($1);
@@ -363,8 +364,11 @@ expr : CTE_ {
                 // array with indexes
             }
       | IDENT_ {
-                symbol *ptr = search(stable, $1);
+                char s[LEN];
+                sprintf(s, "var_%s", $1);
+                symbol *ptr = search(stable, s);
                 testID(ptr, $1);
+
                 $$.ptr  = ptr;
                 $$.quad = NULL;
                 $$.ltrue = NULL;

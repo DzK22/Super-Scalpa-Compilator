@@ -55,9 +55,9 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     static int nsym = 0;
     static int nlabels = 0;
     bool isTmp      = id ? false : true;
-    char *finalID   = id;
     char tid[LEN];
     int res;
+
     if (isTmp) { // is tmp var
         if (type != S_LABEL) {
             res = snprintf(tid, LEN, "temp_%d", nsym ++);
@@ -68,12 +68,14 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
             if (res < 0 || res >= LEN)
                 ferr("stable.c newVar label snprintf");
         }
-
-        finalID = tid;
+    } else {
+        res = sprintf(tid, "var_%s", id);
+        if (res < 0 || res >= LEN)
+            ferr("stable.c newVar var snprintf");
     }
 
     symbol *nt = sAdd(stable);
-    if ((nt->id = strdup(finalID)) == NULL)
+    if ((nt->id = strdup(tid)) == NULL)
         ferr("stable.c newVar strdup data ID");
 
     nt->type = type;
@@ -87,7 +89,7 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
         if ((nt->sval = strdup((char *) data)) == NULL)
             ferr("stable.c newVar strdup data");
     } else if (type == S_LABEL) {
-        if ((nt->sval = strdup(finalID)) == NULL)
+        if ((nt->sval = strdup(tid)) == NULL)
             ferr("stable.c newVar strdup data");
     }
 

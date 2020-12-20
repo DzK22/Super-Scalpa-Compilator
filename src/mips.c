@@ -21,13 +21,20 @@ void getMips (FILE *f, symbol *s, quad *q) {
 }
 
 void getData (FILE *f, symbol *s) {
+    // initial
+    fprintf(f, "_true:\t.asciiz \"true\"\n");
+    fprintf(f, "_false:\t.asciiz \"false\"\n");
+
     while (s != NULL) {
         switch (s->type) {
             case S_INT:
                 fprintf(f, "%s:\t.word %d\n", s->id, s->ival);
                 break;
+            case S_BOOL:
+                fprintf(f, "%s:\t.word %d\n", s->id, s->bval);
+                break;
             case S_STRING:
-                fprintf(f, "%s:\t.ascii %s\n", s->id, s->sval);
+                fprintf(f, "%s:\t.asciiz %s\n", s->id, s->sval);
                 break;
         }
 
@@ -123,22 +130,38 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_WRITE:
-                if (!res)
+                if (!argv1)
                     ferr("mips.c getText Q_WRITE Quad error");
 
-                switch (res->type) {
+                switch (argv1->type) {
                     case S_INT:
-                        fprintf(f, "\t\t\t\t# print integer %s\n", res->id);
-                        fprintf(f, "\tlw $a0, %s\n", res->id);
+                        fprintf(f, "\t\t\t\t# print integer %s\n", argv1->id);
                         fprintf(f, "\tli $v0, 1\n");
+                        fprintf(f, "\tlw $a0, %s\n", argv1->id);
                         break;
 
                     case S_STRING:
-                        fprintf(f, "\t\t\t\t# print string %s\n", res->id);
+                        fprintf(f, "\t\t\t\t# print string %s\n", argv1->id);
                         fprintf(f, "\tli $v0, 4\n");
-                        fprintf(f, "\tla $a0, %s\n", res->id);
+                        fprintf(f, "\tla $a0, %s\n", argv1->id);
+                        break;
+
+                    case S_BOOL:
+                        label  = nextTmpLabel();
+                        label2 = nextTmpLabel();
+
+                        fprintf(f, "\t\t\t\t# print bool %s\n", argv1->id);
+                        fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                        fprintf(f, "\tbeq $t0, $zero, %s\n", label);
+                        fprintf(f, "\tla $a0, _true\n");
+                        fprintf(f, "\tj %s\n", label2);
+                        fprintf(f, "%s:\n", label);
+                        fprintf(f, "\tla $a0, _false\n");
+                        fprintf(f, "%s:\n", label2);
+                        fprintf(f, "\tli $v0, 4\n");
                         break;
                 }
+
                 fprintf(f, "\tsyscall\n");
                 break;
 
