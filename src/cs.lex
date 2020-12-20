@@ -65,6 +65,10 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 {R}{E}{F}                                   { return REF_;                      }
 
+{W}{H}{I}{L}{E}                             { return WHILE_; }
+
+{D}{O}                                      { return DO_; }
+
 {I}{F}                                      { return IF_; }
 
 {T}{H}{E}{N}                                { return THEN_; }

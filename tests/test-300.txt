@@ -1,8 +1,12 @@
 (* Test des opérations booléènnes  *)
 program BoolTest
-   var a, c, z : int
+   var a, c, t : int
    begin
-     a := 2;
-     c := 5;
-     if c = a then write "c'est c le plus grand" else write a + c;
+     a := 0;
+     t := 10;
+     while a < t do
+     begin
+        write a;
+        a := a + 1;
+     end;
    end

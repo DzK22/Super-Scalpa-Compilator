@@ -57,7 +57,7 @@
 
 }
 
-%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
+%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
 
 %type <str>      IDENT_
@@ -201,6 +201,23 @@ instr: lvalue AFFEC_ expr {
             $$.code = concat($$.code, false_label); // goto else
             $$.code = concat($$.code, $6.code); // else code
             $$.code = concat($$.code, next_label); // skip the label
+        }
+        | WHILE_ expr DO_ instr {
+            symbol *goto_while = newLabel(&stable, "");
+            symbol *goto_true = newLabel(&stable, "");
+            symbol *goto_false = newLabel(&stable, "");
+            quad *true_label = qGen(Q_LABEL, goto_true, NULL, NULL);
+            quad *false_label = qGen(Q_LABEL, goto_false, NULL, NULL);
+            quad *while_label = qGen(Q_LABEL, goto_while, NULL, NULL);
+            quad *g_while = qGen(Q_GOTO, goto_while, NULL, NULL);
+            completeQuadList($2.true_list, goto_true);
+            completeQuadList($2.false_list, goto_false);
+            $$.code = NULL;
+            $$.code = concat(while_label, $2.code);
+            $$.code = concat($$.code, true_label);
+            $$.code = concat($$.code, $4.code);
+            $$.code = concat($$.code, g_while);
+            $$.code = concat($$.code, false_label);
         }
       ;
 
