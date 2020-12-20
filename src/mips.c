@@ -38,6 +38,11 @@ void getData (FILE *f, symbol *s) {
 char * opstr (qop op) {
     static char str[LEN]; // NOT THREAD SAFE
     switch (op) {
+            case Q_PLUS  : sprintf(str, "+")   ; break ;
+            case Q_MINUS : sprintf(str, "-")   ; break ;
+            case Q_MULT  : sprintf(str, "*")   ; break ;
+            case Q_DIV   : sprintf(str, "/")   ; break ;
+            case Q_EXP   : sprintf(str, "^")   ; break ;
             case Q_EQUAL : sprintf(str, "=")   ; break ;
             case Q_DIFF  : sprintf(str, "!=")  ; break ;
             case Q_INF   : sprintf(str, "<")   ; break ;
@@ -47,6 +52,7 @@ char * opstr (qop op) {
             case Q_AND   : sprintf(str, "AND") ; break ;
             case Q_OR    : sprintf(str, "OR")  ; break ;
             case Q_XOR   : sprintf(str, "XOR") ; break ;
+            default: ferr("mips.c opstr unknow op");
     }
 
     return str;
@@ -78,35 +84,41 @@ void getText (FILE *f, quad *q) {
 
         switch (q->op) {
             case Q_PLUS:
-                if (!res || !argv1 || !argv2)
-                    ferr("mips.c getText Q_PLUS Quad error");
-
-                fprintf(f, "\t\t\t\t# %s = %s + %s\n", res->id, argv1->id, argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tadd $t2, $t0, $t1\n");
-                fprintf(f, "\tsw $t2, %s\n", res->id);
-                break;
-
             case Q_MINUS:
-                if (!res || !argv1 || !argv2)
-                    ferr("mips.c getText Q_MINUS Quad error");
-
-                fprintf(f, "\t\t\t\t# %s = %s - %s\n", res->id, argv1->id, argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tsub $t2, $t0, $t1\n");
-                fprintf(f, "\tsw $t2, %s\n", res->id);
-                break;
-
             case Q_MULT:
+            case Q_DIV:
+            case Q_EXP:
                 if (!res || !argv1 || !argv2)
-                    ferr("mips.c getText Q_MULT Quad error");
+                    ferr("mips.c getText arith quad error");
 
-                fprintf(f, "\t\t\t\t# %s = %s * %s\n", res->id, argv1->id, argv2->id);
+                fprintf(f, "\t\t\t\t# %s = %s %s %s\n", res->id, argv1->id, opstr(q->op), argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
-                fprintf(f, "\tmul $t2, $t0, $t1\n");
+
+                switch (q->op) {
+                    case Q_PLUS  : fprintf(f, "\tadd $t2, $t0, $t1\n") ; break ;
+                    case Q_MINUS : fprintf(f, "\tsub $t2, $t0, $t1\n") ; break ;
+                    case Q_MULT  : fprintf(f, "\tmul $t2, $t0, $t1\n") ; break ;
+                    case Q_DIV   : fprintf(f, "\tdiv $t2, $t0, $t1\n") ; break ;
+                    case Q_EXP   :
+                        label  = nextTmpLabel();
+                        label2 = nextTmpLabel();
+
+                        fprintf(f, "\tlw $t2, %s\n", argv1->id);
+                        fprintf(f, "\tli $t3, 1\n");
+                        fprintf(f, "\n%s:\n", label);
+                        fprintf(f, "\tble $t1, $t3, %s\n", label2);
+                        fprintf(f, "\tmul $t2, $t2, $t0\n");
+                        fprintf(f, "\tsub $t1, $t1, $t3\n");
+                        fprintf(f, "\tj %s\n", label);
+                        fprintf(f, "\n%s:\n", label2);
+
+                        free(label);
+                        free(label2);
+                        break;
+                        // warning: seulement les puissances > 0 fonctionnent avec ce code
+                }
+
                 fprintf(f, "\tsw $t2, %s\n", res->id);
                 break;
 
@@ -132,7 +144,7 @@ void getText (FILE *f, quad *q) {
 
             case Q_AFFEC:
                 if (!res || !argv1)
-                    ferr("mips.c getText Q_AFFEC Quad error");
+                    ferr("mips.c getText Q_AFFEC quad error");
 
                 fprintf(f, "\t\t\t\t# %s := %s\n", res->id, argv1->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
@@ -140,17 +152,23 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_LABEL:
+                if (!res)
+                    ferr("mips.c getText Q_LABEL quad error");
+
                 fprintf(f, "\n%s:\n", res->id);
                 break;
 
             case Q_GOTO:
+                if (!res)
+                    ferr("mips.c getText Q_GOTO quad error");
+
                 fprintf(f, "\t\t\t\t# goto %s\n", res->id);
                 fprintf(f, "\tj %s\n", res->id);
                 break;
 
             case Q_IF:
-                if (!gtrue || !gfalse || !gnext)
-                    ferr("mips.c getText Q_IF error");
+                if (!argv1 || !gtrue || !gfalse || !gnext)
+                    ferr("mips.c getText Q_IF quad error");
 
                 fprintf(f, "\t\t\t\t# if %s is false then goto %s\n", argv1->id, gfalse->sval);
 
@@ -167,6 +185,9 @@ void getText (FILE *f, quad *q) {
             case Q_AND:
             case Q_OR:
             case Q_XOR:
+                if (!res || !argv1 || !argv2)
+                    ferr("mips.c getText comp quad error");
+
                 label  = nextTmpLabel();
                 label2 = nextTmpLabel();
 
