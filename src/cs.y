@@ -6,7 +6,7 @@
     #include "../headers/stable.h"
     #include "../headers/quad.h"
     #include "../headers/mips.h"
-    #include "../headers/list.h"
+    #include "../headers/arglist.h"
     #define YYDEBUG 1
 
     int yyerror (char *s);
@@ -51,9 +51,7 @@
         };
     } cte;
 
-    struct listIdents *listID;
-    struct listDecls *listDecl;
-
+    struct arglist *arglist;
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
@@ -63,7 +61,7 @@
 %type <cte>      CTE_
 %type <gencode>  expr instr program sequence lvalue m
 %type <listDecl> fundecllist  vardecllist fundecl
-%type <listID>   identlist varsdecl
+%type <arglist>  identlist varsdecl
 %type <type>     typename atomictype
 %type <op>       opu opb
 
@@ -83,50 +81,38 @@ program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
     }
     ;
 
-vardecllist : %empty                       { }
-            | varsdecl
-                {
-                    $$ = newList($1);
-                    addList($$, $1);
-                }
-            | varsdecl DOTCOMMA_ vardecllist
-                {
-                    addList($3, $1);
-                    $$ = $3;
-                }
+vardecllist : %empty                         { }
+            | varsdecl                       { }
+            | varsdecl DOTCOMMA_ vardecllist { }
            ;
 
 varsdecl: VAR_ identlist ':' typename {
-            /* Creer une entree dans la table des symboles avec
-             le type des variables dans identlist  */
-             $$->type = $4 ;
-             printID($2);
-             listIdents *cur = $2;
-             symbol *ptr;
+             arglistPrint($2);
+             arglist *al = $2;
 
-              while (cur != NULL) {
+              while (al != NULL) {
                   switch ($4) {
                       case S_BOOL:
-                          ptr = newVarBool(&stable, cur->tid, false);
+                          newVarBool(&stable, al->id, false);
                           break;
                       case S_INT:
-                          ptr = newVarInt(&stable, cur->tid, 0);
+                          newVarInt(&stable, al->id, 0);
                           break;
-
+                        default:
+                            ferr("cs.y varsdecl identlist An arg has wrong type");
                   }
-                  cur = cur->next;
+
+                  al = al->next;
               }
           }
           ;
 
 identlist : IDENT_ {
-                $$->tid  = strdup($1);
-                $$->type = S_NONE;
-                $$->next = NULL;
+                $$ = arglistNew(strdup($1), S_NONE, NULL);
             }
          | IDENT_ COMMA_ identlist {
-                $$->tid  = strdup($1);
-                $$->next = $3;
+                arglist *al = arglistNew(strdup($1), S_NONE, NULL);
+                $$ = arglistConcat(al, $3);
             }
          ;
 
