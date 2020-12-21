@@ -6,8 +6,8 @@ program totoread
         c:=3;
         read d;
         (*write " a vaut ";*)
-        write a;
         write c;
         write "c+d=";
         write c+d;
+        write a;
     end
