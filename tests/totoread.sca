@@ -1,5 +1,5 @@
 program totoread
-    var a : int;
+    var a : string;
 
     begin
         read a;

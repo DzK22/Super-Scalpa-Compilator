@@ -88,6 +88,8 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 {U}{N}{I}{T}                                { return UNIT_;                     }
 
+{S}{T}{R}{I}{N}{G}                          { return STRING_;                   }
+
 " "*                                        {}
 
 {cst_int}                                   { yylval.cte.type = S_INT;

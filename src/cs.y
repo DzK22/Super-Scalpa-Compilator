@@ -54,7 +54,7 @@
     struct arglist *arglist;
 }
 
-%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
+%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
 
 %type <sval>     IDENT_
@@ -95,6 +95,9 @@ varsdecl: VAR_ identlist ':' typename {
                  case S_BOOL:
                     fprintf(stdout, "boolean\n");
                     break;
+                 case S_STRING:
+                    fprintf(stdout, "string\n");
+                    break;
              }
              arglist *al = $2;
 
@@ -106,8 +109,11 @@ varsdecl: VAR_ identlist ':' typename {
                       case S_INT:
                           newVarInt(&stable, al->id, 0);
                           break;
-                        default:
-                            ferr("cs.y varsdecl identlist An arg has wrong type");
+                      case S_STRING:
+                          newVarStr(&stable, al->id, "\"\"");
+                          break;
+                    default:
+                        ferr("cs.y varsdecl identlist An arg has wrong type");
                   }
 
                   al = al->next;
@@ -129,9 +135,10 @@ typename : atomictype {
           }
          ;
 
-atomictype : UNIT_ { $$ = S_UNIT; }
-           | BOOL_ { $$ = S_BOOL; }
-           | INT_  { $$ = S_INT;  }
+atomictype : UNIT_   { $$ = S_UNIT;    }
+           | BOOL_   { $$ = S_BOOL;    }
+           | INT_    { $$ = S_INT;     }
+           | STRING_ { $$ = S_STRING;  }
            ;
 
 fundecllist : %empty                        {  }
