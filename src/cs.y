@@ -147,6 +147,9 @@ instr: lvalue AFFEC_ expr {
                 quad *quad = concat($3.quad, q);
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
+
+                if ($1.ptr->type != $3.ptr->type)
+                    ferr("cs.y instr: lvalue and expr type differ");
             }
         | RETURN_ expr {}
         | RETURN_ {}
@@ -281,6 +284,10 @@ expr : CTE_ {
                 // OK
                 symbol *ptr;
                 quad *q;
+
+                // if les deux opérandes sont int, then faire un bool
+                if (type == S_INT && (op == Q_INF || op == Q_INFEQ || op == Q_SUP || op == Q_SUPEQ || op == Q_EQUAL || op == Q_DIFF))
+                    type = S_BOOL;
 
                 switch (type) {
                     case S_INT  : ptr = newTmpInt (&stable, 0)     ; break;
