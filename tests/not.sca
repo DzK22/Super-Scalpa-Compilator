@@ -1,0 +1,6 @@
+program not
+    var a : bool;
+    begin
+        a := true;
+        write a;
+    end
