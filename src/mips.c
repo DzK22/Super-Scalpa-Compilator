@@ -315,7 +315,7 @@ void getText (FILE *f, quad *q) {
 
                 fprintf(f, "\t\t\t\t# %s := NOT %s\n", res->id, argv1->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tbne $t0, $zero, $t1, %s\n", label);
+                fprintf(f, "\tbne $t0, $zero, %s\n", label);
                 fprintf(f, "\tli $t3 1\n");
                 fprintf(f, "\tj %s\n", label2);
                 fprintf(f, "\n%s:\n", label);
