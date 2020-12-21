@@ -113,6 +113,8 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 "-"                                         { return MINUS_;                    }
 
+"not"                                       { return NOT_;                    }
+
 "*"                                         { return MULT_;                     }
 
 "/"                                         { return DIV_;                      }
