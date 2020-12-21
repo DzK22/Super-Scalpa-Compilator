@@ -81,6 +81,7 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 {X}{O}{R}                                   { return XOR_;                      }
 
+{N}{O}{T}                                   { return NOT_; }
 
 {I}{N}{T}                                   { return INT_;                      }
 

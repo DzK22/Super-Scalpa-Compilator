@@ -65,8 +65,11 @@
 %type <type>     typename atomictype
 %type <op>       opu opb
 
-%left   PLUS_ MINUS_
-%left   MULT_ DIV_
+%right EQUAL_
+%nonassoc   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
+%left  PLUS_ MINUS_ OR_
+%left  MULT_ DIV_ AND_
+%right AFFEC_
 %right  EXP_
 %left   NOT_
 

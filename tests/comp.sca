@@ -1,8 +1,4 @@
 program comp
     begin
-<<<<<<< HEAD
-        if (((1 > 2) and (5 > 4))) then write "TRUE" else write "FALSE";
-=======
-        if ((1 > 2) and (5 > 4)) then write "TRUE" else write "FALSE";
->>>>>>> a11c53e9e2d6fd63263c3e9f8ff171c56870193f
+        write 5 * 3 + 2
     end
