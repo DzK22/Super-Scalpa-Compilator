@@ -130,11 +130,16 @@ symbol *newVarUnit (symbol **stable, char *id) {
     return newVar(stable, S_UNIT, id, NULL);
 }
 
-symbol *search (symbol *s, char *id) {
-    while (s != NULL) {
-        if (strcmp(s->id, id) == 0)
-            return s;
-        s = s->next;
+symbol *search (symbol *stable, char *id) {
+    char str[LEN];
+    int res = snprintf(str, LEN, "var_%s", id);
+    if (res < 0 || res >= LEN)
+        ferr("stable.c search snprintf");
+
+    while (stable != NULL) {
+        if (strcmp(stable->id, str) == 0)
+            return stable;
+        stable = stable->next;
     }
 
     return NULL;

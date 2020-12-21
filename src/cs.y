@@ -225,9 +225,7 @@ sequence : instr DOTCOMMA_ sequence  {
         ;
 
 lvalue: IDENT_ {
-                char s[LEN];
-                sprintf(s, "var_%s", $1);
-                symbol *ptr = search(stable, s);
+                symbol *ptr = search(stable, $1);
                 testID(ptr, $1);
 
                 $$.ptr  = ptr;
@@ -372,9 +370,7 @@ expr : CTE_ {
                 // array with indexes
             }
       | IDENT_ {
-                char s[LEN];
-                sprintf(s, "var_%s", $1);
-                symbol *ptr = search(stable, s);
+                symbol *ptr = search(stable, $1);
                 testID(ptr, $1);
 
                 $$.ptr  = ptr;
