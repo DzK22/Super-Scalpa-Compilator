@@ -1,2 +1,4 @@
 program comp
-    if (1 > 2 and 5 > 4) then write "TRUE" else write "FALSE";
+    begin
+        if ((1 > 2) and (5 > 4)) then write "TRUE" else write "FALSE";
+    end
