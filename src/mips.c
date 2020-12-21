@@ -330,6 +330,22 @@ void getText (FILE *f, quad *q) {
                 free(label2);
                 break;
 
+            case Q_FUNDEC:
+                if (!res || !argv1)
+                    ferr("mips.c getText Q_FUNDEC quad error");
+
+                fprintf(f, "\t\t\t\t# function %s \n", res->id);
+                fprintf(f, "\t%s:\n", res->id);
+                break;
+
+            case Q_FUNCALL:
+                if (!res || !argv1)
+                    ferr("mips.c getText Q_FUNCALL quad error");
+
+                fprintf(f, "\t\t\t\t# function %s \n", res->id);
+                fprintf(f, "\t%s:\n", res->id);
+                break;
+
             default:
                 ferr("mips.c getText unknown op");
         }

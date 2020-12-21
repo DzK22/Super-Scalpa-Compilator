@@ -78,9 +78,9 @@
 
 %right EQUAL_
 %nonassoc   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
-%left  PLUS_ MINUS_ OR_
-%left  MULT_ DIV_ AND_
-%right AFFEC_
+%left   PLUS_ MINUS_ OR_
+%left   MULT_ DIV_ AND_
+%right  AFFEC_
 %right  EXP_
 %left   NOT_
 
@@ -306,10 +306,9 @@ expr : CTE_ {
             arithmeticExpression(Q_MINUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
-      | expr MULT_ expr {
-            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-                ferr("cs.y expr MULT expr type error");
-
+       | expr MULT_ expr {
+           if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+               ferr("cs.y expr MULT expr type error");
             arithmeticExpression(Q_MULT, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
@@ -437,7 +436,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-        // yydebug = 1;
+        /* yydebug = 1; */
     #endif
 
     yyin = fopen(argv[1], "r");

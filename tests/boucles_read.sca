@@ -1,0 +1,18 @@
+program test
+
+var nombre,sup,inf : int;
+
+begin
+
+  write "Borne sup";
+  read sup;
+  write "Borne inf";
+  read inf;
+  read nombre;
+  while ((nombre>inf) and nombre<sup) do
+  begin
+    write "Nombre contenu";
+    read nombre;
+  end;
+  write "Nombre en dehors";
+  end
