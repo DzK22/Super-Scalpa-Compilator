@@ -155,9 +155,9 @@ void getText (FILE *f, quad *q) {
                         fprintf(f, "\tbeq $t0, $zero, %s\n", label);
                         fprintf(f, "\tla $a0, _true\n");
                         fprintf(f, "\tj %s\n", label2);
-                        fprintf(f, "%s:\n", label);
+                        fprintf(f, "\n%s:\n", label);
                         fprintf(f, "\tla $a0, _false\n");
-                        fprintf(f, "%s:\n", label2);
+                        fprintf(f, "\n%s:\n", label2);
                         fprintf(f, "\tli $v0, 4\n");
                         break;
                 }

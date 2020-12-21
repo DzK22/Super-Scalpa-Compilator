@@ -1,11 +1,12 @@
 (* Test divers *)
 
 program tata
-   var pd : bool;
+   var pd, pe : bool;
    begin
-    write "titi";
-    pd := true;
-    write " pd = ";
-    write pd
+      pd := false or false or false or (true and true);
+      pe := true and false and ((false and true) or (true or false));
+      write pd;
+      write " & ";
+      write pe;
    end
 

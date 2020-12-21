@@ -166,62 +166,61 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = concat($2.quad, q);
             }
         | IF_ expr THEN_ m instr m {
-            quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-            qif->gtrue  = $4.quad->res;
-            qif->gfalse = $6.quad->res;
-            qif->gnext  = $6.quad->res;
+                quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
+                qif->gtrue  = $4.quad->res;
+                qif->gfalse = $6.quad->res;
+                qif->gnext  = $6.quad->res;
 
-            $$.quad = concat($2.quad, qif);
-            $$.quad = concat($$.quad, $4.quad);
-            $$.quad = concat($$.quad, $5.quad);
-            $$.quad = concat($$.quad, $6.quad);
-        }
+                $$.quad = concat($2.quad, qif);
+                $$.quad = concat($$.quad, $4.quad);
+                $$.quad = concat($$.quad, $5.quad);
+                $$.quad = concat($$.quad, $6.quad);
+            }
         | IF_ expr THEN_ m instr ELSE_ m instr m {
-            quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-            qif->gtrue  = $4.quad->res;
-            qif->gfalse = $7.quad->res;
-            qif->gnext  = $9.quad->res;
+                quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
+                qif->gtrue  = $4.quad->res;
+                qif->gfalse = $7.quad->res;
+                qif->gnext  = $9.quad->res;
 
-            quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
+                quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
 
-            $$.quad = concat($2.quad, qif);
-            $$.quad = concat($$.quad, $4.quad);
-            $$.quad = concat($$.quad, $5.quad);
-            $$.quad = concat($$.quad, go);
-            $$.quad = concat($$.quad, $7.quad);
-            $$.quad = concat($$.quad, $8.quad);
-            $$.quad = concat($$.quad, $9.quad);
-        }
-        // Normalement il va falloir différencier expr des expressions booléènnes qui renvoie true ou false mais je vois pas trop comment faire (Genre while true do devrait fonctionner si je dis pas de betises)
+                $$.quad = concat($2.quad, qif);
+                $$.quad = concat($$.quad, $4.quad);
+                $$.quad = concat($$.quad, $5.quad);
+                $$.quad = concat($$.quad, go);
+                $$.quad = concat($$.quad, $7.quad);
+                $$.quad = concat($$.quad, $8.quad);
+                $$.quad = concat($$.quad, $9.quad);
+            }
         | WHILE_ m expr DO_ m instr m {
-            quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
-            qif->gtrue  = $5.quad->res;
-            qif->gfalse = $7.quad->res;
-            qif->gnext  = $2.quad->res;
+                quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
+                qif->gtrue  = $5.quad->res;
+                qif->gfalse = $7.quad->res;
+                qif->gnext  = $2.quad->res;
 
-            quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
+                quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
 
-            $$.quad = concat($2.quad, $3.quad);
-            $$.quad = concat($$.quad, qif);
-            $$.quad = concat($$.quad, $5.quad);
-            $$.quad = concat($$.quad, $6.quad);
-            $$.quad = concat($$.quad, go);
-            $$.quad = concat($$.quad, $7.quad);
-        }
+                $$.quad = concat($2.quad, $3.quad);
+                $$.quad = concat($$.quad, qif);
+                $$.quad = concat($$.quad, $5.quad);
+                $$.quad = concat($$.quad, $6.quad);
+                $$.quad = concat($$.quad, go);
+                $$.quad = concat($$.quad, $7.quad);
+            }
       ;
 
 sequence : instr DOTCOMMA_ sequence  {
-            $$.quad = concat($1.quad, $3.quad);
-            $$.ptr  = $1.ptr;
-         }
-         | instr DOTCOMMA_ {
-             $$.ptr  = $1.ptr;
-             $$.quad = $1.quad;
-         }
-         | instr  {
-             $$.ptr  = $1.ptr;
-             $$.quad = $1.quad;
-         }
+                $$.quad = concat($1.quad, $3.quad);
+                $$.ptr  = $1.ptr;
+             }
+             | instr DOTCOMMA_ {
+                 $$.ptr  = $1.ptr;
+                 $$.quad = $1.quad;
+             }
+             | instr  {
+                 $$.ptr  = $1.ptr;
+                 $$.quad = $1.quad;
+             }
         ;
 
 lvalue: IDENT_ {
@@ -310,6 +309,7 @@ expr : CTE_ {
                         break;
 
                     case Q_AND:
+                        $$.ptr = ptr;
                         complete($1.ltrue, true, $3.quad->res);
                         $$.lfalse = concat($1.lfalse, $4.lfalse);
                         $$.ltrue = $4.ltrue;
@@ -321,6 +321,7 @@ expr : CTE_ {
                         break;
 
                     case Q_OR:
+                        $$.ptr = ptr;
                         complete($1.lfalse, false, $3.quad->res);
                         $$.lfalse = $4.lfalse;
                         $$.ltrue = concat($1.ltrue, $4.ltrue);
