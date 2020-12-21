@@ -1,0 +1,8 @@
+program totoread
+    var a : int;
+
+    begin
+        read a;
+        write " a vaut ";
+        write a;
+    end

@@ -24,6 +24,9 @@ void getData (FILE *f, symbol *s) {
     // initial
     fprintf(f, "_true:\t.asciiz \"true\"\n");
     fprintf(f, "_false:\t.asciiz \"false\"\n");
+    fprintf(f, "_read_int: .asciiz \"Enter int: \"\n");
+    fprintf(f, "_read_string: .asciiz \"Enter string: \"\n");
+    fprintf(f, "_buffer: .space %s\n", MIPS_BUFFER_SPACE);
 
     while (s != NULL) {
         switch (s->type) {
@@ -131,7 +134,7 @@ void getText (FILE *f, quad *q) {
 
             case Q_WRITE:
                 if (!argv1)
-                    ferr("mips.c getText Q_WRITE Quad error");
+                    ferr("mips.c getText Q_WRITE quad error");
 
                 switch (argv1->type) {
                     case S_INT:
@@ -163,6 +166,58 @@ void getText (FILE *f, quad *q) {
                 }
 
                 fprintf(f, "\tsyscall\n");
+                break;
+
+            case Q_READ:
+                if (!res)
+                    ferr("mips.c getText Q_READ quad error");
+
+                switch (res->type) {
+                    case S_INT:
+                        fprintf(f, "\t\t\t\t# read integer %s\n", res->id);
+                        fprintf(f, "\tli $v0, 8\n");
+                        fprintf(f, "\tla $a0, _read_int\n");
+                        fprintf(f, "\tsyscall\n");
+                        fprintf(f, "\tli $v0, 5\n");
+                        fprintf(f, "\tsyscall\n");
+                        fprintf(f, "\tsw $v0, %s\n", res->id);
+                        break;
+
+                    case S_STRING:
+                        fprintf(f, "\t\t\t\t# read string %s\n", res->id);
+                        fprintf(f, "\tli $v0, 8\n");
+                        fprintf(f, "\tla $a0, _read_string\n");
+                        fprintf(f, "\tsyscall\n");
+                        fprintf(f, "\tla $a0, _buffer\n");
+                        fprintf(f, "\tli $a1, %d\n", MIPS_BUFFER_SPACE);
+                        fprintf(f, "\tla $a0, _read_string\n");
+                        fprintf(f, "\tsyscall\n");
+                        fprintf(f, "\tsw $v0, %s\n", res->id);
+                        break;
+
+                    case S_BOOL:
+                        label  = nextTmpLabel();
+                        label2 = nextTmpLabel();
+
+                        fprintf(f, "\t\t\t\t# read bool %s\n", res->id);
+                        fprintf(f, "\tli $v0, 8\n");
+                        fprintf(f, "\tla $a0, _read_int\n");
+                        fprintf(f, "\tsyscall\n");
+                        fprintf(f, "\tli $v0, 5\n");
+                        fprintf(f, "\tsyscall\n");
+                        fprintf(f, "\tbeq $v0, $zero, %s\n", label);
+                        fprintf(f, "\tli $t0, 1\n");
+                        fprintf(f, "\tj %s\n", label2);
+                        fprintf(f, "\n%s:\n", label);
+                        fprintf(f, "\tli $t0, 0\n");
+                        fprintf(f, "\n%s:\n", label2);
+                        fprintf(f, "\nsw $t0, %s\n", res->id);
+
+                        free(label);
+                        free(label2);
+                        break;
+                }
+
                 break;
 
             case Q_AFFEC:

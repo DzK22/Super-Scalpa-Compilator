@@ -1,6 +1,8 @@
 #ifndef MIPS_H
 #define MIPS_H
 
+#define MIPS_BUFFER_SPACE 32
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
