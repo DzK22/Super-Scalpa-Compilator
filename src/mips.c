@@ -289,6 +289,9 @@ void getText (FILE *f, quad *q) {
                     case Q_OR    : fprintf(f, "\tor $t2, $t0, $t1\n");
                                    fprintf(f, "\tbeq $t2, $zero, %s\n", label);
                                    break;
+                    case Q_AND   : fprintf(f, "\tand $t2, $t0, $t1\n");
+                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
+                                   break;
                     case Q_XOR   : fprintf(f, "\txor $t2, $t0, $t1\n");
                                    fprintf(f, "\tbeq $t2, $zero, %s\n", label);
                                    break;

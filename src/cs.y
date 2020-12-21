@@ -26,6 +26,18 @@
             ferr(s);
         }
     }
+
+    void arithmeticExpression(qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2)
+    {
+        // OK
+        symbol *ptr = newTmpInt(&stable, 0);
+        quad *q = qGen(op, ptr, arg1, arg2);
+
+        *res = ptr;
+        *quadRes = concat(quad1, quad2);
+        *quadRes = concat(*quadRes, q);
+     }
+
 %}
 
 %union {
@@ -63,7 +75,6 @@
 %type <listDecl> fundecllist  vardecllist fundecl
 %type <arglist>  identlist varsdecl
 %type <type>     typename atomictype
-%type <op>       opu opb
 
 %right EQUAL_
 %nonassoc   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
@@ -278,106 +289,109 @@ expr : CTE_ {
                 $$.ltrue  = $2.ltrue;
                 $$.lfalse = $2.lfalse;
             }
-      | expr opb m expr {
-                if ($1.ptr->type != $4.ptr->type)
-                    ferr("cs.y expr : expr opb expr Different types");
 
-                // verify type and opb correct
-                stype type = $1.ptr->type;
-                qop op = $2;
 
-                if ((type == S_INT && !(op == Q_PLUS || op == Q_MINUS || op == Q_MULT || op == Q_DIV || op == Q_EXP || op == Q_INF || op == Q_INFEQ || op == Q_SUP || op == Q_SUPEQ || op == Q_EQUAL || op == Q_DIFF))
-                || ((type == S_BOOL && !(op == Q_EQUAL || op == Q_DIFF || op == Q_AND || op == Q_OR || op == Q_XOR))
-                || (type == S_STRING)))
-                    ferr("cs.y expr opb expr Incorrect type/opb");
+            // TODO
+      | expr PLUS_ expr {
+            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+              ferr("cs.y expr PLUS expr type error");
 
-                // OK
-                symbol *ptr;
-                quad *q;
+            arithmeticExpression(Q_PLUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+          }
 
-                // if les deux opérandes sont int, then faire un bool
-                if (type == S_INT && (op == Q_INF || op == Q_INFEQ || op == Q_SUP || op == Q_SUPEQ || op == Q_EQUAL || op == Q_DIFF))
-                    type = S_BOOL;
+      | expr MINUS_ expr {
+            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+                ferr("cs.y expr MULT expr type error");
 
-                switch (type) {
-                    case S_INT  : ptr = newTmpInt (&stable, 0)     ; break;
-                    case S_BOOL : ptr = newTmpBool(&stable, false) ; break;
-                    // no operations on S_STRING are allowed
-                }
+            arithmeticExpression(Q_MINUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+          }
 
-                switch (op) {
-                    case Q_MINUS:
-                    case Q_PLUS:
-                    case Q_MULT:
-                    case Q_DIV:
-                    case Q_EXP:
-                    case Q_EQUAL:
-                    case Q_DIFF:
-                    case Q_INF:
-                    case Q_INFEQ:
-                    case Q_SUP:
-                    case Q_SUPEQ:
-                        $$.ptr = ptr;
-                        q = qGen(op, ptr, $1.ptr, $4.ptr);
+      | expr MULT_ expr {
+            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+                ferr("cs.y expr MULT expr type error");
 
-                        $$.quad = concat($1.quad, $4.quad);
-                        $$.quad = concat($$.quad, q);
-                        qFree($3.quad);
-                        break;
+            arithmeticExpression(Q_MULT, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+          }
 
-                    case Q_AND:
-                        $$.ptr = ptr;
-                        complete($1.ltrue, true, $3.quad->res);
-                        $$.lfalse = concat($1.lfalse, $4.lfalse);
-                        $$.ltrue = $4.ltrue;
+      | expr DIV_ expr {
+            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+                ferr("cs.y expr MULT expr type error");
 
-                        q = qGen(op, ptr, $1.ptr, $4.ptr);
-                        $$.quad = concat($1.quad, $3.quad);
-                        $$.quad = concat($$.quad, $4.quad);
-                        $$.quad = concat($$.quad, q);
-                        break;
+            arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+          }
 
-                    case Q_OR:
-                        $$.ptr = ptr;
-                        complete($1.lfalse, false, $3.quad->res);
-                        $$.lfalse = $4.lfalse;
-                        $$.ltrue = concat($1.ltrue, $4.ltrue);
+      | expr OR_ m expr {
+            if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
+                ferr("cs.y expr OR expr type error");
 
-                        q = qGen(op, ptr, $1.ptr, $4.ptr);
-                        $$.quad = concat($1.quad, $3.quad);
-                        $$.quad = concat($$.quad, $4.quad);
-                        $$.quad = concat($$.quad, q);
-                        break;
+            symbol *ptr = newTmpBool(&stable, false);
+            $$.ptr = ptr;
 
-                    case Q_XOR:
-                        break;
-                }
-            }
-      | opu expr {
-                // verify type and opb correct
-                stype type = $2.ptr->type;
-                qop op = $1;
 
-                if ((type == S_INT && op != Q_MINUS) || (type == S_BOOL && op != Q_NOT) || (type == S_STRING))
-                    ferr("cs.y opu expr Incorrect type/opu");
+            complete($1.lfalse, false, $3.quad->res);
+            $$.lfalse = $4.lfalse;
+            $$.ltrue = concat($1.ltrue, $4.ltrue);
 
-                symbol *ptr;
-                switch (type) {
-                    case S_INT  : ptr = newTmpInt (&stable, 0)     ; break;
-                    case S_BOOL : ptr = newTmpBool(&stable, false) ; break;
-                    // no operations on S_STRING are allowed
-                }
-                $$.ptr = ptr;
+            quad *q = qGen(Q_OR, ptr, $1.ptr, $4.ptr);
+            $$.quad = concat($1.quad, $3.quad);
+            $$.quad = concat($$.quad, $4.quad);
+            $$.quad = concat($$.quad, q);
+          }
 
-                quad *q;
-                if (op == Q_MINUS)
-                    q = qGen(op, ptr, ptr, $2.ptr);
-                else
-                    q = qGen(op, ptr, $2.ptr, NULL);
+      | expr AND_ m expr {
+            if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
+                ferr("cs.y expr AND expr type error");
+            symbol *ptr = newTmpBool(&stable, false);
+            $$.ptr = ptr;
 
-                $$.quad = $2.quad;
-                $$.quad = concat($$.quad, q);
-            }
+            complete($1.ltrue, true, $3.quad->res);
+            $$.lfalse = concat($1.lfalse, $4.lfalse);
+            $$.ltrue = $4.ltrue;
+
+            quad *q = qGen(Q_AND, ptr, $1.ptr, $4.ptr);
+            $$.quad = concat($1.quad, $3.quad);
+            $$.quad = concat($$.quad, $4.quad);
+            $$.quad = concat($$.quad, q);
+          }
+
+      | expr XOR_ m expr {
+            if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
+                ferr("cs.y expr XOR expr type error");
+
+            symbol *ptr = newTmpBool(&stable, false);
+            $$.ptr = ptr;
+
+            // complete true false etc
+
+            quad *q = qGen(Q_XOR, ptr, $1.ptr, $4.ptr);
+            $$.quad = concat($1.quad, $3.quad);
+            $$.quad = concat($$.quad, $4.quad);
+            $$.quad = concat($$.quad, q);
+          }
+
+        | NOT_ expr {
+            if ($2.ptr->type != S_BOOL)
+                ferr("cs.y expr NOT type error");
+
+            symbol *ptr = newTmpBool(&stable, false);
+            $$.ptr = ptr;
+
+            quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
+            $$.quad = $2.quad;
+            $$.quad = concat($$.quad, q);
+        }
+
+        | MINUS_ expr {
+            if ($2.ptr->type != S_INT)
+                ferr("cs.y expr INT type error");
+
+            symbol *ptr = newTmpInt(&stable, 0);
+            $$.ptr = ptr;
+            quad *q = qGen(Q_MINUS, ptr, $2.ptr, NULL);
+            $$.quad = $2.quad;
+            $$.quad = concat($$.quad, q);
+        }
+
       | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 // function call (with parameters)
             }
@@ -403,26 +417,6 @@ m : %empty {
           $$.quad = qGen(Q_LABEL, newTmpLabel(&stable), NULL, NULL);
       }
   ;
-
-opb : PLUS_   { $$ = Q_PLUS   ; }
-    | MINUS_  { $$ = Q_MINUS  ; }
-    | MULT_   { $$ = Q_MULT   ; }
-    | DIV_    { $$ = Q_DIV    ; }
-    | EXP_    { $$ = Q_EXP    ; }
-    | INF_    { $$ = Q_INF    ; }
-    | INF_EQ_ { $$ = Q_INFEQ  ; }
-    | SUP_    { $$ = Q_SUP    ; }
-    | SUP_EQ_ { $$ = Q_SUPEQ  ; }
-    | EQUAL_  { $$ = Q_EQUAL  ; }
-    | DIFF_   { $$ = Q_DIFF   ; }
-    | AND_    { $$ = Q_AND    ; }
-    | OR_     { $$ = Q_OR     ; }
-    | XOR_    { $$ = Q_XOR    ; }
-    ;
-
-opu : MINUS_  { $$ = Q_MINUS ; }
-    | NOT_    { $$ = Q_NOT   ; }
-    ;
 
 %%
 
