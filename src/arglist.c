@@ -44,7 +44,7 @@ void arglistPrint (arglist *la) {
 		if (l->next != NULL)
 			fprintf(stdout, "%s, ", l->id);
 		else
-			fprintf(stdout, "%s ]\n", l->id);
+			fprintf(stdout, "%s ] : ", l->id);
 		l = l->next;
 	}
 }

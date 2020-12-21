@@ -88,6 +88,14 @@ vardecllist : %empty                         { }
 
 varsdecl: VAR_ identlist ':' typename {
              arglistPrint($2);
+             switch ($4) {
+                 case S_INT:
+                    fprintf(stdout, "integer\n");
+                    break;
+                 case S_BOOL:
+                    fprintf(stdout, "boolean\n");
+                    break;
+             }
              arglist *al = $2;
 
               while (al != NULL) {

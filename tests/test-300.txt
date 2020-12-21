@@ -1,6 +1,6 @@
 (* Test des opérations booléènnes  *)
 program BoolTest
-   var a, c, t : int
+   var a, c, t : int; var test : bool
    begin
      a := 0;
      t := 10;
