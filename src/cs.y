@@ -67,9 +67,9 @@
 
 %right EQUAL_
 %nonassoc   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
-%left  PLUS_ MINUS_ OR_
-%left  MULT_ DIV_ AND_
-%right AFFEC_
+%left   PLUS_ MINUS_ OR_
+%left   MULT_ DIV_ AND_
+%right  AFFEC_
 %right  EXP_
 %left   NOT_
 
@@ -350,6 +350,13 @@ expr : CTE_ {
                         break;
 
                     case Q_XOR:
+                        $$.ptr = ptr;
+                        // complete true false etc
+
+                        q = qGen(op, ptr, $1.ptr, $4.ptr);
+                        $$.quad = concat($1.quad, $3.quad);
+                        $$.quad = concat($$.quad, $4.quad);
+                        $$.quad = concat($$.quad, q);
                         break;
                 }
             }

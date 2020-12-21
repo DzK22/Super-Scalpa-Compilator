@@ -1,0 +1,4 @@
+program comp
+    begin
+        write true xor true;
+    end
