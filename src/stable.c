@@ -54,7 +54,12 @@ void sFree (symbol *s) {
 symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     static int nsym = 0;
     static int nlabels = 0;
-    bool isTmp      = id ? false : true;
+    bool isTmp;
+    if (id != NULL)
+        isTmp = false;
+    else
+        isTmp = true;
+
     char tid[LEN];
     int res;
 

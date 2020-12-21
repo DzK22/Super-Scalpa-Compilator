@@ -1,8 +1,13 @@
 program totoread
-    var a : string;
-
+    var a,b : string;
+    var c,d : int;
     begin
         read a;
-        write " a vaut ";
+        c:=3;
+        read d;
+        (*write " a vaut ";*)
         write a;
+        write c;
+        write "c+d=";
+        write c+d;
     end

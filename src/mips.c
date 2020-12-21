@@ -26,6 +26,7 @@ void getData (FILE *f, symbol *s) {
     fprintf(f, "_false:\t.asciiz \"false\"\n");
     fprintf(f, "_read_int: .asciiz \"Enter int: \"\n");
     fprintf(f, "_read_string: .asciiz \"Enter string: \"\n");
+    fprintf(f, ".align 2\n");
     fprintf(f, "_buffer: .space %d\n", MIPS_BUFFER_SPACE);
 
     while (s != NULL) {
@@ -147,6 +148,8 @@ void getText (FILE *f, quad *q) {
                         fprintf(f, "\t\t\t\t# print string %s\n", argv1->id);
                         fprintf(f, "\tli $v0, 4\n");
                         fprintf(f, "\tla $a0, %s\n", argv1->id);
+                        if(!argv1->tmp)
+                            fprintf(f, "\tmove $a0, $t0\n");
                         break;
 
                     case S_BOOL:
@@ -191,8 +194,9 @@ void getText (FILE *f, quad *q) {
                         fprintf(f, "\tli $v0, 8\n");
                         fprintf(f, "\tla $a0, _buffer\n");
                         fprintf(f, "\tli $a1, %d\n", MIPS_BUFFER_SPACE);
+                        fprintf(f, "\tmove $t0, $a0\n");
                         fprintf(f, "\tsyscall\n");
-                        fprintf(f, "\tsw $a0, %s\n", res->id);
+                        //fprintf(f, "\tsw $a0, %s\n", res->id);
                         break;
 
                     case S_BOOL:
@@ -225,8 +229,8 @@ void getText (FILE *f, quad *q) {
                     ferr("mips.c getText Q_AFFEC quad error");
 
                 fprintf(f, "\t\t\t\t# %s := %s\n", res->id, argv1->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tsw $t0, %s\n", res->id);
+                fprintf(f, "\tlw $s0, %s\n", argv1->id);
+                fprintf(f, "\tsw $s0, %s\n", res->id);
                 break;
 
             case Q_LABEL:
