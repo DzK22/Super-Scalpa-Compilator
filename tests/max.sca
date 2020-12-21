@@ -1,0 +1,28 @@
+(* Test divers *)
+
+program test
+   var a, b, c, d, e, f, g, i, borne, max : int;
+   begin
+      a := 1;
+      b := 10;
+      c := 5;
+      d := 2;
+      e := 19;
+      f := 13;
+      g := 45;
+      borne := 7;
+      i := 0;
+      max := a;
+      while i < borne do
+      begin
+        if ((max < b) and (i = 0)) then max := b;
+        if ((max < c) and (i = 1)) then max := c;
+        if ((max < d) and (i = 2)) then max := d;
+        if ((max < e) and (i = 3)) then max := e;
+        if ((max < f) and (i = 4)) then max := f;
+        if ((max < g) and (i = 5)) then max := g;
+        if ((max < a) and (i = 6)) then max := a;
+        i := i + 1;
+       end;
+       write max;
+   end
