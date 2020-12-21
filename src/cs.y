@@ -38,6 +38,18 @@
         *quadRes = concat(*quadRes, q);
      }
 
+    void booleanExpression(qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2)
+    {
+        // OK
+        symbol *ptr = newTmpInt(&stable, 0);
+        quad *q = qGen(op, ptr, arg1, arg2);
+
+        *res = ptr;
+        *quadRes = concat(quad1, quad2);
+        *quadRes = concat(*quadRes, q);
+        (*res)->type = S_BOOL;
+     }
+
 %}
 
 %union {
@@ -76,10 +88,12 @@
 %type <arglist>  identlist varsdecl
 %type <type>     typename atomictype
 
-%right EQUAL_
-%nonassoc   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
-%left   PLUS_ MINUS_ OR_
-%left   MULT_ DIV_ AND_
+%left   OR_
+%left   AND_
+%left   EQUAL_
+%left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
+%left   PLUS_ MINUS_
+%left   MULT_ DIV_
 %right  AFFEC_
 %right  EXP_
 %left   NOT_
@@ -265,34 +279,7 @@ exprlist : expr {}
         |  expr COMMA_ exprlist {}
         ;
 
-expr : CTE_ {
-                symbol *ptr;
-                switch ($1.type) {
-                    case S_INT    : ptr = newTmpInt (&stable, $1.ival);
-                                    break;
-                    case S_BOOL   : ptr = newTmpBool(&stable, $1.bval);
-                                    break;
-                    case S_STRING : ptr = newTmpStr (&stable, $1.sval);
-                                    free($1.sval);
-                                    break;
-                    default: ferr("cs.y expr : CTE_ Unknow cte type");
-                }
-
-                $$.ptr  = ptr;
-                $$.quad = NULL;
-                $$.ltrue = NULL;
-                $$.lfalse = NULL;
-            }
-      | PARLEFT_ expr PARRIGHT_ {
-                $$.ptr    = $2.ptr;
-                $$.quad   = $2.quad;
-                $$.ltrue  = $2.ltrue;
-                $$.lfalse = $2.lfalse;
-            }
-
-
-            // TODO
-      | expr PLUS_ expr {
+expr :  expr PLUS_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
               ferr("cs.y expr PLUS expr type error");
 
@@ -382,7 +369,7 @@ expr : CTE_ {
 
         | MINUS_ expr {
             if ($2.ptr->type != S_INT)
-                ferr("cs.y expr INT type error");
+                ferr("cs.y MINUS expr INT type error");
 
             symbol *ptr = newTmpInt(&stable, 0);
             $$.ptr = ptr;
@@ -390,7 +377,44 @@ expr : CTE_ {
             $$.quad = $2.quad;
             $$.quad = concat($$.quad, q);
         }
+       | expr SUP_ expr {
 
+             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+               ferr("cs.y expr SUP_ expr type error");
+
+             booleanExpression(Q_SUP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+           }
+
+       | expr SUP_EQ_ expr {
+             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+               ferr("cs.y expr SUP_ expr type error");
+
+             booleanExpression(Q_SUPEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+           }
+       | expr INF_ expr {
+             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+               ferr("cs.y expr SUP_ expr type error");
+
+             booleanExpression(Q_INF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+           }
+       | expr INF_EQ_ expr {
+             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+               ferr("cs.y expr SUP_ expr type error");
+
+             booleanExpression(Q_INFEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+           }
+       | expr EQUAL_ expr {
+             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+               ferr("cs.y expr SUP_ expr type error");
+
+             booleanExpression(Q_EQUAL, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+           }
+       | expr DIFF_ expr {
+             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+               ferr("cs.y expr SUP_ expr type error");
+
+             booleanExpression(Q_DIFF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+           }
       | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 // function call (with parameters)
             }
@@ -410,6 +434,30 @@ expr : CTE_ {
                 $$.lfalse = NULL;
                 free($1);
             }
+        | CTE_ {
+                        symbol *ptr;
+                        switch ($1.type) {
+                            case S_INT    : ptr = newTmpInt (&stable, $1.ival);
+                                            break;
+                            case S_BOOL   : ptr = newTmpBool(&stable, $1.bval);
+                                            break;
+                            case S_STRING : ptr = newTmpStr (&stable, $1.sval);
+                                            free($1.sval);
+                                            break;
+                            default: ferr("cs.y expr : CTE_ Unknow cte type");
+                        }
+
+                        $$.ptr  = ptr;
+                        $$.quad = NULL;
+                        $$.ltrue = NULL;
+                        $$.lfalse = NULL;
+                    }
+              | PARLEFT_ expr PARRIGHT_ {
+                        $$.ptr    = $2.ptr;
+                        $$.quad   = $2.quad;
+                        $$.ltrue  = $2.ltrue;
+                        $$.lfalse = $2.lfalse;
+                    }
       ;
 
 m : %empty {

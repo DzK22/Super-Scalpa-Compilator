@@ -102,7 +102,6 @@ void getText (FILE *f, quad *q) {
             case Q_EXP:
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText arith quad error");
-
                 fprintf(f, "\t\t\t\t# %s = %s %s %s\n", res->id, argv1->id, opstr(q->op), argv2->id);
                 fprintf(f, "\tlw $t0, %s\n", argv1->id);
                 fprintf(f, "\tlw $t1, %s\n", argv2->id);
