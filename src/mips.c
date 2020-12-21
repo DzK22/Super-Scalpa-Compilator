@@ -63,6 +63,7 @@ char * opstr (qop op) {
             case Q_AND   : sprintf(str, "AND") ; break ;
             case Q_OR    : sprintf(str, "OR")  ; break ;
             case Q_XOR   : sprintf(str, "XOR") ; break ;
+            case Q_NOT   : sprintf(str, "NOT") ; break ;
             default: ferr("mips.c opstr unknow op");
     }
 
@@ -196,7 +197,6 @@ void getText (FILE *f, quad *q) {
                         fprintf(f, "\tli $a1, %d\n", MIPS_BUFFER_SPACE);
                         fprintf(f, "\tmove $s0, $a0\n");
                         fprintf(f, "\tsyscall\n");
-                        //fprintf(f, "\tsw $a0, %s\n", res->id);
                         break;
 
                     case S_BOOL:
@@ -284,7 +284,6 @@ void getText (FILE *f, quad *q) {
                     case Q_INFEQ : fprintf(f, "\tbgt $t0, $t1, %s\n", label); break;
                     case Q_SUP   : fprintf(f, "\tble $t0, $t1, %s\n", label); break;
                     case Q_SUPEQ : fprintf(f, "\tblt $t0, $t1, %s\n", label); break;
-                    case Q_AND   : fprintf(f, "\tand $t2, $t0, $t1\n");
                                    fprintf(f, "\tbeq $t2, $zero, %s\n", label);
                                    break;
                     case Q_OR    : fprintf(f, "\tor $t2, $t0, $t1\n");
@@ -293,8 +292,30 @@ void getText (FILE *f, quad *q) {
                     case Q_XOR   : fprintf(f, "\txor $t2, $t0, $t1\n");
                                    fprintf(f, "\tbeq $t2, $zero, %s\n", label);
                                    break;
+
                 }
 
+                fprintf(f, "\tli $t3 1\n");
+                fprintf(f, "\tj %s\n", label2);
+                fprintf(f, "\n%s:\n", label);
+                fprintf(f, "\tli $t3 0\n");
+                fprintf(f, "\n%s:\n", label2);
+                fprintf(f, "\tsw $t3 %s\n", res->id);
+
+                free(label);
+                free(label2);
+                break;
+
+            case Q_NOT:
+                if (!res || !argv1)
+                    ferr("mips.c getText Q_NOT quad error");
+
+                label  = nextTmpLabel();
+                label2 = nextTmpLabel();
+
+                fprintf(f, "\t\t\t\t# %s := NOT %s\n", res->id, argv1->id);
+                fprintf(f, "\tlw $t0, %s\n", argv1->id);
+                fprintf(f, "\tbne $t0, $zero, %s\n", label);
                 fprintf(f, "\tli $t3 1\n");
                 fprintf(f, "\tj %s\n", label2);
                 fprintf(f, "\n%s:\n", label);

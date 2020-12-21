@@ -1,0 +1,4 @@
+program totonot
+    begin
+        write not 5 > 4;
+    end
