@@ -464,13 +464,16 @@ lvalue: IDENT_ {
 
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
 
-          arglist *toto = $3->al;
-          while (toto != NULL) {
-              fprintf(stdout, "liste indices %d\n", toto->sym->ival);
-              toto = toto->next;
-          }
-          printf("je rentre dans le truc lvalue \n") ;
-
+          symbol *ptr = search(stable, $1);
+          testID(ptr, $1);
+          // calcul l'indice du exprlist element
+          lstInt *tab = ptr->array.intarr;
+          int index = 0  ; //  exprlist
+          arglist *cur = $3->al;
+          int value =  getNthIntVal (tab, $3->al->sym->ival);
+          ptr->ival = value;
+          $$.ptr = ptr ;
+          $$.quad = NULL;
             }
       ;
 
@@ -643,6 +646,8 @@ expr :  expr PLUS_ expr {
                 funcallExpression(&($$.quad), $1, NULL);
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
+
+            // expr  = t [2,3]
 
         arglist *toto = $3->al;
         while (toto != NULL) {
