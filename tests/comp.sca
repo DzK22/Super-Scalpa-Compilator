@@ -1,10 +1,9 @@
 program comp
   var a, c, t : int;
   var test : bool;
+  var fdd : array[4..4,0..5] of int ;
     begin
         t := 8 ;
         a := 5 ;
-        test := true;
-        write -1 ;
-        if (test and t < a) then write "it works guys without brackets" else write "tata";
-    end
+        write a * t ;
+       end

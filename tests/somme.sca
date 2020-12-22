@@ -1,4 +1,5 @@
-(* Programme scalpa qui calcule la somme de tous les entiers de "a" à "b" *)
+(* Programme scalpa qui calcule
+             la somme de tous les entiers de "a" à "b" *)
 
 program somme
     var a, b, s : int;

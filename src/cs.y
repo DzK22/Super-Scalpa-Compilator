@@ -78,7 +78,7 @@
     struct arglist *arglist;
 }
 
-%token PROGRAM_ IDENT_ NEWLINE_ END_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
+%token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
 
 %type <sval>     IDENT_
@@ -126,6 +126,10 @@ varsdecl: VAR_ identlist ':' typename {
                  case S_STRING:
                     fprintf(stdout, "string\n");
                     break;
+                case ARRAY_:
+                    fprintf(stdout, "array\n");
+                    break;
+
              }
              arglist *al = $2;
 
@@ -140,6 +144,9 @@ varsdecl: VAR_ identlist ':' typename {
                       case S_STRING:
                           newVarStr(&stable, al->id, "\"\"");
                           break;
+                      case ARRAY_:
+                      // CREER une nouvelle variable de table
+                       break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
                   }
@@ -161,6 +168,10 @@ identlist : IDENT_ {
 typename : atomictype {
             $$ = $1;
           }
+          | arraytype {
+            $$ = ARRAY_;
+
+          }
          ;
 
 atomictype : UNIT_   { $$ = S_UNIT;    }
@@ -169,6 +180,11 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
            | STRING_ { $$ = S_STRING;  }
            ;
 
+arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype { }
+          ;
+rangelist : CTE_ TWO_POINTS_ CTE_  {}
+            |CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist {}
+            ;
 fundecllist : %empty                        {  }
             | fundecl DOTCOMMA_ fundecllist       {  }
            ;
