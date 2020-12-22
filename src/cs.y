@@ -334,6 +334,13 @@ expr :  expr PLUS_ expr {
             arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
+      | expr EXP_ expr {
+          if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+              ferr("cs.y expr MULT expr type error");
+
+          arithmeticExpression(Q_EXP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+      }
+
       | expr OR_ m expr {
             if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
                 ferr("cs.y expr OR expr type error");

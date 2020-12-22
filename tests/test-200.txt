@@ -2,14 +2,12 @@
 
 program tata
    var c, a, x, z, t : int
-
    begin
-     a := 10 * 5;
-     x := a - 10;
-     t := 9 + 4 + 60 - x;
-     z := 4 ^ 3;
-     c := -(20 / 5);
-
+     a := 5 + 5 - 7 * 10 / 5 - 60;
+     x := a * t;
+     t := 6 ^ 2;
+     c := a * a * 5;
+     z := c / 10;
      write a;
      write " ";
      write t;
