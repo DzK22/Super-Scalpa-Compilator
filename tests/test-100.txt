@@ -6,6 +6,6 @@ program tata
    begin
     (* write "tata";*)
     write "titi";
-    a := 5 * -4;
+    a := -6;
     write a;
    end

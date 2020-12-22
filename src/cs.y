@@ -94,9 +94,9 @@
 %left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
 %left   PLUS_ MINUS_
 %left   MULT_ DIV_
+%right  NEG_ NOT_
 %right  AFFEC_
 %right  EXP_
-%left   NOT_
 
 %start  program
 %%
@@ -309,6 +309,18 @@ expr :  expr PLUS_ expr {
             arithmeticExpression(Q_MINUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
+      | MINUS_ expr %prec NEG_ {
+          if ($2.ptr->type != S_INT)
+              ferr("cs.y MINUS expr INT type error");
+
+          symbol *ptr = newTmpInt(&stable, 0);
+          symbol *tmp = newTmpInt(&stable, 0);
+          $$.ptr = ptr;
+          quad *q = qGen(Q_MINUS, ptr, tmp, $2.ptr);
+          $$.quad = $2.quad;
+          $$.quad = concat($$.quad, q);
+      }
+
        | expr MULT_ expr {
            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
                ferr("cs.y expr MULT expr type error");
@@ -383,16 +395,6 @@ expr :  expr PLUS_ expr {
             $$.quad = concat($$.quad, q);
         }
 
-        | MINUS_ expr {
-            if ($2.ptr->type != S_INT)
-                ferr("cs.y MINUS expr INT type error");
-
-            symbol *ptr = newTmpInt(&stable, 0);
-            $$.ptr = ptr;
-            quad *q = qGen(Q_MINUS, ptr, $2.ptr, NULL);
-            $$.quad = $2.quad;
-            $$.quad = concat($$.quad, q);
-        }
        | expr SUP_ expr {
 
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
