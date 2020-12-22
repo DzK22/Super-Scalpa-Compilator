@@ -1,4 +1,5 @@
 #include "../headers/stable.h"
+#include "../headers/arglist.h"
 
 symbol *sAlloc () {
     symbol *ns = malloc(sizeof(struct symbol));
@@ -74,6 +75,9 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
                 ferr("stable.c newVar label snprintf");
         }
     } else {
+        if (search(*stable, id) != NULL)
+            ferr("stable.c newVar var ID already exists");
+
         res = sprintf(tid, "var_%s", id);
         if (res < 0 || res >= LEN)
             ferr("stable.c newVar var snprintf");
@@ -86,18 +90,30 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     nt->type = type;
     nt->tmp  = isTmp;
 
-    if (type == S_INT)
-        nt->ival = *((int *) data);
-    else if (type == S_BOOL)
-        nt->bval = *((bool *) data);
-    else if (type == S_STRING) {
-        if ((nt->sval = strdup((char *) data)) == NULL)
-            ferr("stable.c newVar strdup data");
-    } else if (type == S_LABEL) {
-        if ((nt->sval = strdup(tid)) == NULL)
-            ferr("stable.c newVar strdup data");
-    } else if (type == S_ARRAY)
-        nt->array = *((s_array *) data);
+    switch (type) {
+        case S_INT:
+            nt->ival = *((int *) data);
+            break;
+        case S_BOOL:
+            nt->bval = *((bool *) data);
+            break;
+        case S_STRING:
+            if ((nt->sval = strdup((char *) data)) == NULL)
+                ferr("stable.c newVar strdup data");
+            break;
+        case S_LABEL:
+            if ((nt->sval = strdup(tid)) == NULL)
+                ferr("stable.c newVar strdup data");
+            break;
+        case S_ARRAY:
+            nt->array = *((s_array *) data);
+            break;
+        case S_FUNCTION:
+            nt->fdata = data;
+            break;
+        default:
+            ferr("stable.c newVar unknow type");
+    }
 
     return nt;
 }
@@ -138,6 +154,14 @@ symbol *newVarArray (symbol **stable, char *id, s_array arr) {
 
 symbol *newVarUnit (symbol **stable, char *id) {
     return newVar(stable, S_UNIT, id, NULL);
+}
+
+symbol *newVarFun (symbol **stable, char *id, arglist *al, stype rtype) {
+    fundata *fdata = malloc(sizeof(fundata));
+    fdata->al      = al;
+    fdata->rtype   = rtype;
+
+    return newVar(stable, S_FUNCTION, id, fdata);
 }
 
 symbol *search (symbol *stable, char *id) {

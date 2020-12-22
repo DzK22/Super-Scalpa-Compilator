@@ -9,7 +9,7 @@
 #define LEN 128
 
 typedef enum stype {
-    S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY
+    S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION
 } stype;
 
 //Bornes
@@ -17,7 +17,7 @@ typedef struct t_range {
     int min;
     int max;
     int ndim;
-    struct t_range *next ;    
+    struct t_range *next ;
  } t_range;
 
 //Structure d'un tableau
@@ -33,16 +33,19 @@ typedef struct s_array {
 } s_array;
 
 typedef struct symbol {
-    char  *id;
-    bool  tmp; // is tmp var ? (true = cannot be modified by user)
-    stype type;
+    char   *id;
+    bool   tmp; // is tmp var ? (true = cannot be modified by user)
+    stype  type;
+    struct symbol *next;
+
     union {
         int  ival;
         char *sval;
         bool bval;
         s_array array;
+        void *fdata; // function data ( = fundata)
+        // probleme = on peut pas declarer arglist fdata sinon ca cause interblocage du pauvre de déclarations entre arglist et symbol des fichiers stable.h et arglist.h
     };
-    struct symbol *next;
 } symbol;
 
 void   ferr         (char *s);

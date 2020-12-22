@@ -5,22 +5,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stable.h"
+#include "quad.h"
 
 typedef struct arglist {
 	struct arglist *next;
-	char *id;
-
-	// juste pour les args de fonctions ci dessous, dont utiliser for now
-	stype type; // type determine le value du union
-	union {
-		int  ival;
-		bool bval;
-		char *sval;
-	};
+	char   *id;
+	symbol *sym; // arg symbol (only for function args)
 } arglist;
 
-arglist * arglistNew    (char *, stype, void *);
-arglist * arglistConcat (arglist *, arglist *);
-void arglistPrint       (arglist *);
+typedef struct fundata {
+    arglist *al;
+    stype rtype;
+} fundata;
+
+typedef struct exprlist {
+	struct quad    *quad;
+	struct arglist *al;
+} exprlist;
+
+arglist * arglistNew     (char *, symbol *);
+arglist * arglistConcat  (arglist *, arglist *);
+void arglistPrint        (arglist *);
+symbol *arglistToSymlist (arglist *);
+
+// dans stable.h normalement, mais pb inclusion en boucle ou jsp quoi mdr interblocage du pauvre de declaration mdr
+symbol *newVarFun        (symbol **, char *, arglist *, stype);
 
 #endif

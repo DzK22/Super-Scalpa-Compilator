@@ -1,23 +1,14 @@
 #include "../headers/arglist.h"
 
-// mettre type = S_NONE si pas besoin d'avoir de type (ex: liste declaration de variables, juste les ID qui sont usefull mdr
-arglist *arglistNew (char *id, stype type, void *val) {
+// sym: only for function args, put it to NULL for var declarations
+arglist *arglistNew (char *id, symbol *sym) {
 	arglist *al = malloc(sizeof(arglist));
 	if (al == NULL)
 		ferr("arglist.c arglistNew malloc");
 
 	al->next = NULL;
 	al->id   = id;
-	al->type = type;
-
-	if (val != NULL) {
-		if (type == S_INT)
-			al->ival  = *((int *) val);
-		else if (type == S_BOOL)
-			al->bval  = *((bool *) val);
-		else if (type == S_STRING)
-			al->sval  = (char *) val;
-	}
+	al->sym  = sym;
 
 	return al;
 }
@@ -47,4 +38,33 @@ void arglistPrint (arglist *la) {
 			fprintf(stdout, "%s ] : ", l->id);
 		l = l->next;
 	}
+}
+
+// Utile pour convertir les arglist de function call en liste de symbol * pour passer en param de qGen
+symbol *arglistToSymlist (arglist *al) {
+	symbol *slist = NULL, *slast = NULL;
+
+	while (al) {
+		slist = sAdd(&slist);
+		if (slast != NULL)
+			slast->next = slist;
+
+		slist->id = strdup(al->sym->id);
+		if (slist->id == NULL)
+			ferr("arglist.c arglistToSymlist strdup");
+
+		slist->tmp   = al->sym->tmp;
+		slist->type  = al->sym->type;
+
+		switch (slist->type) {
+			case S_INT  : slist->ival = al->sym->ival; break;
+			case S_BOOL : slist->bval = al->sym->bval; break;
+			default: ferr("arglist.c arglistToSymlist wrong slist type");
+		}
+
+		slast = slist;
+		al    = al->next;
+	}
+
+	return slist;
 }

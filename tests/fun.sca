@@ -1,0 +1,16 @@
+(* Programme qui effectue des tests basiques avec des fonctions *)
+
+program Fun
+    var a : int;
+
+    function toto () : unit
+    begin
+        a := a + 2;
+    end;
+
+    begin
+        a := 0;
+        toto();
+        toto();
+        write a;
+    end

@@ -91,9 +91,11 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 {S}{T}{R}{I}{N}{G}                          { return STRING_;                   }
 
-{A}{R}{R}{A}{Y}                             { return ARRAY_;                   }
+{A}{R}{R}{A}{Y}                             { return ARRAY_;                    }
 
-{O}{F}                                      { return OF_;  }
+{O}{F}                                      { return OF_;                       }
+
+{F}{U}{N}{C}{T}{I}{O}{N}                    { return FUNCTION_;                 }
 
 " "*                                        {}
 
@@ -109,18 +111,13 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
                                               yylval.cte.sval = strdup(yytext);
                                               return CTE_;                   }
 
-{ident}                                     { yylval.sval = strdup(yytext);
-                                              return IDENT_;                    }
-
 {comment}                                   { /* ignore comments*/              }
 
-":"                                         { return yytext[0];                 }
+":"                                         { return DPOINT_;                 }
 
 "+"                                         { return PLUS_;                     }
 
 "-"                                         { return MINUS_;                    }
-
-"not"                                       { return NOT_;                    }
 
 "*"                                         { return MULT_;                     }
 
@@ -155,6 +152,9 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 "["                                         { return BRALEFT_;                  }
 
 "]"                                         { return BRARIGHT_;                 }
+
+{ident}                                     { yylval.sval = strdup(yytext);
+                                              return IDENT_;                    }
 
 .                                           { fprintf(stderr, "Unrecognized character : %s at line %d\n", yytext, linecpt);
                                               return EXIT_FAILURE; }

@@ -11,7 +11,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
     getData(f, s);
 
     // text
-    fprintf(f, "\n\t.text\n\t.globl main\nmain:\n");
+    fprintf(f, "\n\t.text\n\t.globl main\n");
     getText(f, q);
 
     // quitter le programme proprement
@@ -85,6 +85,7 @@ char * nextTmpLabel () {
 void getText (FILE *f, quad *q) {
     symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
     char *label, *label2;
+    fundata *fdata;
 
     while (q != NULL) {
         res    = q->res;
@@ -330,19 +331,49 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_FUNDEC:
-                if (!res || !argv1)
+                if (!argv1)
                     ferr("mips.c getText Q_FUNDEC quad error");
+                // argv1 = function symbol
 
-                fprintf(f, "\t\t\t\t# function %s \n", res->id);
-                fprintf(f, "\t%s:\n", res->id);
+                fprintf(f, "\t\t\t\t# function %s\n", argv1->id);
+                fprintf(f, "%s:\n", argv1->id);
+                break;
+
+            case Q_FUNEND: // end of declaration of a function
+                if (!argv1)
+                    ferr("mips.c getText Q_FUNEND quad error");
+                // argv1 = function symbol
+                fdata = (fundata *) argv1->fdata;
+
+                // pop args from the stack
+                // ...
+                fprintf(f, "\tj $ra\n");
+                fprintf(f, "\t\t\t\t# end of function %s\n", argv1->id);
                 break;
 
             case Q_FUNCALL:
-                if (!res || !argv1)
+                // res can be NULL = fun type S_UNIT
+                // argv2 can be NULL = no args
+                if (!argv1)
                     ferr("mips.c getText Q_FUNCALL quad error");
+                // res   = where to put function return value
+                // arvg1 = function symbol
+                // argv2 = list of symbol (!= stable and not arglist)
 
-                fprintf(f, "\t\t\t\t# function %s \n", res->id);
-                fprintf(f, "\t%s:\n", res->id);
+                if (res)
+                    fprintf(f, "\t\t\t\t# funcall %s := %s (...)\n", res->id, argv1->id);
+                else
+                    fprintf(f, "\t\t\t\t# funcall %s (...)\n", argv1->id);
+
+                // caller push args to the stack if any, callee pop them before returning to $ra
+                // push args to the stack
+                // ...
+
+                fprintf(f, "\tjal %s\n", argv1->id);
+                break;
+
+            case Q_MAIN:
+                fprintf(f, "main:\n");
                 break;
 
             default:

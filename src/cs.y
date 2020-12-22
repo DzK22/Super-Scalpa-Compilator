@@ -14,10 +14,10 @@
     void freeLex (void);
     extern FILE *yyin;
 
-    symbol *stable = NULL;
-    quad *all_code = NULL;
-    char *progName = NULL;
-    int instr_cnt  = 0;
+    symbol *stable  = NULL;
+    quad *all_code  = NULL;
+    char *progName  = NULL;
+    int instr_cnt   = 0;
 
     void testID (symbol *s, char *name) {
         if(s == NULL) {
@@ -35,8 +35,7 @@
         }
     }
 
-    void arithmeticExpression(qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2)
-    {
+    void arithmeticExpression(qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
         symbol *ptr = newTmpInt(&stable, 0);
         quad *q = qGen(op, ptr, arg1, arg2);
@@ -46,8 +45,7 @@
         *quadRes = concat(*quadRes, q);
      }
 
-    void booleanExpression(qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2)
-    {
+    void booleanExpression(qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
         symbol *ptr = newTmpInt(&stable, 0);
         quad *q = qGen(op, ptr, arg1, arg2);
@@ -58,6 +56,38 @@
         (*res)->type = S_BOOL;
      }
 
+    // el = NULL for procedure
+    void funcallExpression(quad **quadRes, char *id, exprlist *el) {
+        symbol *fs = search(stable, id);
+        testID(fs, id);
+
+        if (fs->type != S_FUNCTION)
+            ferr("cs.y funcallExpression symbol is not a function");
+
+        symbol *res;
+        fundata *fdata = (fundata *) fs->fdata;
+
+        switch (fdata->rtype) {
+            case S_INT  : res = newTmpInt(&stable, 0) ; break ;
+            case S_BOOL : res = newTmpInt(&stable, 0) ; break ;
+            case S_UNIT : res = NULL                  ; break ;
+            default: ferr("cs.y funcallExpression wrong return type");
+        }
+
+        symbol *slist = NULL;
+        if (el) { // args présent
+            // convertir arglist en nouv liste de symbol car gGen ne prend que des symbol * en arg
+            slist = arglistToSymlist(el->al);
+        }
+
+         quad *q = qGen(Q_FUNCALL, res, fs, slist);
+         *quadRes = NULL;
+
+         if (el)
+            *quadRes = concat(*quadRes, el->quad);
+
+        *quadRes = concat(*quadRes, q);
+     }
 %}
 
 %union {
@@ -69,10 +99,10 @@
     qop   op;
 
     struct {
-        struct symbol    *ptr;
-        struct quad      *quad;
-        struct quad      *ltrue;
-        struct quad      *lfalse;
+        struct symbol *ptr;
+        struct quad   *quad;
+        struct quad   *ltrue;
+        struct quad   *lfalse;
     } gencode; // Pour les expressions
     struct t_range range;
     struct s_array sarray;
@@ -95,27 +125,38 @@
         struct s_expr *next;
     } lstExpr;
 
-    struct arglist *arglist;
+    struct arglist  *argl;
+    struct exprlist *exprl;
 }
 
-
-%token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
+%token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
 
 %type <sval>     IDENT_
 %type <cte>      CTE_
-%type <gencode>  expr instr program sequence lvalue m
-%type <listDecl> fundecllist  vardecllist fundecl
-%type <arglist>  identlist varsdecl
+%type <gencode>  expr instr program sequence lvalue m fundecllist  fundecl
 %type <type>     atomictype
 %type <signe>    sign
 %type <range>    rangelist
-%type <isTab>    typename
 %type <sarray>   arraytype
+%type <argl>     identlist varsdecl parlist par
+
+/**
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+*/
+
+//TABLO CONFLIT
 %type <lstExpr>  exprlist
+%type <isTab>    typename
 
-
-
+// FUNCTINO CONFLIT
+%type <exprl>    exprlist
+%type <type>     typename
 
 %left   OR_
 %left   AND_
@@ -133,8 +174,10 @@
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         newVarInt(&stable, $2, 0);
         progName = strdup($2);
-        $$.quad  = concat(NULL, $5.quad);
-        all_code = $$.quad;
+
+        quad *q  = qGen(Q_MAIN, NULL, NULL, NULL);
+        all_code = concat($4.quad, q);
+        all_code = concat(all_code, $5.quad);
     }
     ;
 
@@ -143,7 +186,7 @@ vardecllist : %empty                         { }
             | varsdecl DOTCOMMA_ vardecllist { }
            ;
 
-varsdecl: VAR_ identlist ':' typename {
+varsdecl: VAR_ identlist DPOINT_ typename {
              arglistPrint($2);
              switch ($4.type) {
                  case S_INT:
@@ -188,10 +231,10 @@ varsdecl: VAR_ identlist ':' typename {
           ;
 
 identlist : IDENT_ {
-                $$ = arglistNew(strdup($1), S_NONE, NULL);
+                $$ = arglistNew(strdup($1), NULL);
             }
          | IDENT_ COMMA_ identlist {
-                arglist *al = arglistNew(strdup($1), S_NONE, NULL);
+                arglist *al = arglistNew(strdup($1), NULL);
                 $$ = arglistConcat(al, $3);
             }
          ;
@@ -294,13 +337,51 @@ sign : %empty                       {}
       | MINUS_  {  $$ = '-'; }
       ;
 
-fundecllist : %empty                        {  }
-            | fundecl DOTCOMMA_ fundecllist       {  }
+fundecllist : %empty {
+                    $$.quad = NULL;
+                }
+            | fundecl DOTCOMMA_ fundecllist {
+                    $$.quad = concat($1.quad, $3.quad);
+                }
            ;
 
-/* BOUMBOUM = pour ne pas avoir de conflit bison, a virer quand implementation des fonctions mdr */
-fundecl : "BOUMBOUM"                            {}
+fundecl : FUNCTION_ IDENT_  PARLEFT_ parlist PARRIGHT_ DPOINT_ atomictype vardecllist instr {
+                arglist *al = $4;
+                symbol *fs  = newVarFun(&stable, $2, al, $7);
+                quad *qdec  = qGen(Q_FUNDEC, NULL, fs, NULL);
+                quad *qend  = qGen(Q_FUNEND, NULL, fs, NULL);
+
+                $$.quad = concat(qdec, $9.quad);
+                $$.quad = concat($$.quad, qend);
+            }
         ;
+
+parlist : %empty {
+                $$ = NULL;
+            }
+        | par {
+                $$ = $1;
+            }
+        | par COMMA_ par {
+                $$ = arglistConcat($1, $3);
+            }
+        ;
+
+par : IDENT_ DPOINT_ typename {
+            symbol *s;
+            switch ($3) {
+                case S_INT  : s = newVarInt(&stable, $1, 0)      ; break ;
+                case S_BOOL : s = newVarBool(&stable, $1, false) ; break ;
+                default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
+            }
+
+            $$ = arglistNew(NULL, s);
+        }
+
+    | REF_ IDENT_ DPOINT_ typename {
+
+        }
+    ;
 
 instr: lvalue AFFEC_ expr {
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
@@ -313,8 +394,12 @@ instr: lvalue AFFEC_ expr {
             }
         | RETURN_ expr {}
         | RETURN_ {}
-        | IDENT_ PARLEFT_ exprlist PARRIGHT_ {}
-        | IDENT_ PARLEFT_ PARRIGHT_ {}
+        | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
+                funcallExpression(&($$.quad), $1, $3);
+            }
+        | IDENT_ PARLEFT_ PARRIGHT_ {
+                funcallExpression(&($$.quad), $1, NULL);
+            }
         | BEGIN_ sequence END_ {
                 $$.ptr  = $2.ptr;
                 $$.quad = $2.quad;
@@ -407,6 +492,18 @@ lvalue: IDENT_ {
       ;
 
 exprlist : expr {
+
+/**
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+                            ALERTE CONFLIT ALERTE CONFLIT
+*/
+
+
+    // CODE DE TABLEAU ICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIi
               if ($1.ptr->type != S_INT) {
                   fprintf(stderr, "Erreur expr dans exprlist\n");
                   exit(EXIT_FAILURE);
@@ -422,7 +519,23 @@ exprlist : expr {
             $$.ival = $1.ptr->ival ;
             $$.next = &($3);
               }
+
+
+
+    // CODE DE FONCTION ICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIi
+                $$->al   = arglistNew(NULL, $1.ptr);
+                $$->quad = $1.quad;
+            }
+        |  expr COMMA_ exprlist {
+                arglist *al = arglistNew(NULL, $1.ptr);
+                $$->al       = arglistConcat(al, $3->al);
+                $$->quad     = concat($1.quad, $3->quad);
+            }
         ;
+
+
+
+
 
 expr :  expr PLUS_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
@@ -572,9 +685,10 @@ expr :  expr PLUS_ expr {
 
       | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 // function call (with parameters)
+                funcallExpression(&($$.quad), $1, $3);
             }
       | IDENT_ PARLEFT_ PARRIGHT_ {
-                // procedure call (no parameters)
+                funcallExpression(&($$.quad), $1, NULL);
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
           //struct s_expr * l = &($3) ;

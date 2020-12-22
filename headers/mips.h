@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include "quad.h"
 #include "stable.h"
+#include "arglist.h"
 
 void getMips (FILE *, symbol *, quad *);
 void getData (FILE *f, symbol *s);

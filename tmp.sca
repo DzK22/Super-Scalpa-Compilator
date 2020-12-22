@@ -1,4 +1,0 @@
-program comp
-    begin
-        write 5 * 3 + 2;
-    end
