@@ -120,11 +120,6 @@
         struct s_array sarray;
     } isTab;
 
-    struct s_expr {
-        int ival;
-        struct s_expr *next;
-    } lstExpr;
-
     struct arglist  *argl;
     struct exprlist *exprl;
 }
@@ -141,22 +136,9 @@
 %type <sarray>   arraytype
 %type <argl>     identlist varsdecl parlist par
 
-/**
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-*/
-
-//TABLO CONFLIT
-%type <lstExpr>  exprlist
+//%type <lstExpr>  exprlist
 %type <isTab>    typename
-
-// FUNCTINO CONFLIT
 %type <exprl>    exprlist
-%type <type>     typename
 
 %left   OR_
 %left   AND_
@@ -257,7 +239,7 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
               //creer la struct s_array
-            //  printRange(&($3));
+              printRange(&($3));
               t_range *rg = &($3);
               s_array *arr = malloc(sizeof(s_array));
               if (arr == NULL) {
@@ -369,7 +351,7 @@ parlist : %empty {
 
 par : IDENT_ DPOINT_ typename {
             symbol *s;
-            switch ($3) {
+            switch ($3.type) {
                 case S_INT  : s = newVarInt(&stable, $1, 0)      ; break ;
                 case S_BOOL : s = newVarBool(&stable, $1, false) ; break ;
                 default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
@@ -388,7 +370,7 @@ instr: lvalue AFFEC_ expr {
                 quad *quad = concat($3.quad, q);
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
-
+                //printf("%d et %d\n", $1.ptr->type, $3.ptr->type);
                 if ($1.ptr->type != $3.ptr->type)
                     ferr("cs.y instr: lvalue and expr type differ");
             }
@@ -481,48 +463,18 @@ lvalue: IDENT_ {
             }
 
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
-         //struct s_expr * l = &($3) ;
-         // while (l != NULL) {
-        //    printf("liste indices est %d , ", l->ival) ;
-        //    l = l->next;
-          //}
+
+          arglist *toto = $3->al;
+          while (toto != NULL) {
+              fprintf(stdout, "liste indices %d\n", toto->sym->ival);
+              toto = toto->next;
+          }
           printf("je rentre dans le truc lvalue \n") ;
 
             }
       ;
 
 exprlist : expr {
-
-/**
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-                            ALERTE CONFLIT ALERTE CONFLIT
-*/
-
-
-    // CODE DE TABLEAU ICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIi
-              if ($1.ptr->type != S_INT) {
-                  fprintf(stderr, "Erreur expr dans exprlist\n");
-                  exit(EXIT_FAILURE);
-              }
-              printf("ival = %d\n", $1.ptr->ival);
-              $$.ival = $1.ptr->ival ;
-              $$.next = NULL ;  }
-        |  expr COMMA_ exprlist {
-              //if ($1.ptr->type != S_INT) {
-            //     fprintf(stderr, "Erreur expr dans exprlist\n");
-            //     exit(EXIT_FAILURE);
-            printf("ival = %d\n", $1.ptr->ival);
-            $$.ival = $1.ptr->ival ;
-            $$.next = &($3);
-              }
-
-
-
-    // CODE DE FONCTION ICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIi
                 $$->al   = arglistNew(NULL, $1.ptr);
                 $$->quad = $1.quad;
             }
@@ -691,12 +643,12 @@ expr :  expr PLUS_ expr {
                 funcallExpression(&($$.quad), $1, NULL);
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
-          //struct s_expr * l = &($3) ;
-         // while (l != NULL) {
-        //    printf("liste indices est %d , ", l->ival) ;
-        //    l = l->next;
-          //}
-          printf("je rentre dans le truc expr \n") ;
+
+        arglist *toto = $3->al;
+        while (toto != NULL) {
+            fprintf(stdout, "liste indices de la ligne 654  %d\n", toto->sym->ival);
+            toto = toto->next;
+        }
              }
       | IDENT_ {
                 symbol *ptr = search(stable, $1);
@@ -758,7 +710,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-        /* yydebug = 1; */
+        // yydebug = 1;
     #endif
 
     yyin = fopen(argv[1], "r");

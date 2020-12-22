@@ -4,6 +4,5 @@ program comp
   var fdd : array[-2..4,10..20] of int ;
     begin
         t := 8 ;
-        a := fdd [2,5] ;
-        write a * t + 1 ;
-    end
+        fdd [2,5] := t;
+     end
