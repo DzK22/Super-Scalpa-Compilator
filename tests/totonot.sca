@@ -1,4 +1,14 @@
 program totonot
+    var test : bool;
+    var i, j : int;
     begin
-        write not 5 > 4;
+        test := false;
+        while not test do
+          begin
+              write "Enter integer i";
+              read i;
+              write "Enter integer j";
+              read j;
+              if i = j then test := true;
+          end;
     end

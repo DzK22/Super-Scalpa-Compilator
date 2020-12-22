@@ -390,18 +390,6 @@ expr :  expr PLUS_ expr {
             $$.quad = concat($$.quad, q);
           }
 
-        | NOT_ expr {
-            if ($2.ptr->type != S_BOOL)
-                ferr("cs.y expr NOT type error");
-
-            symbol *ptr = newTmpBool(&stable, false);
-            $$.ptr = ptr;
-
-            quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
-            $$.quad = $2.quad;
-            $$.quad = concat($$.quad, q);
-        }
-
        | expr SUP_ expr {
 
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
@@ -440,6 +428,19 @@ expr :  expr PLUS_ expr {
 
              booleanExpression(Q_DIFF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
+
+       | NOT_ expr {
+           if ($2.ptr->type != S_BOOL)
+               ferr("cs.y expr NOT type error");
+
+           symbol *ptr = newTmpBool(&stable, false);
+           $$.ptr = ptr;
+
+           quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
+           $$.quad = $2.quad;
+           $$.quad = concat($$.quad, q);
+       }
+
       | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 // function call (with parameters)
             }
