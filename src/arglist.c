@@ -44,6 +44,14 @@ void arglistPrint (arglist *la) {
 symbol *arglistToSymlist (arglist *al) {
 	symbol *slist = NULL, *slast = NULL;
 
+	printf("\n =====> ");
+	while (al) {
+		printf(" %s, ", al->sym->id);
+		al = al->next;
+	}
+	printf("\n\n");
+	exit(2);
+
 	while (al) {
 		slist = sAdd(&slist);
 		if (slast != NULL)

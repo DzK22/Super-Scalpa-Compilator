@@ -347,6 +347,7 @@ void getText (FILE *f, quad *q) {
 
                 // pop args from the stack
                 // ...
+                fprintf(f, "\t\t\t\t# epilogue of function %s\n", argv1->id);
                 fprintf(f, "\tj $ra\n");
                 fprintf(f, "\t\t\t\t# end of function %s\n", argv1->id);
                 break;
@@ -358,12 +359,27 @@ void getText (FILE *f, quad *q) {
                     ferr("mips.c getText Q_FUNCALL quad error");
                 // res   = where to put function return value
                 // arvg1 = function symbol
-                // argv2 = list of symbol (!= stable and not arglist)
+                // argv2 = list of symbol = symbol * (!= stable)
+
+                // args str for debugging
+                char argsDebug[LEN] = "";
+                int o = 0, r;
+                symbol *s = argv2;
+
+                while (s != NULL) {
+                    r = snprintf(argsDebug + o, LEN - o, "%s, ", s->id);
+                    if (r < 0 || r >= LEN)
+                        ferr("mips.c getText Q_FUNCALL snprintf");
+                    o += r;
+                }
+
+                if ((r = strlen(argsDebug)) > 2)
+                    argsDebug[r - 3] = '\0'; // erase the last ", "
 
                 if (res)
-                    fprintf(f, "\t\t\t\t# funcall %s := %s (...)\n", res->id, argv1->id);
+                    fprintf(f, "\t\t\t\t# funcall %s := %s ( %s )\n", res->id, argv1->id, argsDebug);
                 else
-                    fprintf(f, "\t\t\t\t# funcall %s (...)\n", argv1->id);
+                    fprintf(f, "\t\t\t\t# funcall %s ( %s )\n", argv1->id, argsDebug);
 
                 // caller push args to the stack if any, callee pop them before returning to $ra
                 // push args to the stack

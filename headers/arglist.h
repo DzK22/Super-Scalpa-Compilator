@@ -23,12 +23,12 @@ typedef struct exprlist {
 	struct arglist *al;
 } exprlist;
 
-arglist * arglistNew     (char *, symbol *);
-arglist * arglistConcat  (arglist *, arglist *);
-void arglistPrint        (arglist *);
-symbol *arglistToSymlist (arglist *);
+arglist * arglistNew       (char *, symbol *);
+arglist * arglistConcat    (arglist *, arglist *);
+void arglistPrint          (arglist *);
+symbol  * arglistToSymlist (arglist *);
 
 // dans stable.h normalement, mais pb inclusion en boucle ou jsp quoi mdr interblocage du pauvre de declaration mdr
-symbol *newVarFun        (symbol **, char *, arglist *, stype);
+symbol *newVarFun (symbol **, char *, arglist *, stype);
 
 #endif

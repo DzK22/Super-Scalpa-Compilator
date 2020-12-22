@@ -3,14 +3,13 @@
 program Fun
     var a : int;
 
-    function toto () : unit
+    function toto (b : int) : unit
     begin
-        a := a + 2;
+        a := a + b;
     end;
 
     begin
-        a := 0;
-        toto();
-        toto();
+        toto(1);
+        toto(2);
         write a;
     end
