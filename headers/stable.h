@@ -7,7 +7,7 @@
 #define LEN 128
 
 typedef enum stype {
-    S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL
+    S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY
 } stype;
 
 typedef struct symbol {

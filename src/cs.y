@@ -126,7 +126,7 @@ varsdecl: VAR_ identlist ':' typename {
                  case S_STRING:
                     fprintf(stdout, "string\n");
                     break;
-                case ARRAY_:
+                 case S_ARRAY:
                     fprintf(stdout, "array\n");
                     break;
 
@@ -144,7 +144,7 @@ varsdecl: VAR_ identlist ':' typename {
                       case S_STRING:
                           newVarStr(&stable, al->id, "\"\"");
                           break;
-                      case ARRAY_:
+                      case S_ARRAY:
                       // CREER une nouvelle variable de table
                        break;
                     default:
@@ -169,7 +169,7 @@ typename : atomictype {
             $$ = $1;
           }
           | arraytype {
-            $$ = ARRAY_;
+            $$ = S_ARRAY;
 
           }
          ;

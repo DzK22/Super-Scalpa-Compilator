@@ -91,9 +91,9 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 {S}{T}{R}{I}{N}{G}                          { return STRING_;                   }
 
-{A}{R}{R}{A}{Y}                             { printf("array ") ; return ARRAY_;                   }
+{A}{R}{R}{A}{Y}                             { return ARRAY_;                   }
 
-{O}{F}                                      { printf("of ") ;  return OF_;                   }
+{O}{F}                                      { return OF_;  }
 
 " "*                                        {}
 
