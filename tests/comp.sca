@@ -1,9 +1,9 @@
 program comp
   var a, c, t : int;
   var test : bool;
-  var fdd : array[4..4,0..5] of int ;
+  var fdd : array[-2..4,10..20] of int ;
     begin
         t := 8 ;
-        a := 5 ;
-        write a * t ;
-       end
+        a := fdd [2,5] ;
+        write a * t + 1 ;
+    end

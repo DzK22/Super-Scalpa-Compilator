@@ -27,6 +27,14 @@
         }
     }
 
+    void printRange (t_range *list) {
+        t_range *cur = list;
+        while (cur != NULL) {
+                fprintf(stdout, "min:%d[]max:%d[]ndim:%d\n", cur->min, cur->max, cur->ndim);
+            cur = cur->next;
+        }
+    }
+
     void arithmeticExpression(qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2)
     {
         // OK
@@ -56,6 +64,7 @@
     int   ival;
     bool  bval;
     char  *sval;
+    char  signe;
     stype type;
     qop   op;
 
@@ -65,7 +74,8 @@
         struct quad      *ltrue;
         struct quad      *lfalse;
     } gencode; // Pour les expressions
-
+    struct t_range range;
+    struct s_array sarray;
     struct {
         stype type;
         union {
@@ -75,8 +85,19 @@
         };
     } cte;
 
+    struct {
+        stype type;
+        struct s_array sarray;
+    } isTab;
+
+    struct s_expr {
+        int ival;
+        struct s_expr *next;
+    } lstExpr;
+
     struct arglist *arglist;
 }
+
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
@@ -86,7 +107,15 @@
 %type <gencode>  expr instr program sequence lvalue m
 %type <listDecl> fundecllist  vardecllist fundecl
 %type <arglist>  identlist varsdecl
-%type <type>     typename atomictype
+%type <type>     atomictype
+%type <signe>    sign
+%type <range>    rangelist
+%type <isTab>    typename
+%type <sarray>   arraytype
+%type <lstExpr>  exprlist
+
+
+
 
 %left   OR_
 %left   AND_
@@ -116,7 +145,7 @@ vardecllist : %empty                         { }
 
 varsdecl: VAR_ identlist ':' typename {
              arglistPrint($2);
-             switch ($4) {
+             switch ($4.type) {
                  case S_INT:
                     fprintf(stdout, "integer\n");
                     break;
@@ -134,7 +163,7 @@ varsdecl: VAR_ identlist ':' typename {
              arglist *al = $2;
 
               while (al != NULL) {
-                  switch ($4) {
+                  switch ($4.type) {
                       case S_BOOL:
                           newVarBool(&stable, al->id, false);
                           break;
@@ -146,6 +175,8 @@ varsdecl: VAR_ identlist ':' typename {
                           break;
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
+                          newVarArray(&stable, al->id, $4.sarray);
+                          //printf("nbim = %d\n", $4.sarray.range->ndim);
                        break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -166,11 +197,11 @@ identlist : IDENT_ {
          ;
 
 typename : atomictype {
-            $$ = $1;
+            $$.type = $1;
           }
           | arraytype {
-            $$ = S_ARRAY;
-
+            $$.type = S_ARRAY;
+            $$.sarray = $1;
           }
          ;
 
@@ -180,11 +211,89 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
            | STRING_ { $$ = S_STRING;  }
            ;
 
-arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype { }
+
+arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
+              //creer la struct s_array
+            //  printRange(&($3));
+              t_range *rg = &($3);
+              s_array *arr = malloc(sizeof(s_array));
+              if (arr == NULL) {
+                  fprintf(stderr, "malloc error\n");
+                  exit(EXIT_FAILURE);
+              }
+              arr->range = rg;
+              arr->type = $6;
+              // calcul nombre d'elements
+              int cpt = 0 ;
+              t_range *cur = rg;
+              while (cur != NULL) {
+                  cpt += (cur->max - cur->min);
+                  cur = cur->next;
+              }
+              arr->size = cpt;
+              switch (arr->type) {
+                  case S_INT:
+                    arr->intarr = newLstInt(rg->ndim);
+                    break;
+
+                  case S_BOOL:
+                  arr->boolarr = newLstBool(rg->ndim);
+                    break;
+              }
+              //fprintf(stdout, "ndim = %d\n", rg->ndim);
+              $$ = *arr ;
+            }
           ;
-rangelist : CTE_ TWO_POINTS_ CTE_  {}
-            |CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist {}
+
+rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
+              // test array types
+                if ($2.type != S_INT || $5.type != S_INT) {
+                    fprintf(stderr, "Mauvais types array \n");
+                    exit(EXIT_FAILURE);
+                }
+                // test borns values
+                int min = $2.ival, max = $5.ival;
+                if ($1 == '-')
+                    min = -min;
+                if ($4 == '-')
+                    max = -max;
+                if (min > max) {
+                    fprintf(stderr, "Bornes inf > Borne sup\n");
+                    exit(EXIT_FAILURE);
+                }
+                $$.min = min  ;
+                $$.max = max ;
+                $$.ndim = 1 ;
+                $$.next = NULL;
+
+            }
+            |sign CTE_ TWO_POINTS_ sign CTE_ COMMA_ rangelist {
+                if ($2.type != S_INT || $5.type != S_INT) {
+                    fprintf(stderr, "Mauvais types array \n");
+                    exit(EXIT_FAILURE);
+                }
+                int min = $2.ival, max = $5.ival;
+                if ($1 == '-')
+                    min = -min;
+                if ($4 == '-')
+                    max = -max;
+                if (min > max) {
+                    fprintf(stderr, "Bornes inf > Borne sup\n");
+                    exit(EXIT_FAILURE);
+                }
+                $$.min = min  ;
+                $$.max = max ;
+                $$.ndim = $7.ndim + 1 ;
+                $$.next = &($7) ;
+
+
+            }
             ;
+
+sign : %empty                       {}
+      | MINUS_  {  $$ = '-'; }
+      ;
+
 fundecllist : %empty                        {  }
             | fundecl DOTCOMMA_ fundecllist       {  }
            ;
@@ -287,12 +396,32 @@ lvalue: IDENT_ {
             }
 
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
+         //struct s_expr * l = &($3) ;
+         // while (l != NULL) {
+        //    printf("liste indices est %d , ", l->ival) ;
+        //    l = l->next;
+          //}
+          printf("je rentre dans le truc lvalue \n") ;
 
             }
       ;
 
-exprlist : expr {}
-        |  expr COMMA_ exprlist {}
+exprlist : expr {
+              if ($1.ptr->type != S_INT) {
+                  fprintf(stderr, "Erreur expr dans exprlist\n");
+                  exit(EXIT_FAILURE);
+              }
+              printf("ival = %d\n", $1.ptr->ival);
+              $$.ival = $1.ptr->ival ;
+              $$.next = NULL ;  }
+        |  expr COMMA_ exprlist {
+              //if ($1.ptr->type != S_INT) {
+            //     fprintf(stderr, "Erreur expr dans exprlist\n");
+            //     exit(EXIT_FAILURE);
+            printf("ival = %d\n", $1.ptr->ival);
+            $$.ival = $1.ptr->ival ;
+            $$.next = &($3);
+              }
         ;
 
 expr :  expr PLUS_ expr {
@@ -448,8 +577,13 @@ expr :  expr PLUS_ expr {
                 // procedure call (no parameters)
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
-                // array with indexes
-            }
+          //struct s_expr * l = &($3) ;
+         // while (l != NULL) {
+        //    printf("liste indices est %d , ", l->ival) ;
+        //    l = l->next;
+          //}
+          printf("je rentre dans le truc expr \n") ;
+             }
       | IDENT_ {
                 symbol *ptr = search(stable, $1);
                 testID(ptr, $1);
