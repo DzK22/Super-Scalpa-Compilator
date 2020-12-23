@@ -3,7 +3,7 @@
 lstInt *newLstInt (int ival) {
   printf(">>>>>>>>>>>> taille initiale de tableau debut  %d \n",ival);
 
-  lstInt *q = NULL ;
+  lstInt  *tete = NULL , *q = NULL ;
   for (int i = 0; i < ival; i++) {
 
     lstInt *p = malloc(sizeof(lstInt));
@@ -12,14 +12,22 @@ lstInt *newLstInt (int ival) {
         return NULL;
     }
     p->ival = 0 ;
-    if( q == NULL) {
-        p->next = NULL;
-      q = p ;
-      q->next = p;
-     }
+    p->next = NULL;
 
-    return q  ;
+    if(tete == NULL)
+      tete = p ;
+    else {
+      q = tete ;
+       while (q->next != NULL) {
+         q = q->next;
+      }
+      q->next = p;
+
+    }
 }
+
+    return tete  ;
+
 }
 
 void freeLstInt (lstInt *list) {
@@ -61,9 +69,9 @@ int getNthIntVal (lstInt *list, int nth) {
 }
 
 lstBool *newLstBool (int ival) {
-  printf(">>>>>>>>>>>> taille initiale de tableau debut  %d \n",ival);
 
-  lstBool *q = NULL ;
+  printf(">>>>>>>>>>>> taille initiale de tableau debut  %d \n",ival);
+  lstBool  *tete = NULL , *q = NULL ;
   for (int i = 0; i < ival; i++) {
 
     lstBool *p = malloc(sizeof(lstBool));
@@ -71,15 +79,23 @@ lstBool *newLstBool (int ival) {
         fprintf(stderr, "malloc error lst int \n");
         return NULL;
     }
-    p->bval = false ;
+    p->ival = 0 ;
     p->next = NULL;
-    if( q == NULL) {
-      q = p ;
-      q->next = p;
-      }
 
-    return q  ;
+    if(tete == NULL)
+      tete = p ;
+    else {
+      q = tete ;
+       while (q->next != NULL) {
+         q = q->next;
+      }
+      q->next = p;
+
+    }
 }
+
+    return tete  ;
+
 }
 
 void freeLstBool (lstBool * list) {

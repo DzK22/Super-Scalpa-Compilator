@@ -212,6 +212,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
                           newVarArray(&stable, al->id, $4.sarray);
+
                           break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -269,6 +270,11 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
               switch (arr->type) {
                   case S_INT:
                     arr->intarr = newLstInt(arr->size);
+                    struct lstInt * cur = arr->intarr ;
+                    while (cur != NULL) {
+                      printf("%d *_* ", cur->ival) ;
+                      cur = cur->next;
+                    }
                     break;
 
                   case S_BOOL:
@@ -673,11 +679,11 @@ expr :  expr PLUS_ expr {
         $$.ptr->type = ptr->array.type ;
         // calcul de la valeur de l'indice du tableau
 
-        struct lstInt * cur = ptr->array.intarr ;
+      /*  struct lstInt * cur = ptr->array.intarr ;
         while (cur != NULL) {
           printf("%d *_* %d  ",ptr->array.size,cur->ival) ;
           cur = cur->next;
-        }
+        }*/
 
              }
       | IDENT_ {
@@ -739,7 +745,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-         yydebug = 1;
+         //yydebug = 1;
     #endif
 
     yyin = fopen(argv[1], "r");
