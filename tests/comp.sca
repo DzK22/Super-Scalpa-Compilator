@@ -1,6 +1,6 @@
 program comp
   var a, c, t : int;
-  var test : bool;  
+  var test : bool;
   var fdd : array[1..10, 1..5] of int ;
     begin
          a := fdd [5,2]  ;

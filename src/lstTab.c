@@ -12,13 +12,16 @@ lstInt *newLstInt (int ival) {
         return NULL;
     }
     p->ival = 0 ;
-    if( q == NULL)
+    if( q == NULL) {
+        p->next = NULL;
       q = p ;
       q->next = p;
-      }
+     }
 
     return q  ;
 }
+}
+
 void freeLstInt (lstInt *list) {
     lstInt *cur;
     while (list != NULL) {
@@ -69,12 +72,14 @@ lstBool *newLstBool (int ival) {
         return NULL;
     }
     p->bval = false ;
-    if( q == NULL)
+    p->next = NULL;
+    if( q == NULL) {
       q = p ;
       q->next = p;
       }
 
     return q  ;
+}
 }
 
 void freeLstBool (lstBool * list) {
