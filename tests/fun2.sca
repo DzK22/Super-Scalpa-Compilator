@@ -1,0 +1,23 @@
+program Fun2
+    var d : int;
+
+    function f1 (k : int) : int
+    begin
+        return k * 2;
+    end;
+
+    function f2 (l : int) : int
+    begin
+        return f1(l) + 2;
+    end;
+
+    begin
+        d := 3;
+        write "f2(";
+        write d;
+        write ") = ";
+        write f2(d);
+        write "\n";
+    end
+
+
