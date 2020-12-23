@@ -16,8 +16,11 @@
 
     symbol *stable = NULL;
     quad *all_code = NULL;
+    symbol *curfun = NULL; // current parsing function symbol or NULL
     char *progName = NULL;
     int instr_cnt  = 0;
+
+    arglist *funcalls = NULL;
 
     void testID (symbol *s, char *name) {
         if(s == NULL) {
@@ -78,15 +81,14 @@
         if (al)
             slist = arglistToSymlist(al);
 
-
         quad *q  = qGen(Q_FUNCALL, res, fs, slist);
         *quadRes = NULL;
 
-
         if (qd)
             *quadRes = concat(*quadRes, qd);
+
         *quadRes = concat(*quadRes, q);
-        *symRes  = NULL;
+        *symRes  = res;
      }
 %}
 
@@ -338,13 +340,17 @@ fundecllist : %empty {
                 }
            ;
 
-fundecl : FUNCTION_ IDENT_ PARLEFT_ parlist PARRIGHT_ DPOINT_ atomictype vardecllist instr {
+fundecl : FUNCTION_ IDENT_ PARLEFT_ parlist PARRIGHT_ DPOINT_ atomictype vardecllist {
                 arglist *al = $4.al;
                 symbol *fs  = newVarFun(&stable, $2, al, $7);
-                quad *qdec  = qGen(Q_FUNDEC, NULL, fs, NULL);
-                quad *qend  = qGen(Q_FUNEND, NULL, fs, NULL);
+                curfun      = fs;
+            }
+          instr {
+                quad *qdec  = qGen(Q_FUNDEC, NULL, curfun, NULL);
+                quad *qend  = qGen(Q_FUNEND, NULL, curfun, NULL);
 
-                $$.quad = concat(qdec, $9.quad);
+                curfun  = NULL;
+                $$.quad = concat(qdec, $10.quad);
                 $$.quad = concat($$.quad, qend);
             }
         ;
@@ -392,8 +398,22 @@ instr: lvalue AFFEC_ expr {
                 $$.ptr     = $1.ptr;
 
             }
-        | RETURN_ expr {}
-        | RETURN_ {}
+        | RETURN_ expr {
+                if (curfun == NULL)
+                    ferr("cs.y instr : RETURN_ expr not in function");
+
+                if ($2.ptr->type != ((fundata *) curfun->fdata)->rtype)
+                    ferr("cs.y instr : RETURN_ expr return expr type != fun ret type");
+
+                quad *qr = qGen(Q_FUNRETURN, NULL, curfun, $2.ptr);
+                $$.quad  = concat($2.quad, qr);
+            }
+        | RETURN_ {
+                if (curfun == NULL)
+                    ferr("cs.y instr : RETURN_ not in function");
+
+                $$.quad = qGen(Q_FUNRETURN, NULL, curfun, NULL);
+            }
         | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 funcallExpression(&($$.quad), &($$.ptr), $1, $3.quad, $3.al);
             }

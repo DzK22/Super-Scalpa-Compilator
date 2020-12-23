@@ -9,8 +9,10 @@
 
 typedef struct arglist {
 	struct arglist *next;
-	char   *id;
-	symbol *sym; // arg symbol (only for function args)
+	union {
+		char   *id;  // only for var decl
+		symbol *sym; // only for fun args
+	};
 } arglist;
 
 typedef struct fundata {

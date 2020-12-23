@@ -13,8 +13,19 @@ program Fun
       write d;
     end;
 
+    (* fonction qui renvoie t x 2 *)
+    function titi (t : int) : int
     begin
+      return t * 2;
+    end;
+
+    (* main *)
+    begin
+        (*
         toto(1, true, 22);
         toto(3, false, 15);
+        *)
+
+        write titi(6);
         write "\n"
     end

@@ -8,9 +8,9 @@
 #include "stable.h"
 
 typedef enum {
-  Q_END, Q_WRITE, Q_READ, Q_AFFEC,       // divers
   Q_PLUS, Q_MINUS, Q_MULT, Q_DIV, Q_EXP, Q_INF, Q_INFEQ, Q_SUP, Q_SUPEQ, Q_EQUAL, Q_DIFF, Q_AND, Q_OR, Q_XOR, Q_NOT, // operators (binary or unary)
-  Q_LABEL, Q_GOTO, Q_IF, Q_IFELSE, Q_FUNDEC, Q_FUNEND, Q_FUNCALL, Q_MAIN
+  Q_FUNDEC, Q_FUNEND, Q_FUNCALL, Q_FUNRETURN, // for functions
+  Q_END, Q_WRITE, Q_READ, Q_AFFEC, Q_LABEL, Q_GOTO, Q_IF, Q_IFELSE, Q_MAIN // other
 } qop;
 
 typedef struct gotoLst gotoLst;

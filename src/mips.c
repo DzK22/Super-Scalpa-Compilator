@@ -88,7 +88,7 @@ void getText (FILE *f, quad *q) {
     fundata *fdata;
     arglist *al;
 
-    int offset, bytes;
+    int offset, bytes, len;
     symbol *sym;
 
     while (q != NULL) {
@@ -349,14 +349,14 @@ void getText (FILE *f, quad *q) {
                 // sauvegardage du ra
                 fprintf(f, "\t\t\t\t# on empile $ra et récupère chaque argument de la pile\n");
                 fprintf(f, "\tsub $sp, $sp, 4\n");
-                fprintf(f, "\tsw $ra %d($sp)\n", offset);
+                fprintf(f, "\tsw $ra, %d($sp)\n", offset);
                 offset += 4;
 
                 /* pile a ce moment:
                   0  -> ra
                   -4 -> arg 1
                   -8 -> arg 2
-                  etc ... macouil
+                  etc ...
                 */
 
                 while (al != NULL) {
@@ -374,6 +374,7 @@ void getText (FILE *f, quad *q) {
                   al = al->next;
                 }
 
+                fprintf(f, "\t\t\t\t# body of function %s\n\n", argv1->id);
                 break;
 
             case Q_FUNEND: // end of declaration of a function
@@ -382,12 +383,15 @@ void getText (FILE *f, quad *q) {
                 // argv1 = function symbol
 
                 // pop args from the stack and put sav ra in $ra
-                fprintf(f, "\t\t\t\t# epilogue of function %s\n", argv1->id);
+                fprintf(f, "\n\t\t\t\t# epilogue of function %s\n", argv1->id);
+                // label où jumper après un return
+                fprintf(f, "end_%s:\n", argv1->id);
+
                 /* pile a ce moment:
                   0  -> ra
                   -4 -> arg n
                   -8 -> arg n - 1
-                  etc ... macouil
+                  etc ...
                 */
 
                 fdata = (fundata *) argv1->fdata;
@@ -411,7 +415,7 @@ void getText (FILE *f, quad *q) {
 
                 fprintf(f, "\taddi $sp, $sp, %d\n", offset);
                 fprintf(f, "\tjr $ra\n");
-                fprintf(f, "\t\t\t\t# end of function %s\n\n", argv1->id);
+                fprintf(f, "\t\t\t\t# end of function %s\n", argv1->id);
                 break;
 
             case Q_FUNCALL:
@@ -427,15 +431,17 @@ void getText (FILE *f, quad *q) {
 
                 // args str for debugging
                 char argsDebug[LEN] = "";
+                len    = 0;
                 offset = 0;
+                sym    = argv2;
 
                 // debug args string + calcul du total offset
-                sym = argv2;
                 while (sym != NULL) {
-                    bytes = snprintf(argsDebug + offset, LEN - offset, "%s, ", sym->id);
+                    bytes = snprintf(argsDebug + len, LEN - len, "%s, ", sym->id);
                     if (bytes < 0 || bytes >= LEN)
                         ferr("mips.c getText Q_FUNCALL snprintf");
 
+                    len += bytes;
                     switch (sym->type) {
                       case S_INT  : bytes = 4; break;
                       case S_BOOL : bytes = 4; break;
@@ -447,8 +453,8 @@ void getText (FILE *f, quad *q) {
                 }
 
                 // print debug args
-                if ((bytes = strlen(argsDebug)) > 2)
-                    argsDebug[bytes - 2] = '\0'; // erase the last ", "
+                if (len > 2)
+                    argsDebug[len - 2] = '\0'; // erase the last ", "
 
                 // empiler chaque arg
                 fprintf(f, "\tsub $sp, $sp, %d\n", offset);
@@ -479,9 +485,30 @@ void getText (FILE *f, quad *q) {
 
                 // jump to function and put actual addr in $ra
                 fprintf(f, "\tjal %s\n", argv1->id);
+
+                // store result ($v0) in res->id
+                if (res)
+                    fprintf(f, "\tsw $v0, %s\n", res->id);
+                break;
+
+            case Q_FUNRETURN:
+                if (!argv1) // argv2 optional
+                    ferr("mips.c getText Q_FUNRETURN quad error");
+                // arvg1 = function symbol
+                // arvg2 = symbol to return (can be NULL if fun unit)
+
+                if (argv2) {
+                    fprintf(f, "\t\t\t\t# funreturn %s\n", argv2->id);
+                    fprintf(f, "\tlw $v0, %s\n", argv2->id);
+                } else
+                    fprintf(f, "\t\t\t\t# funreturn (void)\n");
+
+                // goto function end label
+                fprintf(f, "\tj end_%s\n", argv1->id);
                 break;
 
             case Q_MAIN:
+                fprintf(f, "\n\t\t\t\t# main function\n");
                 fprintf(f, "main:\n");
                 break;
 
