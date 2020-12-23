@@ -5,7 +5,7 @@ program Fun
 
     function toto (b : int) : unit
     begin
-        a := a + b;
+        a := a + 2;
     end;
 
     begin

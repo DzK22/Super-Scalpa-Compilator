@@ -50,7 +50,6 @@ symbol *arglistToSymlist (arglist *al) {
 		al = al->next;
 	}
 	printf("\n\n");
-	exit(2);
 
 	while (al) {
 		slist = sAdd(&slist);

@@ -57,7 +57,7 @@
      }
 
     // el = NULL for procedure
-    void funcallExpression (quad **quadRes, symbol **symRes, char *id, exprlist *el) {
+    void funcallExpression (quad **quadRes, symbol **symRes, char *id, quad *qd, arglist *al) {
         symbol *fs = search(stable, id);
         testID(fs, id);
 
@@ -75,16 +75,16 @@
         }
 
         symbol *slist = NULL;
-        if (el) { // args présent
-            // convertir arglist en nouv liste de symbol car gGen ne prend que des symbol * en arg
-            slist = arglistToSymlist(el->al);
-        }
+        if (al)
+            slist = arglistToSymlist(al);
+
 
         quad *q  = qGen(Q_FUNCALL, res, fs, slist);
         *quadRes = NULL;
 
-        if (el)
-            *quadRes = concat(*quadRes, el->quad);
+
+        if (qd)
+            *quadRes = concat(*quadRes, qd);
         *quadRes = concat(*quadRes, q);
         *symRes  = NULL;
      }
@@ -120,8 +120,18 @@
         struct s_array sarray;
     } ctype;
 
-    struct arglist  *argl;
-    struct exprlist *exprl;
+    //struct arglist  *argl;
+    struct {
+        struct arglist *al;
+    	char   *id;
+    	symbol *sym; // arg symbol (only for function args)
+    } argl;
+
+    struct {
+        struct quad *quad;
+        struct arglist *al;
+    } exprl;
+    //struct exprlist *exprl;
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
@@ -170,7 +180,7 @@ vardecllist : %empty                         { }
            ;
 
 varsdecl: VAR_ identlist DPOINT_ typename {
-             arglistPrint($2);
+             arglistPrint($2.al);
              switch ($4.type) {
                  case S_INT:
                     fprintf(stdout, "integer\n");
@@ -186,7 +196,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                     break;
 
              }
-             arglist *al = $2;
+             arglist *al = $2.al;
 
               while (al != NULL) {
                   switch ($4.type) {
@@ -214,11 +224,11 @@ varsdecl: VAR_ identlist DPOINT_ typename {
           ;
 
 identlist : IDENT_ {
-                $$ = arglistNew(strdup($1), NULL);
+                $$.al = arglistNew(strdup($1), NULL);
             }
          | IDENT_ COMMA_ identlist {
                 arglist *al = arglistNew(strdup($1), NULL);
-                $$ = arglistConcat(al, $3);
+                $$.al = arglistConcat(al, $3.al);
             }
          ;
 
@@ -330,7 +340,7 @@ fundecllist : %empty {
            ;
 
 fundecl : FUNCTION_ IDENT_ PARLEFT_ parlist PARRIGHT_ DPOINT_ atomictype vardecllist instr {
-                arglist *al = $4;
+                arglist *al = $4.al;
                 symbol *fs  = newVarFun(&stable, $2, al, $7);
                 quad *qdec  = qGen(Q_FUNDEC, NULL, fs, NULL);
                 quad *qend  = qGen(Q_FUNEND, NULL, fs, NULL);
@@ -341,13 +351,13 @@ fundecl : FUNCTION_ IDENT_ PARLEFT_ parlist PARRIGHT_ DPOINT_ atomictype vardecl
         ;
 
 parlist : %empty {
-                $$ = NULL;
+                $$.al = NULL;
             }
         | par {
                 $$ = $1;
             }
         | par COMMA_ par {
-                $$ = arglistConcat($1, $3);
+                $$.al = arglistConcat($1.al, $3.al);
             }
         ;
 
@@ -359,7 +369,7 @@ par : IDENT_ DPOINT_ typename {
                 default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
             }
 
-            $$ = arglistNew(NULL, s);
+            $$.al = arglistNew(NULL, s);
         }
 
     | REF_ IDENT_ DPOINT_ typename {
@@ -379,10 +389,10 @@ instr: lvalue AFFEC_ expr {
         | RETURN_ expr {}
         | RETURN_ {}
         | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
-                funcallExpression(&($$.quad), &($$.ptr), $1, $3);
+                funcallExpression(&($$.quad), &($$.ptr), $1, $3.quad, $3.al);
             }
         | IDENT_ PARLEFT_ PARRIGHT_ {
-                funcallExpression(&($$.quad), &($$.ptr), $1, NULL);
+                funcallExpression(&($$.quad), &($$.ptr), $1, NULL, NULL);
             }
         | BEGIN_ sequence END_ {
                 $$.ptr  = $2.ptr;
@@ -471,8 +481,8 @@ lvalue: IDENT_ {
               // calcul l'indice du exprlist element
               lstInt *tab  = ptr->array.intarr;
               int index    = 0; //  exprlist
-              arglist *cur = $3->al;
-              int value    = getNthIntVal (tab, $3->al->sym->ival);
+              arglist *cur = $3.al;
+              int value    = getNthIntVal (tab, $3.al->sym->ival);
               ptr->ival    = value;
               $$.ptr       = ptr;
               $$.quad      = NULL;
@@ -497,15 +507,15 @@ exprlist : expr {
                 // TODO
                 // TODO
                 // TODO
-                $$->al   = arglistNew(NULL, $1.ptr);
+                $$.al   = arglistNew(NULL, $1.ptr);
                 printf(" ### avant exprlist expr, ID = %s\n\n", $1.ptr->id);
-                $$->quad = $1.quad;
+                $$.quad = $1.quad;
                 printf(" ### apres exprlist expr, ID = %s\n\n", $1.ptr->id);
             }
         |  expr COMMA_ exprlist {
                 arglist *al = arglistNew(NULL, $1.ptr);
-                $$->al      = arglistConcat(al, $3->al);
-                $$->quad    = concat($1.quad, $3->quad);
+                $$.al      = arglistConcat(al, $3.al);
+                $$.quad    = concat($1.quad, $3.quad);
             }
         ;
 
@@ -657,16 +667,16 @@ expr :  expr PLUS_ expr {
 
       | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
                 // function call (with parameters)
-                funcallExpression(&($$.quad), &($$.ptr), $1, $3);
+                funcallExpression(&($$.quad), &($$.ptr), $1, $3.quad, $3.al);
             }
       | IDENT_ PARLEFT_ PARRIGHT_ {
-                funcallExpression(&($$.quad), &($$.ptr), $1, NULL);
+                funcallExpression(&($$.quad), &($$.ptr), $1, NULL, NULL);
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
 
             // expr  = t [2,3]
 
-        arglist *toto = $3->al;
+        arglist *toto = $3.al;
         while (toto != NULL) {
             fprintf(stdout, "liste indices de la ligne 654  %d\n", toto->sym->ival);
             toto = toto->next;

@@ -2,11 +2,14 @@
 program BoolTest
    var a, c, t : int; var test : bool
    begin
-     a := 0;
-     t := 10;
-     while a < t do
+     a := 1;
+     t := 100;
+     test := false;
+     while not test do
      begin
         write a;
-        a := a + 1;
+        a := a * 2 - t / 2;
+        if a >= 100 then test := true;
+        write "\n";
      end;
    end
