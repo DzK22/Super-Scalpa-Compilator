@@ -25,4 +25,5 @@ program test
         i := i + 1;
        end;
        write max;
+       write "\n";
    end

@@ -1,15 +1,16 @@
 (* Test des opérations booléènnes  *)
-program BoolTest
-   var a, c, t : int; var test : bool
+
+program boolTest
+   var a, b, c : int; var test : bool
    begin
      a := 1;
-     t := 100;
+     c := 100;
      test := false;
      while not test do
      begin
         write a;
-        a := a * 2 - t / 2;
-        if a >= 100 then test := true;
+        a := a * 2;
+        if a >= c then test := true;
         write "\n";
      end;
    end
