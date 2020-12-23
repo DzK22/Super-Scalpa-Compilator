@@ -242,8 +242,10 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-                int ndims = $3.ndims;
-                printf("J'ai %d dimensions\n", ndims);
+                printf("J'ai %d dimensions\n", $3.ndims);
+                $$.ndims = $3.ndims;
+                //$$.base = newVarArray()
+                $$.quad = NULL;
             }
           ;
 
