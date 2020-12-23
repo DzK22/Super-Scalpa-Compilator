@@ -356,7 +356,7 @@ parlist : %empty {
         | par {
                 $$ = $1;
             }
-        | par COMMA_ par {
+        | par COMMA_ parlist {
                 $$.al = arglistConcat($1.al, $3.al);
             }
         ;
@@ -722,7 +722,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-        /* yydebug = 1; */
+         yydebug = 1;
     #endif
 
     yyin = fopen(argv[1], "r");
