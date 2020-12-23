@@ -30,14 +30,6 @@
         }
     }
 
-    void printRange (t_range *list) {
-        t_range *cur = list;
-        while (cur != NULL) {
-                fprintf(stdout, "min:%d[]max:%d[]ndim:%d\n", cur->min, cur->max, cur->ndim);
-            cur = cur->next;
-        }
-    }
-
     void arithmeticExpression (qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
         symbol *ptr = newTmpInt(&stable, 0);
@@ -106,8 +98,6 @@
         struct quad   *ltrue;
         struct quad   *lfalse;
     } gencode; // Pour les expressions
-    struct t_range range;
-    struct s_array sarray;
     struct {
         stype type;
         union {
@@ -118,12 +108,6 @@
     } cte;
 
     struct {
-        stype type;
-        struct s_array sarray;
-    } ctype;
-
-    //struct arglist  *argl;
-    struct {
         struct arglist *al;
         char   *id;
         symbol *sym; // arg symbol (only for function args)
@@ -133,7 +117,6 @@
         struct quad *quad;
         struct arglist *al;
     } exprl;
-    //struct exprlist *exprl;
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
@@ -142,14 +125,10 @@
 %type <sval>     IDENT_
 %type <cte>      CTE_
 %type <gencode>  expr instr program sequence lvalue m fundecllist  fundecl
-%type <type>     atomictype
+%type <type>     atomictype typename
 %type <signe>    sign
-%type <range>    rangelist
 %type <sarray>   arraytype
 %type <argl>     identlist varsdecl parlist par
-
-//%type <lstExpr>  exprlist
-%type <ctype>    typename
 %type <exprl>    exprlist
 
 %left   OR_
@@ -183,7 +162,7 @@ vardecllist : %empty                         { }
 
 varsdecl: VAR_ identlist DPOINT_ typename {
              arglistPrint($2.al);
-             switch ($4.type) {
+             switch ($4) {
                  case S_INT:
                     fprintf(stdout, "integer\n");
                     break;
@@ -201,7 +180,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
              arglist *al = $2.al;
 
               while (al != NULL) {
-                  switch ($4.type) {
+                  switch ($4) {
                       case S_BOOL:
                           newVarBool(&stable, al->id, false);
                           break;
@@ -213,8 +192,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                           break;
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
-                          newVarArray(&stable, al->id, $4.sarray);
-
+                          //newVarArray(&stable, al->id, $4.sarray);
                           break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -235,11 +213,10 @@ identlist : IDENT_ {
          ;
 
 typename : atomictype {
-            $$.type = $1;
+            $$ = $1;
           }
           | arraytype {
-            $$.type = S_ARRAY;
-            $$.sarray = $1;
+            $$ = S_ARRAY;
           }
          ;
 
@@ -251,35 +228,7 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-              //creer la struct s_array
-              printRange(&($3));
-              t_range *rg = &($3);
-              s_array *arr = malloc(sizeof(s_array));
-              if (arr == NULL) {
-                  fprintf(stderr, "malloc error\n");
-                  exit(EXIT_FAILURE);
-              }
-              arr->range = rg;
-              arr->type = $6;
-              // calcul nombre d'elements
-              int cpt = 1 ;
-              t_range *cur = rg;
-              while (cur != NULL) {
-                  cpt *= (cur->max - cur->min + 1);
-                  cur = cur->next;
-              }
-              arr->size = cpt;
-              switch (arr->type) {
-                  case S_INT:
-                    arr->intarr = newLstInt(arr->size);
-                     break;
 
-                  case S_BOOL:
-                  arr->boolarr = newLstBool(arr->size);
-                    break;
-              }
-              //fprintf(stdout, "ndim = %d\n", rg->ndim);
-              $$ = *arr ;
             }
           ;
 
@@ -299,10 +248,8 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-                $$.min = min  ;
-                $$.max = max ;
-                $$.ndim = 1 ;
-                $$.next = NULL;
+
+                fprintf(stdout, "borne inf : %d et borne sup : %d\n", min, max);
 
             }
             |sign CTE_ TWO_POINTS_ sign CTE_ COMMA_ rangelist {
@@ -319,12 +266,8 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-                $$.min = min  ;
-                $$.max = max ;
-                $$.ndim = $7.ndim + 1 ;
-                $$.next = &($7) ;
 
-
+                fprintf(stdout, "borne inf : %d et borne sup : %d\n", min, max);
             }
             ;
 
@@ -368,7 +311,7 @@ parlist : %empty {
 
 par : IDENT_ DPOINT_ typename {
             symbol *s;
-            switch ($3.type) {
+            switch ($3) {
                 case S_INT  : s = newVarInt(&stable, $1, 0)      ; break ;
                 case S_BOOL : s = newVarBool(&stable, $1, false) ; break ;
                 default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
@@ -503,15 +446,6 @@ lvalue: IDENT_ {
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
               symbol *ptr = search(stable, $1);
               testID(ptr, $1);
-
-              // calcul l'indice du exprlist element
-              lstInt *tab  = ptr->array.intarr;
-              int index    = 0; //  exprlist
-              arglist *cur = $3.al;
-              int value    = getNthIntVal (tab, $3.al->sym->ival);
-              ptr->ival    = value;
-              $$.ptr       = ptr;
-              $$.quad      = NULL;
             }
       ;
 
@@ -690,18 +624,6 @@ expr :  expr PLUS_ expr {
              while (toto != NULL) {
             fprintf(stdout, "liste indices de expr = ident[i, .. ,n]  %d\n", toto->sym->ival);
              toto = toto->next;
-        }
-
-        // mettre le type de retour
-        $$.ptr->type = ptr->array.type ;
-        $$.quad = NULL ;
-
-        // calcul de la valeur de l'indice du tableau
-         $$.ptr->ival = 44 ; // valeur bidon
-        struct lstInt * cur = ptr->array.intarr ;
-        while (cur != NULL) {
-          printf("%d *_* %d  ",ptr->array.size,cur->ival) ;
-          cur = cur->next;
         }
 
              }

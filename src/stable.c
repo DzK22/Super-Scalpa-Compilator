@@ -105,9 +105,6 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
             if ((nt->sval = strdup(tid)) == NULL)
                 ferr("stable.c newVar strdup data");
             break;
-        case S_ARRAY:
-            nt->array = *((s_array *) data);
-            break;
         case S_FUNCTION:
             nt->fdata = data;
             break;
@@ -146,10 +143,6 @@ symbol *newVarStr (symbol **stable, char *id, char *str) {
 
 symbol *newVarBool (symbol **stable, char *id, bool bol) {
     return newVar(stable, S_BOOL, id, &bol);
-}
-
-symbol *newVarArray (symbol **stable, char *id, s_array arr) {
-    return newVar(stable, S_ARRAY, id, &arr);
 }
 
 symbol *newVarUnit (symbol **stable, char *id) {

@@ -1,7 +1,7 @@
 program comp
   var a, c, t : int;
   var test : bool;
-  var fdd : array[1..10] of int ;
+  var fdd : array[1..10, 5..7] of int ;
     begin
-         a := fdd [5,2]  ;
+        write "toto"
      end
