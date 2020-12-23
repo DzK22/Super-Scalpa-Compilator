@@ -18,7 +18,7 @@ void freeLstInt (lstInt *);
 lstInt *addLstInt (lstInt *, int);
 int getNthIntVal (lstInt *, int);
 
-lstBool *newLstBool (bool);
+lstBool *newLstBool (int );
 void freeLstBool (lstBool *);
 lstBool *addLstBool (lstBool *, bool);
 bool getNthBoolVal (lstBool *, int);

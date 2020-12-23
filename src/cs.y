@@ -212,8 +212,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
                           newVarArray(&stable, al->id, $4.sarray);
-                          //printf("nbim = %d\n", $4.sarray.range->ndim);
-                       break;
+                          break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
                   }
@@ -260,16 +259,15 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
               arr->range = rg;
               arr->type = $6;
               // calcul nombre d'elements
-              int cpt = 0 ;
+              int cpt = 1 ;
               t_range *cur = rg;
               while (cur != NULL) {
-                  cpt += (cur->max - cur->min + 1);
+                  cpt *= (cur->max - cur->min + 1);
                   cur = cur->next;
               }
               arr->size = cpt;
               switch (arr->type) {
                   case S_INT:
-                    printf("toto = %d\n", cpt);
                     arr->intarr = newLstInt(arr->size);
                     break;
 
@@ -378,13 +376,20 @@ par : IDENT_ DPOINT_ typename {
     ;
 
 instr: lvalue AFFEC_ expr {
-                if ($1.ptr->type != $3.ptr->type)
-                    ferr("cs.y instr: lvalue and expr type differ");
 
+                if ($1.ptr->type != $3.ptr->type)
+                {
+                  printf("type lvalue %d \n ",$1.ptr->type) ;
+                  printf("type expr %d \n ",$3.ptr->type) ;
+                  ferr("cs.y instr: lvalue and expr type differ");
+                }
+
+                printf(" lvalue AFFEC_ expr de valeur %d \n",$3.ptr->ival) ;
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
-                quad *quad = concat($3.quad, q);
+                quad *quad = concat($3.quad, q); // segfault here for array affectation 
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
+
             }
         | RETURN_ expr {}
         | RETURN_ {}
@@ -508,10 +513,8 @@ exprlist : expr {
                 // TODO
                 // TODO
                 $$.al   = arglistNew(NULL, $1.ptr);
-                printf(" ### avant exprlist expr, ID = %s\n\n", $1.ptr->id);
                 $$.quad = $1.quad;
-                printf(" ### apres exprlist expr, ID = %s\n\n", $1.ptr->id);
-            }
+             }
         |  expr COMMA_ exprlist {
                 arglist *al = arglistNew(NULL, $1.ptr);
                 $$.al      = arglistConcat(al, $3.al);
@@ -674,13 +677,25 @@ expr :  expr PLUS_ expr {
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
 
-            // expr  = t [2,3]
+        symbol *ptr = search(stable, $1);
+        testID(ptr, $1);
 
         arglist *toto = $3.al;
-        while (toto != NULL) {
-            fprintf(stdout, "liste indices de la ligne 654  %d\n", toto->sym->ival);
+             while (toto != NULL) {
+            fprintf(stdout, "liste indices de expr = ident[i, .. ,n]  %d\n", toto->sym->ival);
             toto = toto->next;
         }
+
+        // mettre le type de retour
+        $$.ptr->type = ptr->array.type ;
+        // calcul de la valeur de l'indice du tableau
+
+        struct lstInt * cur = ptr->array.intarr ;
+        while (cur != NULL) {
+          printf("%d *_* %d  ",ptr->array.size,cur->ival) ;
+          cur = cur->next;
+        }
+
              }
       | IDENT_ {
             symbol *ptr = search(stable, $1);
