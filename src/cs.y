@@ -127,7 +127,6 @@
 %type <gencode>  expr instr program sequence lvalue m fundecllist  fundecl
 %type <type>     atomictype typename
 %type <signe>    sign
-%type <sarray>   arraytype
 %type <argl>     identlist varsdecl parlist par
 %type <exprl>    exprlist
 
@@ -327,14 +326,11 @@ par : IDENT_ DPOINT_ typename {
 
 instr: lvalue AFFEC_ expr {
 
-                if ($1.ptr->type != $3.ptr->type)
-                {
-                  printf("type lvalue %d \n ",$1.ptr->type) ;
-                  printf("type expr %d \n ",$3.ptr->type) ;
+                if ($1.ptr->type != $3.ptr->type) {
+                  printf("type lvalue %d \n ", $1.ptr->type) ;
+                  printf("type expr %d \n ", $3.ptr->type) ;
                   ferr("cs.y instr: lvalue and expr type differ");
                 }
-
-                printf(" lvalue AFFEC_ expr de valeur %d \n",$3.ptr->ival) ;
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
@@ -700,7 +696,8 @@ int main (int argc, char **argv) {
     }
 
     FILE *output = fopen(out, "w");
-    qPrint(all_code);
+    if (yydebug)
+        qPrint(all_code);
     getMips(output, stable, all_code);
 
     freeLex();
