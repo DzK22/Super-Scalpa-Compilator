@@ -664,16 +664,20 @@ expr :  expr PLUS_ expr {
         symbol *ptr = search(stable, $1);
         testID(ptr, $1);
 
+        // calcul de l'indice dans le tableau
+        int index = 0 ;
         arglist *toto = $3.al;
              while (toto != NULL) {
             fprintf(stdout, "liste indices de expr = ident[i, .. ,n]  %d\n", toto->sym->ival);
-            toto = toto->next;
+             toto = toto->next;
         }
 
         // mettre le type de retour
         $$.ptr->type = ptr->array.type ;
-        // calcul de la valeur de l'indice du tableau
+        $$.quad = NULL ;
 
+        // calcul de la valeur de l'indice du tableau
+         $$.ptr->ival = 44 ; // valeur bidon
         struct lstInt * cur = ptr->array.intarr ;
         while (cur != NULL) {
           printf("%d *_* %d  ",ptr->array.size,cur->ival) ;
