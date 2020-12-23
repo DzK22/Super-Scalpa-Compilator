@@ -386,7 +386,7 @@ instr: lvalue AFFEC_ expr {
 
                 printf(" lvalue AFFEC_ expr de valeur %d \n",$3.ptr->ival) ;
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
-                quad *quad = concat($3.quad, q); // segfault here for array affectation 
+                quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
 
@@ -497,11 +497,8 @@ lvalue: IDENT_ {
 exprlist : expr {
                 $$.al   = arglistNew(NULL, $1.ptr);
                 $$.quad = $1.quad;
-<<<<<<< HEAD
              }
-=======
-            }
->>>>>>> a7898496fa788b1289adefeb718e0a81c8ce5e8f
+
         |  expr COMMA_ exprlist {
                 arglist *al = arglistNew(NULL, $1.ptr);
                 $$.al       = arglistConcat(al, $3.al);
