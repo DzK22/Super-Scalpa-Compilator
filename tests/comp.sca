@@ -3,5 +3,5 @@ program comp
   var test : bool;
   var fdd : array[1..10] of int ;
     begin
-         a := fdd [5,2]  ;
+         a := fdd [2]  ;
      end

@@ -15,8 +15,10 @@ program Fun
 
     (* fonction qui renvoie t x 2 *)
     function titi (t : int) : int
+    var x : int;
     begin
-      return t * 2;
+      x := 5;
+      return t * 2 - 5;
     end;
 
     (* main *)
