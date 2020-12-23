@@ -253,17 +253,18 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
               int cpt = 0 ;
               t_range *cur = rg;
               while (cur != NULL) {
-                  cpt += (cur->max - cur->min);
+                  cpt += (cur->max - cur->min + 1);
                   cur = cur->next;
               }
               arr->size = cpt;
               switch (arr->type) {
                   case S_INT:
-                    arr->intarr = newLstInt(rg->ndim);
+                    printf("toto = %d\n", cpt);
+                    arr->intarr = newLstInt(arr->size);
                     break;
 
                   case S_BOOL:
-                  arr->boolarr = newLstBool(rg->ndim);
+                  arr->boolarr = newLstBool(arr->size);
                     break;
               }
               //fprintf(stdout, "ndim = %d\n", rg->ndim);

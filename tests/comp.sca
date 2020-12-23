@@ -1,8 +1,8 @@
 program comp
   var a, c, t : int;
   var test : bool;
-  var fdd : array[0..10] of int ;
+  var fdd : array[0..10, 0..5] of int ;
     begin
         t := 8 ;
-        fdd [5] :=  t;
+        fdd [5,2] :=  t;
      end
