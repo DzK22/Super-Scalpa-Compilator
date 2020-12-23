@@ -14,13 +14,11 @@ all:
 	gcc -c $(SRC)quad.c
 	gcc -c $(SRC)mips.c
 	gcc -c $(SRC)arglist.c
-	gcc -c $(SRC)lstTab.c
 	mv stable.o $(TMP)
 	mv quad.o $(TMP)
 	mv mips.o $(TMP)
 	mv arglist.o $(TMP)
-	mv lstTab.o $(TMP)
-	gcc -o $(NAME).out $(TMP)stable.o $(TMP)quad.o $(TMP)arglist.o $(TMP)lstTab.o $(TMP)mips.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
+	gcc -o $(NAME).out $(TMP)stable.o $(TMP)quad.o $(TMP)arglist.o $(TMP)mips.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 
 clean:
 	rm -rf $(TMP) $(NAME).out
