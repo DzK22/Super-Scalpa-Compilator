@@ -491,7 +491,8 @@ expr :  expr PLUS_ expr {
       | expr DIV_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
                 ferr("cs.y expr MULT expr type error");
-
+            if ($3.ptr->ival == 0)
+                ferr("Error division by 0");
             arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 

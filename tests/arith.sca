@@ -9,6 +9,7 @@ program arith
      c := 5 * (a + b);
      i := a + b / 2 * (c - a);
      j := i ^ 2;
+     j := j / 0;
      write a;       (* 10 *)
      write "\n";
      write b;       (* 30 *)
