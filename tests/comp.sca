@@ -1,7 +1,11 @@
 program comp
   var a, c, t : int;
   var test : bool;
+<<<<<<< HEAD
   var fdd : array[1..10, 1..5] of int ;
+=======
+  var fdd : array[4..10, 0..5] of int ;
+>>>>>>> a7898496fa788b1289adefeb718e0a81c8ce5e8f
     begin
          a := fdd [5,2]  ;
      end

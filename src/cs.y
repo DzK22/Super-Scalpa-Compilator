@@ -56,7 +56,7 @@
         (*res)->type = S_BOOL;
      }
 
-    // el = NULL for procedure
+    // qd et al = NULL for procedure (no args)
     void funcallExpression (quad **quadRes, symbol **symRes, char *id, quad *qd, arglist *al) {
         symbol *fs = search(stable, id);
         testID(fs, id);
@@ -123,8 +123,8 @@
     //struct arglist  *argl;
     struct {
         struct arglist *al;
-    	char   *id;
-    	symbol *sym; // arg symbol (only for function args)
+        char   *id;
+        symbol *sym; // arg symbol (only for function args)
     } argl;
 
     struct {
@@ -354,7 +354,7 @@ parlist : %empty {
         | par {
                 $$ = $1;
             }
-        | par COMMA_ par {
+        | par COMMA_ parlist {
                 $$.al = arglistConcat($1.al, $3.al);
             }
         ;
@@ -495,30 +495,17 @@ lvalue: IDENT_ {
       ;
 
 exprlist : expr {
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // GROS PROBLEME PUTIN FCEST QUOI CE MERDIER CEST IMPOSSIBLE LE PREMIER ID EST BON ET LE SECOND EST NULL
-                // TODO
-                // TODO
-                // TODO
-                // TODO
                 $$.al   = arglistNew(NULL, $1.ptr);
                 $$.quad = $1.quad;
+<<<<<<< HEAD
              }
+=======
+            }
+>>>>>>> a7898496fa788b1289adefeb718e0a81c8ce5e8f
         |  expr COMMA_ exprlist {
                 arglist *al = arglistNew(NULL, $1.ptr);
-                $$.al      = arglistConcat(al, $3.al);
-                $$.quad    = concat($1.quad, $3.quad);
+                $$.al       = arglistConcat(al, $3.al);
+                $$.quad     = concat($1.quad, $3.quad);
             }
         ;
 
@@ -756,7 +743,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-        /* yydebug = 1; */
+         yydebug = 1;
     #endif
 
     yyin = fopen(argv[1], "r");
