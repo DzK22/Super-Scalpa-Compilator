@@ -42,34 +42,27 @@ void arglistPrint (arglist *la) {
 
 // Utile pour convertir les arglist de function call en liste de symbol * pour passer en param de qGen
 symbol *arglistToSymlist (arglist *al) {
-	symbol *slist = NULL, *slast = NULL;
-
-	printf("\n =====> ");
-	while (al) {
-		printf(" %s, ", al->sym->id);
-		al = al->next;
-	}
-	printf("\n\n");
+	symbol *slist = NULL, *slast = NULL, *cur;
 
 	while (al) {
-		slist = sAdd(&slist);
+		cur = sAdd(&slist);
 		if (slast != NULL)
-			slast->next = slist;
+			slast->next = cur;
 
-		slist->id = strdup(al->sym->id);
-		if (slist->id == NULL)
+		cur->id = strdup(al->sym->id);
+		if (cur->id == NULL)
 			ferr("arglist.c arglistToSymlist strdup");
 
-		slist->tmp   = al->sym->tmp;
-		slist->type  = al->sym->type;
+		cur->tmp   = al->sym->tmp;
+		cur->type  = al->sym->type;
 
-		switch (slist->type) {
-			case S_INT  : slist->ival = al->sym->ival; break;
-			case S_BOOL : slist->bval = al->sym->bval; break;
-			default: ferr("arglist.c arglistToSymlist wrong slist type");
+		switch (cur->type) {
+			case S_INT  : cur->ival = al->sym->ival; break;
+			case S_BOOL : cur->bval = al->sym->bval; break;
+			default: ferr("arglist.c arglistToSymlist wrong type");
 		}
 
-		slast = slist;
+		slast = cur;
 		al    = al->next;
 	}
 

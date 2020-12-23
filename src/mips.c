@@ -86,6 +86,10 @@ void getText (FILE *f, quad *q) {
     symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
     char *label, *label2;
     fundata *fdata;
+    arglist *al;
+
+    int offset, bytes;
+    symbol *sym;
 
     while (q != NULL) {
         res    = q->res;
@@ -335,21 +339,79 @@ void getText (FILE *f, quad *q) {
                     ferr("mips.c getText Q_FUNDEC quad error");
                 // argv1 = function symbol
 
-                fprintf(f, "\t\t\t\t# function %s\n", argv1->id);
+                fprintf(f, "\n\t\t\t\t# function %s\n", argv1->id);
                 fprintf(f, "%s:\n", argv1->id);
+
+                fdata  = (fundata *) argv1->fdata;
+                offset = 0;
+                al = fdata->al;
+
+                // sauvegardage du ra
+                fprintf(f, "\t\t\t\t# on empile $ra et récupère chaque argument de la pile\n");
+                fprintf(f, "\tsub $sp, $sp, 4\n");
+                fprintf(f, "\tsw $ra %d($sp)\n", offset);
+                offset += 4;
+
+                /* pile a ce moment:
+                  0  -> ra
+                  -4 -> arg 1
+                  -8 -> arg 2
+                  etc ... macouil
+                */
+
+                while (al != NULL) {
+                  sym = al->sym;
+
+                  switch (sym->type) {
+                      case S_INT  : bytes = 4; break;
+                      case S_BOOL : bytes = 4; break;
+                      default: ferr("mips.c getText Q_FUNDEC wrong arg type");
+                  }
+
+                  fprintf(f, "\tlw $t0, %d($sp)\n", offset);
+                  fprintf(f, "\tsw $t0, %s\n", sym->id);
+                  offset += bytes;
+                  al = al->next;
+                }
+
                 break;
 
             case Q_FUNEND: // end of declaration of a function
                 if (!argv1)
                     ferr("mips.c getText Q_FUNEND quad error");
                 // argv1 = function symbol
-                fdata = (fundata *) argv1->fdata;
 
-                // pop args from the stack
-                // ...
+                // pop args from the stack and put sav ra in $ra
                 fprintf(f, "\t\t\t\t# epilogue of function %s\n", argv1->id);
-                fprintf(f, "\tj $ra\n");
-                fprintf(f, "\t\t\t\t# end of function %s\n", argv1->id);
+                /* pile a ce moment:
+                  0  -> ra
+                  -4 -> arg n
+                  -8 -> arg n - 1
+                  etc ... macouil
+                */
+
+                fdata = (fundata *) argv1->fdata;
+                al = fdata->al;
+                offset = 0;
+                fprintf(f, "\tlw $ra, %d($sp)\n", offset);
+                offset += 4;
+
+                while (al != NULL) {
+                  sym = al->sym;
+
+                  switch (sym->type) {
+                      case S_INT  : bytes = 4; break;
+                      case S_BOOL : bytes = 4; break;
+                      default: ferr("mips.c getText Q_FUNDEC wrong arg type");
+                  }
+
+                  offset += bytes;
+                  al = al->next;
+                }
+
+                fprintf(f, "\taddi $sp, $sp, %d\n", offset);
+                fprintf(f, "\tjr $ra\n");
+                fprintf(f, "\t\t\t\t# end of function %s\n\n", argv1->id);
                 break;
 
             case Q_FUNCALL:
@@ -361,30 +423,61 @@ void getText (FILE *f, quad *q) {
                 // arvg1 = function symbol
                 // argv2 = list of symbol = symbol * (!= stable)
 
+                // caller push return adress + args to the stack if any, callee pop them before returning to $ra
+
                 // args str for debugging
                 char argsDebug[LEN] = "";
-                int o = 0, r;
-                symbol *s = argv2;
+                offset = 0;
 
-                while (s != NULL) {
-                    r = snprintf(argsDebug + o, LEN - o, "%s, ", s->id);
-                    if (r < 0 || r >= LEN)
+                // debug args string + calcul du total offset
+                sym = argv2;
+                while (sym != NULL) {
+                    bytes = snprintf(argsDebug + offset, LEN - offset, "%s, ", sym->id);
+                    if (bytes < 0 || bytes >= LEN)
                         ferr("mips.c getText Q_FUNCALL snprintf");
-                    o += r;
+
+                    switch (sym->type) {
+                      case S_INT  : bytes = 4; break;
+                      case S_BOOL : bytes = 4; break;
+                      default: ferr("mips.c getText Q_FUNCALL wrong arg type");
+                    }
+
+                    offset += bytes;
+                    sym = sym->next;
                 }
 
-                if ((r = strlen(argsDebug)) > 2)
-                    argsDebug[r - 3] = '\0'; // erase the last ", "
+                // print debug args
+                if ((bytes = strlen(argsDebug)) > 2)
+                    argsDebug[bytes - 2] = '\0'; // erase the last ", "
 
+                // empiler chaque arg
+                fprintf(f, "\tsub $sp, $sp, %d\n", offset);
+                sym = argv2;
+                offset = 0;
+
+                while (sym != NULL) {
+                    // push args
+                    switch (sym->type) {
+                      case S_INT  : bytes = 4; break;
+                      case S_BOOL : bytes = 4; break;
+                      default: ferr("mips.c getText Q_FUNCALL wrong arg type");
+                    }
+
+                    fprintf(f, "\t\t\t\t # on pousse larg %s\n", sym->id);
+                    fprintf(f, "\tlw $t0, %s\n", sym->id);
+                    fprintf(f, "\tsw $t0, %d($sp)\n", offset);
+
+                    offset += bytes;
+                    sym = sym->next;
+                }
+
+                // afficher debug mess
                 if (res)
                     fprintf(f, "\t\t\t\t# funcall %s := %s ( %s )\n", res->id, argv1->id, argsDebug);
                 else
                     fprintf(f, "\t\t\t\t# funcall %s ( %s )\n", argv1->id, argsDebug);
 
-                // caller push args to the stack if any, callee pop them before returning to $ra
-                // push args to the stack
-                // ...
-
+                // jump to function and put actual addr in $ra
                 fprintf(f, "\tjal %s\n", argv1->id);
                 break;
 

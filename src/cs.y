@@ -56,7 +56,7 @@
         (*res)->type = S_BOOL;
      }
 
-    // el = NULL for procedure
+    // qd et al = NULL for procedure (no args)
     void funcallExpression (quad **quadRes, symbol **symRes, char *id, quad *qd, arglist *al) {
         symbol *fs = search(stable, id);
         testID(fs, id);
@@ -123,8 +123,8 @@
     //struct arglist  *argl;
     struct {
         struct arglist *al;
-    	char   *id;
-    	symbol *sym; // arg symbol (only for function args)
+        char   *id;
+        symbol *sym; // arg symbol (only for function args)
     } argl;
 
     struct {
@@ -490,32 +490,13 @@ lvalue: IDENT_ {
       ;
 
 exprlist : expr {
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // TODO
-                // GROS PROBLEME PUTIN FCEST QUOI CE MERDIER CEST IMPOSSIBLE LE PREMIER ID EST BON ET LE SECOND EST NULL
-                // TODO
-                // TODO
-                // TODO
-                // TODO
                 $$.al   = arglistNew(NULL, $1.ptr);
-                printf(" ### avant exprlist expr, ID = %s\n\n", $1.ptr->id);
                 $$.quad = $1.quad;
-                printf(" ### apres exprlist expr, ID = %s\n\n", $1.ptr->id);
             }
         |  expr COMMA_ exprlist {
                 arglist *al = arglistNew(NULL, $1.ptr);
-                $$.al      = arglistConcat(al, $3.al);
-                $$.quad    = concat($1.quad, $3.quad);
+                $$.al       = arglistConcat(al, $3.al);
+                $$.quad     = concat($1.quad, $3.quad);
             }
         ;
 
