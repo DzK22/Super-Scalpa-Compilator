@@ -270,12 +270,7 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
               switch (arr->type) {
                   case S_INT:
                     arr->intarr = newLstInt(arr->size);
-                    struct lstInt * cur = arr->intarr ;
-                    while (cur != NULL) {
-                      printf("%d *_* ", cur->ival) ;
-                      cur = cur->next;
-                    }
-                    break;
+                     break;
 
                   case S_BOOL:
                   arr->boolarr = newLstBool(arr->size);
@@ -679,11 +674,11 @@ expr :  expr PLUS_ expr {
         $$.ptr->type = ptr->array.type ;
         // calcul de la valeur de l'indice du tableau
 
-      /*  struct lstInt * cur = ptr->array.intarr ;
+        struct lstInt * cur = ptr->array.intarr ;
         while (cur != NULL) {
           printf("%d *_* %d  ",ptr->array.size,cur->ival) ;
           cur = cur->next;
-        }*/
+        }
 
              }
       | IDENT_ {

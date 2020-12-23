@@ -79,7 +79,7 @@ lstBool *newLstBool (int ival) {
         fprintf(stderr, "malloc error lst int \n");
         return NULL;
     }
-    p->ival = 0 ;
+    p->bval = false ;
     p->next = NULL;
 
     if(tete == NULL)
