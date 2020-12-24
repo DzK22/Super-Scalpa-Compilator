@@ -118,8 +118,7 @@ void getText (FILE *f, quad *q) {
                     case Q_MINUS : fprintf(f, "\tsub $t2, $t0, $t1\n") ; break ;
                     case Q_MULT  : fprintf(f, "\tmul $t2, $t0, $t1\n") ; break ;
                     case Q_DIV   : fprintf(f, "\tdiv $t2, $t0, $t1\n") ; break ;
-                    case Q_MOD   :
-                        fprintf(f, "\trem $t2, $t0, $t1\n") ; break ;
+                    case Q_MOD   : fprintf(f, "\trem $t2, $t0, $t1\n") ; break ;
                     case Q_EXP   :
                         label  = nextTmpLabel();
                         label2 = nextTmpLabel();
