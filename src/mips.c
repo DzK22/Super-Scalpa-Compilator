@@ -506,7 +506,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
            etc ...
        */
 
-        fprintf(f, "\t\t\t\t# push local vars to the stack\n");
+        fprintf(f, "\t\t\t\t# load local vars from the stack\n");
         // load local vars from stack
         curfunStackLoadVars(f);
         size = curfunVarSize();
