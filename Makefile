@@ -2,6 +2,8 @@ NAME=cs
 SRC=src/
 HEADERS=headers/
 TMP=tmp/
+MIPS=mips/
+
 
 all:
 	mkdir -p $(TMP)
@@ -22,4 +24,4 @@ all:
 
 
 clean:
-	rm -rf $(TMP) $(NAME).out *.s
+	rm -rf $(TMP) $(NAME).out $(MIPS)
