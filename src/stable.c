@@ -126,7 +126,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun) 
             ferr("stable.c newVar unknow type");
     }
 
-    return nt;
+     return nt;
 }
 
 // Helpers functions which call newVar
@@ -173,8 +173,8 @@ symbol *newProg (symbol **tos, char *id) {
     return newVar(tos, S_PROG, id, NULL, NULL);
 }
 
-symbol *newVarArray (symbol **tos, char *id, s_array arr) {
-    return newVar(tos, S_ARRAY, id, &arr, NULL);
+symbol *newVarArray (symbol **tos, char *id, s_array *arr) {
+    return newVar(tos, S_ARRAY, id, arr, NULL);
 }
 
 symbol *searchTable (symbol *tos, char *id, symbol *curfun) {
