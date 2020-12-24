@@ -115,6 +115,7 @@
         int min;
         int max;
         int dim;
+        struct arr_range *me;
         struct arr_range *next;
     } dimprop;
     //struct arr_range dimprop;
@@ -276,6 +277,7 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                 rg->min = $3.min;
                 rg->max = $3.max;
                 rg->dim = $3.dim;
+                rg->next = $3.me;
 
                 s_array *arr = malloc(sizeof(s_array));
                 if (arr == NULL) {
@@ -354,6 +356,7 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                 rg->min = min;
                 rg->max = max;
                 rg->dim = $$.dim;
+                rg->next = NULL;
                 $$.next = rg;
                 fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$.min, $$.max, $$.dim);
             }
@@ -554,14 +557,20 @@ lvalue: IDENT_ {
               printf("TOTOT %d et %s \n",ptr->arr->type, ptr->id);
               // calcul de la valeur de l'indice du tableau
               arglist *cur = $3.al;
-              ptr->arr->index = 1;
-              while (cur != NULL) {
-                  ptr->arr->index *= cur->sym->ival;
-                  cur = cur->next;
+              dimProp *test = ptr->arr->dims;
+              int cpt = 1;
+
+              while ( test != NULL) {
+                  printf(" dims min %d || dims max %d\n",test->min, test->max);
+                //  cpt *= cur->sym->ival;
+                   test = test->next;
               }
+              ptr->arr->index = cpt;
+
               printf("TOTOLAND: min et %d max %d dim %d\n",
                ptr->arr->dims->min , ptr->arr->dims->max, ptr->arr->dims->dim);
-              if (ptr->arr->index < ptr->arr->dims->min || ptr->arr->index > ptr->arr->dims->max) {
+
+               if (ptr->arr->index < ptr->arr->dims->min || ptr->arr->index > ptr->arr->dims->max) {
                   fprintf(stderr, "index out of range\n");
                   exit(EXIT_FAILURE);
               }
@@ -770,10 +779,11 @@ expr :  expr PLUS_ expr {
             $$.lfalse = NULL;
             free($1);
         }
-      | CTE_ {
+      |   CTE_ {
               symbol *ptr;
-              switch ($1.type) {
-                  case S_INT    : ptr = newTmpInt (curtos(), $1.ival);
+               switch ($1.type) {
+                  case S_INT    :
+                                  ptr = newTmpInt (curtos(), $1.ival);
                                   break;
                   case S_BOOL   : ptr = newTmpBool(curtos(), $1.bval);
                                   break;
