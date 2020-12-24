@@ -53,6 +53,7 @@ char * opstr (qop op) {
             case Q_MINUS : sprintf(str, "-")   ; break ;
             case Q_MULT  : sprintf(str, "*")   ; break ;
             case Q_DIV   : sprintf(str, "/")   ; break ;
+            case Q_MOD   : sprintf(str, "MOD")   ; break ;
             case Q_EXP   : sprintf(str, "^")   ; break ;
             case Q_EQUAL : sprintf(str, "=")   ; break ;
             case Q_DIFF  : sprintf(str, "!=")  ; break ;
@@ -104,6 +105,7 @@ void getText (FILE *f, quad *q) {
             case Q_MINUS:
             case Q_MULT:
             case Q_DIV:
+            case Q_MOD:
             case Q_EXP:
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText arith quad error");
@@ -116,6 +118,8 @@ void getText (FILE *f, quad *q) {
                     case Q_MINUS : fprintf(f, "\tsub $t2, $t0, $t1\n") ; break ;
                     case Q_MULT  : fprintf(f, "\tmul $t2, $t0, $t1\n") ; break ;
                     case Q_DIV   : fprintf(f, "\tdiv $t2, $t0, $t1\n") ; break ;
+                    case Q_MOD   :
+                        fprintf(f, "\trem $t2, $t0, $t1\n") ; break ;
                     case Q_EXP   :
                         label  = nextTmpLabel();
                         label2 = nextTmpLabel();

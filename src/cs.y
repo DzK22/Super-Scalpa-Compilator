@@ -133,7 +133,7 @@
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
-%token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
+%token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ MOD_// operators (binary or unary)
 
 %type <sval>     IDENT_
 %type <cte>      CTE_
@@ -150,7 +150,7 @@
 %left   EQUAL_
 %left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
 %left   PLUS_ MINUS_
-%left   MULT_ DIV_
+%left   MULT_ DIV_ MOD_
 %right  NEG_ NOT_
 %right  AFFEC_
 %right  EXP_
@@ -517,6 +517,13 @@ expr :  expr PLUS_ expr {
                 ferr("Error division by 0");
             arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
+
+      | expr MOD_ expr {
+          if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+              ferr("cs.y expr MOD expr type error");
+
+          arithmeticExpression(Q_MOD, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+      }
 
       | expr EXP_ expr {
           if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
