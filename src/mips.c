@@ -1,6 +1,40 @@
 #include "../headers/mips.h"
 
+// print instr 1 arg
+#define pinstr1(s1) \
+    fprintf(f, "\t%s\n", s1);
+
+// print instr 2 args
+#define pinstr2(s1, s2) \
+    fprintf(f, "\t%-5s %s\n", s1, s2);
+
+// print instr 3 args
+#define pinstr3(s1, s2, s3) \
+    fprintf(f, "\t%-5s %-5s %s\n", s1, s2, s3);
+
+// print instr 4 args
+#define pinstr4(s1, s2, s3, s4) \
+    fprintf(f, "\t%-5s %-5s %-5s %s\n", s1, s2, s3, s4);
+
+// print data
+#define pdata(s1, s2) \
+    fprintf(f, "\t%-16s :  %s\n", s1, s2);
+
+// print label
+#define plabel(s) \
+    fprintf(f, "\n%s:\n", s);
+
+// print commentary
+#define pcom(s) \
+    fprintf(f, "\t\t\t# %s\n", s);
+
+// print directive
+#define pdir(s) \
+    fprintf(f, "%s\n", s);
+
+static char tbuf[LEN];
 static symbol *curfun = NULL;
+
 /**
  * curfun is used to know if a funcall is done inside a function or not
  * If a funcall is done inside a function, save all function local vars to the stack and restore them after the call
@@ -13,16 +47,18 @@ void ferr (char *s) {
 
 void getMips (FILE *f, symbol *s, quad *q) {
     // data
-    fprintf(f, "\t.data\n");
-    fprintf(f, "_true:\t.asciiz \"true\"\n");
-    fprintf(f, "_false:\t.asciiz \"false\"\n");
-    fprintf(f, "_read_int: .asciiz \"Enter int: \"\n");
-    fprintf(f, "_read_string: .asciiz \"Enter string: \"\n");
-    fprintf(f, ".align 2\n");
-    fprintf(f, "_buffer: .space %d\n", MIPS_BUFFER_SPACE);
+    pdir(".data");
+    pdata("_true", ".asciiz \"true\"");
+    pdata("_false", ".asciiz \"false\"");
+    pdata("_read_int", ".asciiz \"Enter int: \"");
+    pdata("_read_string", ".asciiz \"Enter string: \"");
+    pdir(".align 2");
+    snprintf(tbuf, LEN, ".space %d", MIPS_BUFFER_SPACE);
+    pdata("_buffer", tbuf);
 
     // tos global
-    fprintf(f, "\n\t\t\t\t# TOS Global\n");
+    pdir("");
+    pcom("TOS Global");
     getData(f, s);
 
     // tos of each function
@@ -30,7 +66,8 @@ void getMips (FILE *f, symbol *s, quad *q) {
         if (s->type == S_FUNCTION) {
             fundata *fdata = (fundata *) s->fdata;
 
-            fprintf(f, "\n\t\t\t\t# TOS of function %s\n", s->id);
+            snprintf(tbuf, LEN, "TOS of function %s", s->id);
+            pcom(tbuf);
             getData(f, fdata->tos);
         }
 
@@ -38,30 +75,36 @@ void getMips (FILE *f, symbol *s, quad *q) {
     }
 
     // text
-    fprintf(f, "\n\t.text\n\t.globl main\n");
+    pdir("\n.text");
+    pdir(".globl main");
     getText(f, q);
 
     // quitter le programme proprement
-    fprintf(f, "\nexit:\n");
-    fprintf(f, "\tli $v0, 10\n");
-    fprintf(f, "\tsyscall\n");
+    plabel("exit");
+    pinstr3("li", "$v0", "10");
+    pinstr1("syscall");
 }
 
 void getData (FILE *f, symbol *s) {
     while (s != NULL) {
         switch (s->type) {
             case S_INT:
-                fprintf(f, "%s:\t.word %d\n", s->id, s->ival);
+                snprintf(tbuf, LEN, ".word %d", s->ival);
+                pdata(s->id, tbuf);
                 break;
             case S_BOOL:
-                fprintf(f, "%s:\t.word %d\n", s->id, s->bval);
+                snprintf(tbuf, LEN, ".word %d", s->bval);
+                pdata(s->id, tbuf);
                 break;
             case S_STRING:
-                fprintf(f, "%s:\t.asciiz %s\n", s->id, s->sval);
+                snprintf(tbuf, LEN, ".asciiz %s", s->sval);
+                pdata(s->id, tbuf);
                 break;
             case S_ARRAY:
-                if (s->arr->type == S_INT)
-                    fprintf(f, "%s:\t.space %d\n", s->id, s->arr->size * 4);
+                if (s->arr->type == S_INT) {
+                    snprintf(tbuf, LEN, ".space %d", s->arr->size * 4);
+                    pdata(s->id, tbuf);
+                }
                 break;
         }
 
@@ -76,7 +119,7 @@ char * opstr (qop op) {
             case Q_MINUS : sprintf(str, "-")   ; break ;
             case Q_MULT  : sprintf(str, "*")   ; break ;
             case Q_DIV   : sprintf(str, "/")   ; break ;
-            case Q_MOD   : sprintf(str, "MOD")   ; break ;
+            case Q_MOD   : sprintf(str, "MOD") ; break ;
             case Q_EXP   : sprintf(str, "^")   ; break ;
             case Q_EQUAL : sprintf(str, "=")   ; break ;
             case Q_DIFF  : sprintf(str, "!=")  ; break ;
@@ -108,7 +151,6 @@ char * nextTmpLabel () {
 
 void getText (FILE *f, quad *q) {
     symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
-    char *label, *label2;
 
     while (q != NULL) {
         res    = q->res;
@@ -127,160 +169,61 @@ void getText (FILE *f, quad *q) {
             case Q_EXP:
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText arith quad error");
-                fprintf(f, "\t\t\t\t# %s = %s %s %s\n", res->id, argv1->id, opstr(q->op), argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
 
-                switch (q->op) {
-                    case Q_PLUS  : fprintf(f, "\tadd $t2, $t0, $t1\n") ; break ;
-                    case Q_MINUS : fprintf(f, "\tsub $t2, $t0, $t1\n") ; break ;
-                    case Q_MULT  : fprintf(f, "\tmul $t2, $t0, $t1\n") ; break ;
-                    case Q_DIV   : fprintf(f, "\tdiv $t2, $t0, $t1\n") ; break ;
-                    case Q_MOD   : fprintf(f, "\trem $t2, $t0, $t1\n") ; break ;
-                    case Q_EXP   :
-                        label  = nextTmpLabel();
-                        label2 = nextTmpLabel();
-
-                        fprintf(f, "\tlw $t2, %s\n", argv1->id);
-                        fprintf(f, "\tli $t3, 1\n");
-                        fprintf(f, "\n%s:\n", label);
-                        fprintf(f, "\tble $t1, $t3, %s\n", label2);
-                        fprintf(f, "\tmul $t2, $t2, $t0\n");
-                        fprintf(f, "\tsub $t1, $t1, $t3\n");
-                        fprintf(f, "\tj %s\n", label);
-                        fprintf(f, "\n%s:\n", label2);
-
-                        free(label);
-                        free(label2);
-                        break;
-                        // warning: seulement les puissances > 0 fonctionnent avec ce code
-                }
-
-                fprintf(f, "\tsw $t2, %s\n", res->id);
+                qArith(f, q->op, res, argv1, argv2);
                 break;
 
             case Q_WRITE:
                 if (!argv1)
                     ferr("mips.c getText Q_WRITE quad error");
 
-                switch (argv1->type) {
-                    case S_INT:
-                        fprintf(f, "\t\t\t\t# print integer %s\n", argv1->id);
-                        fprintf(f, "\tli $v0, 1\n");
-                        fprintf(f, "\tlw $a0, %s\n", argv1->id);
-                        break;
-
-                    case S_STRING:
-                        fprintf(f, "\t\t\t\t# print string %s\n", argv1->id);
-                        fprintf(f, "\tli $v0, 4\n");
-                        fprintf(f, "\tla $a0, %s\n", argv1->id);
-                        if(!argv1->tmp)
-                            fprintf(f, "\tmove $a0, $s0\n");
-                        break;
-
-                    case S_BOOL:
-                        label  = nextTmpLabel();
-                        label2 = nextTmpLabel();
-
-                        fprintf(f, "\t\t\t\t# print bool %s\n", argv1->id);
-                        fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                        fprintf(f, "\tbeq $t0, $zero, %s\n", label);
-                        fprintf(f, "\tla $a0, _true\n");
-                        fprintf(f, "\tj %s\n", label2);
-                        fprintf(f, "\n%s:\n", label);
-                        fprintf(f, "\tla $a0, _false\n");
-                        fprintf(f, "\n%s:\n", label2);
-                        fprintf(f, "\tli $v0, 4\n");
-                        break;
-                }
-
-                fprintf(f, "\tsyscall\n");
+                qWrite(f, argv1);
                 break;
 
             case Q_READ:
                 if (!res)
                     ferr("mips.c getText Q_READ quad error");
 
-                switch (res->type) {
-                    case S_INT:
-                        fprintf(f, "\t\t\t\t# read integer %s\n", res->id);
-                        fprintf(f, "\tli $v0, 4\n");
-                        fprintf(f, "\tla $a0, _read_int\n");
-                        fprintf(f, "\tsyscall\n");
-                        fprintf(f, "\tli $v0, 5\n");
-                        fprintf(f, "\tsyscall\n");
-                        fprintf(f, "\tsw $v0, %s\n", res->id);
-                        break;
-
-                    case S_STRING:
-                        fprintf(f, "\t\t\t\t# read string %s\n", res->id);
-                        fprintf(f, "\tli $v0, 4\n");
-                        fprintf(f, "\tla $a0, _read_string\n");
-                        fprintf(f, "\tsyscall\n");
-                        fprintf(f, "\tli $v0, 8\n");
-                        fprintf(f, "\tla $a0, _buffer\n");
-                        fprintf(f, "\tli $a1, %d\n", MIPS_BUFFER_SPACE);
-                        fprintf(f, "\tmove $s0, $a0\n");
-                        fprintf(f, "\tsyscall\n");
-                        break;
-
-                    case S_BOOL:
-                        label  = nextTmpLabel();
-                        label2 = nextTmpLabel();
-
-                        fprintf(f, "\t\t\t\t# read bool %s\n", res->id);
-                        fprintf(f, "\tli $v0, 4\n");
-                        fprintf(f, "\tla $a0, _read_int\n");
-                        fprintf(f, "\tsyscall\n");
-                        fprintf(f, "\tli $v0, 5\n");
-                        fprintf(f, "\tsyscall\n");
-                        fprintf(f, "\tbeq $v0, $zero, %s\n", label);
-                        fprintf(f, "\tli $t0, 1\n");
-                        fprintf(f, "\tj %s\n", label2);
-                        fprintf(f, "\n%s:\n", label);
-                        fprintf(f, "\tli $t0, 0\n");
-                        fprintf(f, "\n%s:\n", label2);
-                        fprintf(f, "\nsw $t0, %s\n", res->id);
-
-                        free(label);
-                        free(label2);
-                        break;
-                }
-
+                qRead(f, res);
                 break;
 
             case Q_AFFEC:
                 if (!res || !argv1)
                     ferr("mips.c getText Q_AFFEC quad error");
 
-                fprintf(f, "\t\t\t\t# %s := %s\n", res->id, argv1->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tsw $t0, %s\n", res->id);
+                snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id);
+                pcom(tbuf);
+
+                pinstr3("lw", "$t0", argv1->id);
+                pinstr3("sw", "$t0", res->id);
                 break;
 
             case Q_LABEL:
                 if (!res)
                     ferr("mips.c getText Q_LABEL quad error");
 
-                fprintf(f, "\n%s:\n", res->id);
+                plabel(res->id);
                 break;
 
             case Q_GOTO:
                 if (!res)
                     ferr("mips.c getText Q_GOTO quad error");
 
-                fprintf(f, "\t\t\t\t# goto %s\n", res->id);
-                fprintf(f, "\tj %s\n", res->id);
+                snprintf(tbuf, LEN, "goto %s", res->id);
+                pcom(tbuf);
+
+                pinstr2("j", res->id);
                 break;
 
             case Q_IF:
                 if (!argv1 || !gtrue || !gfalse || !gnext)
                     ferr("mips.c getText Q_IF quad error");
 
-                fprintf(f, "\t\t\t\t# if %s is false then goto %s\n", argv1->id, gfalse->sval);
+                snprintf(tbuf, LEN, "if %s is false then goto %s", argv1->id, gfalse->sval);
+                pcom(tbuf);
 
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tbeq $t0, $zero, %s\n", gfalse->sval);
+                pinstr3("lw", "$t0", argv1->id);
+                pinstr4("beq", "$t0", "$zero", gfalse->sval);
                 break;
 
             case Q_EQUAL:
@@ -295,64 +238,14 @@ void getText (FILE *f, quad *q) {
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText comp quad error");
 
-                label  = nextTmpLabel();
-                label2 = nextTmpLabel();
-
-                fprintf(f, "\t\t\t\t# %s := %s %s %s\n", res->id, argv1->id, opstr(q->op), argv2->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tlw $t1, %s\n", argv2->id);
-
-                switch (q->op) {
-                    case Q_EQUAL : fprintf(f, "\tbne $t0, $t1, %s\n", label); break;
-                    case Q_DIFF  : fprintf(f, "\tbeq $t0, $t1, %s\n", label); break;
-                    case Q_INF   : fprintf(f, "\tbge $t0, $t1, %s\n", label); break;
-                    case Q_INFEQ : fprintf(f, "\tbgt $t0, $t1, %s\n", label); break;
-                    case Q_SUP   : fprintf(f, "\tble $t0, $t1, %s\n", label); break;
-                    case Q_SUPEQ : fprintf(f, "\tblt $t0, $t1, %s\n", label); break;
-                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
-                                   break;
-                    case Q_OR    : fprintf(f, "\tor $t2, $t0, $t1\n");
-                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
-                                   break;
-                    case Q_AND   : fprintf(f, "\tand $t2, $t0, $t1\n");
-                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
-                                   break;
-                    case Q_XOR   : fprintf(f, "\txor $t2, $t0, $t1\n");
-                                   fprintf(f, "\tbeq $t2, $zero, %s\n", label);
-                                   break;
-
-                }
-
-                fprintf(f, "\tli $t3 1\n");
-                fprintf(f, "\tj %s\n", label2);
-                fprintf(f, "\n%s:\n", label);
-                fprintf(f, "\tli $t3 0\n");
-                fprintf(f, "\n%s:\n", label2);
-                fprintf(f, "\tsw $t3 %s\n", res->id);
-
-                free(label);
-                free(label2);
+                qComp(f, q->op, res, argv1, argv2);
                 break;
 
             case Q_NOT:
                 if (!res || !argv1)
                     ferr("mips.c getText Q_NOT quad error");
 
-                label  = nextTmpLabel();
-                label2 = nextTmpLabel();
-
-                fprintf(f, "\t\t\t\t# %s := NOT %s\n", res->id, argv1->id);
-                fprintf(f, "\tlw $t0, %s\n", argv1->id);
-                fprintf(f, "\tbne $t0, $zero, %s\n", label);
-                fprintf(f, "\tli $t3 1\n");
-                fprintf(f, "\tj %s\n", label2);
-                fprintf(f, "\n%s:\n", label);
-                fprintf(f, "\tli $t3 0\n");
-                fprintf(f, "\n%s:\n", label2);
-                fprintf(f, "\tsw $t3 %s\n", res->id);
-
-                free(label);
-                free(label2);
+                qNot(f, res, argv1);
                 break;
 
             case Q_FUNDEC:
@@ -391,8 +284,8 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_MAIN:
-                fprintf(f, "\n\t\t\t\t# main function\n");
-                fprintf(f, "main:\n");
+                pcom("main function");
+                plabel("main");
                 break;
 
             default:
@@ -403,22 +296,254 @@ void getText (FILE *f, quad *q) {
     }
 }
 
+////////////
+// COMMON //
+////////////
+
+void qRead (FILE *f, symbol *res) {
+    char *label, *label2;
+
+    switch (res->type) {
+        case S_INT:
+            snprintf(tbuf, LEN, "read integer %s", res->id);
+            pcom(tbuf);
+
+            pinstr3("li", "$v0", "4");
+            pinstr3("la", "$a0", "_read_int");
+            pinstr1("syscall");
+            pinstr3("li", "$v0", "5");
+            pinstr1("syscall");
+            pinstr3("sw", "$v0", res->id);
+            break;
+
+        case S_STRING:
+            snprintf(tbuf, LEN, "read string %s", res->id);
+            pcom(tbuf);
+
+            pinstr3("li", "$v0", "4");
+            pinstr3("la", "$a0", "_read_string");
+            pinstr1("syscall");
+            pinstr3("li", "$v0", "8");
+            pinstr3("la", "$a0", "_buffer");
+            snprintf(tbuf, LEN, "%d", MIPS_BUFFER_SPACE);
+            pinstr3("li", "$a1", tbuf);
+            pinstr3("move", "$s0", "$a0");
+            pinstr1("syscall");
+            break;
+
+        case S_BOOL:
+            label  = nextTmpLabel();
+            label2 = nextTmpLabel();
+
+            snprintf(tbuf, LEN, "read bool %s", res->id);
+            pcom(tbuf);
+
+            pinstr3("li", "$v0", "4");
+            pinstr3("la", "$a0", "_read_int");
+            pinstr1("syscall");
+            pinstr3("li", "$v0", "5");
+            pinstr1("syscall");
+
+            pinstr4("beq", "$v0", "$zero", label);
+            pinstr3("li", "$t0", "1");
+            pinstr2("j", label2);
+
+            plabel(label);
+            pinstr3("li", "$t0", "0");
+
+            plabel(label2);
+            pinstr3("sw", "$t0", res->id);
+
+            free(label);
+            free(label2);
+            break;
+    }
+}
+
+void qWrite (FILE *f, symbol *argv1) {
+    char *label, *label2;
+
+    switch (argv1->type) {
+        case S_INT:
+            snprintf(tbuf, LEN, "print integer %s", argv1->id);
+            pcom(tbuf);
+
+            pinstr3("li", "$v0", "1");
+            pinstr3("lw", "$a0", argv1->id);
+            break;
+
+        case S_STRING:
+            snprintf(tbuf, LEN, "print string %s", argv1->id);
+            pcom(tbuf);
+
+            pinstr3("li", "$v0", "4");
+            pinstr3("la", "$a0", argv1->id);
+            if(!argv1->tmp)
+                pinstr3("move", "$a0", "$s0");
+            break;
+
+        case S_BOOL:
+            label  = nextTmpLabel();
+            label2 = nextTmpLabel();
+
+            snprintf(tbuf, LEN, "print bool %s", argv1->id);
+            pcom(tbuf);
+
+            pinstr3("lw", "$t0", argv1->id);
+            pinstr4("beq", "$t0", "$zero", label);
+            pinstr3("la", "$a0", "_true");
+            pinstr2("j", label2);
+
+            plabel(label);
+            pinstr3("la", "$a0", "_false");
+
+            plabel(label2);
+            pinstr3("li", "$v0", "4");
+            break;
+    }
+
+    pinstr1("syscall");
+}
+
+void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
+    snprintf(tbuf, LEN, "%s = %s %s %s", res->id, argv1->id, opstr(op), argv2->id);
+    pcom(tbuf);
+
+    pinstr3("lw", "$t0", argv1->id);
+    pinstr3("lw", "$t1", argv2->id);
+
+    char *label, *label2;
+    switch (op) {
+        case Q_PLUS  : pinstr4("add", "$t2", "$t0", "$t1") ; break ;
+        case Q_MINUS : pinstr4("sub", "$t2", "$t0", "$t1") ; break ;
+        case Q_MULT  : pinstr4("mul", "$t2", "$t0", "$t1") ; break ;
+        case Q_DIV   : pinstr4("div", "$t2", "$t0", "$t1") ; break ;
+        case Q_MOD   : pinstr4("rem", "$t2", "$t0", "$t1") ; break ;
+        case Q_EXP   :
+           label  = nextTmpLabel();
+           label2 = nextTmpLabel();
+
+           pinstr3("lw", "$t2", argv1->id);
+           pinstr3("li", "$t3", "1");
+
+           // warning: seulement les puissances > 0 fonctionnent avec ce code
+           plabel(label);
+           pinstr4("ble", "$t1", "$t3", label2);
+           pinstr4("mul", "$t2", "$t2", "$t0");
+           pinstr4("sub", "$t1", "$t1", "$t3");
+           pinstr2("j", label);
+           plabel(label2);
+
+           free(label);
+           free(label2);
+           break;
+    }
+
+    pinstr3("sw", "$t2", res->id);
+}
+
+void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
+    char *label, *label2;
+    label  = nextTmpLabel();
+    label2 = nextTmpLabel();
+
+    snprintf(tbuf, LEN, ")%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id);
+    pcom(tbuf);
+
+    pinstr3("lw", "$t0", argv1->id);
+    pinstr3("lw", "$t1", argv2->id);
+
+    switch (op) {
+        case Q_EQUAL:
+            pinstr4("bne", "$t0", "$t1", label);
+            break;
+        case Q_DIFF:
+            pinstr4("beq", "$t0", "$t1", label); break;
+        case Q_INF:
+            pinstr4("bge", "$t0", "$t1", label);
+            break;
+        case Q_INFEQ:
+            pinstr4("bgt", "$t0", "$t1", label);
+            break;
+        case Q_SUP:
+            pinstr4("ble", "$t0", "$t1", label);
+            break;
+        case Q_SUPEQ:
+            pinstr4("blt", "$t0", "$t1", label);
+            pinstr4("beq", "$t2", "$zero", label);
+            break;
+        case Q_OR:
+            pinstr4("r", "$t2", "$t0", "$t1");
+            pinstr4("beq", "$t2", "$zero", label);
+            break;
+        case Q_AND:
+            pinstr4("and", "$t2", "$t0", "$t1");
+            pinstr4("beq", "$t2", "$zero", label);
+            break;
+        case Q_XOR:
+            pinstr4("xor", "$t2", "$t0", "$t1");
+            pinstr4("beq", "$t2", "$zero", label);
+            break;
+        default:
+            ferr("mips.c qComp wrong op");
+    }
+
+    pinstr3("li", "$t3", "1");
+    pinstr2("j", label2);
+
+    plabel(label);
+    pinstr3("li", "$t3", "0");
+
+    plabel(label2);
+    pinstr3("sw", "$t3", res->id);
+
+    free(label);
+    free(label2);
+}
+
+void qNot (FILE *f, symbol *res, symbol *argv1) {
+    char *label, *label2;
+    label  = nextTmpLabel();
+    label2 = nextTmpLabel();
+
+    snprintf(tbuf, LEN, ")%s := NOT %s", res->id, argv1->id);
+    pcom(tbuf);
+
+    pinstr3("lw", "$t0", argv1->id);
+    pinstr4("bne", "$t0", "$zero", label);
+    pinstr3("li", "$t3", "1");
+    pinstr2("j", label2);
+
+    plabel(label);
+    pinstr3("li", "$t3", "0");
+
+    plabel(label2);
+    pinstr3("sw", "$t3", res->id);
+
+    free(label);
+    free(label2);
+}
+
 ///////////////
 // FUNCTIONS //
 ///////////////
 
 void fundec (FILE *f, symbol *fun) {
-    fprintf(f, "\n\t\t\t\t# function %s\n", fun->id);
-    fprintf(f, "%s:\n", fun->id);
+    snprintf(tbuf, LEN, "function %s", fun->id);
+    pcom(tbuf);
+    plabel(fun->id);
 
     // sauvegardage du ra
-    fprintf(f, "\t\t\t\t# push $ra to stack and load each arg from stack\n");
-    fprintf(f, "\tsub $sp, $sp, 4\n");
-    fprintf(f, "\tsw $ra, 0($sp)\n");
+    pcom("push $ra to stack and load each arg from stack");
+
+    pinstr4("sub", "$sp", "$sp", "4");
+    pinstr3("sw", "$ra", "0($sp)");
 
     // load args from stack offset 4
     funStackLoadArgs(f, fun, 4);
-    fprintf(f, "\t\t\t\t# body of function %s\n\n", fun->id);
+
+    snprintf(tbuf, LEN, "body of function %s", fun->id);
+    pcom(tbuf);
 
     /* Stack now:
        0 -> ra
@@ -438,19 +563,25 @@ void funend (FILE *f, symbol *fun) {
        etc ...
     */
 
-    fprintf(f, "\n\t\t\t\t# epilogue of function %s\n", fun->id);
+    snprintf(tbuf, LEN, "epilogue of function %s", fun->id);
+    pcom(tbuf);
+
     // label to jump to after a return
-    fprintf(f, "end_%s:\n", fun->id);
+    snprintf(tbuf, LEN, "end_%s", fun->id);
+    plabel(tbuf);
+
     // load saved ra to $ra
-    fprintf(f, "\tlw $ra, 0($sp)\n");
+    pinstr3("lw", "$ra", "0($sp)");
 
     int offset = 4 + funArgsSize(fun);
     // pop ra and args from the stack
-    fprintf(f, "\taddi $sp, $sp, %d\n", offset);
+    snprintf(tbuf, LEN, "%d", offset);
+    pinstr4("addi", "$sp", "$sp", tbuf);
 
     // jump to $ra
-    fprintf(f, "\tjr $ra\n");
-    fprintf(f, "\t\t\t\t# end of function %s\n", fun->id);
+    pinstr2("jr", "$ra");
+    snprintf(tbuf, LEN, "end of function %s", fun->id);
+    pcom(tbuf);
 
     curfun = NULL;
 }
@@ -462,27 +593,32 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     char argsDebug[LEN];
     funArgsDebugString(fun, argsDebug, LEN);
 
-    if (res)
-        fprintf(f, "\t\t\t\t# funcall %s := %s ( %s )\n", res->id, fun->id, argsDebug);
-    else
-        fprintf(f, "\t\t\t\t# funcall %s ( %s )\n", fun->id, argsDebug);
+    if (res) {
+        snprintf(tbuf, LEN, "funcall %s := %s ( %s )", res->id, fun->id, argsDebug);
+        pcom(tbuf);
+    } else {
+        snprintf(tbuf, LEN, "funcall %s ( %s )", fun->id, argsDebug);
+        pcom(tbuf);
+    }
 
     int size;
 
     if (curfun != NULL) {
-        fprintf(f, "\t\t\t\t# push local vars to the stack\n");
+        pcom("push local vars to the stack");
         // make space for local var save in the stack
         size = curfunVarSize();
-        fprintf(f, "\tsub $sp, $sp, %d\n", size);
+        snprintf(tbuf, LEN, "%d", size);
+        pinstr4("sub", "$sp", "$sp", tbuf);
 
         // push local vars to the stack
         curfunStackPushVars(f);
     }
 
-    fprintf(f, "\t\t\t\t# push funcall args to the stack\n");
+    pcom("push funcall args to the stack");
     // make space for args in the stack
     size = funArgsSize(fun);
-    fprintf(f, "\tsub $sp, $sp, %d\n", size);
+    snprintf(tbuf, LEN, "%d", size);
+    pinstr4("sub", "$sp", "$sp", tbuf);
 
     // push args to stack
     funStackPushArgs(f, args);
@@ -497,11 +633,11 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     */
 
     // jump to function and put actual addr in $ra
-    fprintf(f, "\tjal %s\n", fun->id);
+    pinstr2("jal", fun->id);
 
     // store result ($v0) in res->id
     if (res)
-        fprintf(f, "\tsw $v0, %s\n", res->id);
+        pinstr3("sw", "$v0", res->id);
 
     if (curfun != NULL) {
         /* Stack now (curfun != NULL)
@@ -510,25 +646,28 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
            etc ...
        */
 
-        fprintf(f, "\t\t\t\t# load local vars from the stack\n");
+        pcom("load local vars from the stack");
         // load local vars from stack
         curfunStackLoadVars(f);
         size = curfunVarSize();
 
         // pop local vars from stack
-        fprintf(f, "\taddi $sp, $sp, %d\n", size);
+        snprintf(tbuf, LEN, "%d", size);
+        pinstr4("addi", "$sp", "$sp", tbuf);
     }
 }
 
 void funreturn (FILE *f, symbol *fun, symbol *ret) {
     if (ret) {
-        fprintf(f, "\t\t\t\t# funreturn %s\n", ret->id);
-        fprintf(f, "\tlw $v0, %s\n", ret->id);
+        snprintf(tbuf, LEN, "funreturn %s", ret->id);
+        pcom(tbuf);
+        pinstr3("lw", "$v0", ret->id);
     } else
-        fprintf(f, "\t\t\t\t# funreturn (void)\n");
+        pcom("funreturn (void)");
 
     // goto function end label
-    fprintf(f, "\tj end_%s\n", fun->id);
+    snprintf(tbuf, LEN, "end_%s", fun->id);
+    pinstr2("j", tbuf);
 }
 
 //////////////////////
@@ -568,8 +707,9 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
     arglist *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
-        fprintf(f, "\tlw $t0, %d($sp)\n", offset);
-        fprintf(f, "\tsw $t0, %s\n", al->sym->id);
+        snprintf(tbuf, LEN, "%d($sp)", offset);
+        pinstr3("lw", "$t0", tbuf);
+        pinstr3("sw", "$t0", al->sym->id);
 
         bytes   = funSymTypeSize(al->sym);
         offset += bytes;
@@ -581,8 +721,9 @@ void funStackPushArgs (FILE *f, symbol *args) {
     int offset = 0, bytes;
 
     while (args != NULL) {
-        fprintf(f, "\tlw $t0, %s\n", args->id);
-        fprintf(f, "\tsw $t0, %d($sp)\n", offset);
+        pinstr3("lw", "$t0", args->id);
+        snprintf(tbuf, LEN, "%d($sp)", offset);
+        pinstr3("sw", "$t0", tbuf);
 
         bytes   = funSymTypeSize(args);
         offset += bytes;
@@ -637,8 +778,9 @@ void curfunStackPushVars (FILE *f) {
 
     while (tos != NULL) {
         if (tos->type == S_INT || tos->type == S_BOOL) {
-            fprintf(f, "\tlw $t0, %s\n", tos->id);
-            fprintf(f, "\tsw $t0, %d($sp)\n", offset);
+            pinstr3("lw", "$t0", tos->id);
+            snprintf(tbuf, LEN, "%d($sp)", offset);
+            pinstr3("sw", "$t0", tbuf);
 
             bytes = funSymTypeSize(tos);
             offset += bytes;
@@ -657,8 +799,9 @@ void curfunStackLoadVars (FILE *f) {
 
     while (tos != NULL) {
         if (tos->type == S_INT || tos->type == S_BOOL) {
-            fprintf(f, "\tlw $t0, %d($sp)\n", offset);
-            fprintf(f, "\tsw $t0, %s\n", tos->id);
+            snprintf(tbuf, LEN, "%d($sp)", offset);
+            pinstr3("lw", "$t0", tbuf);
+            pinstr3("sw", "$t0", tos->id);
 
             bytes = funSymTypeSize(tos);
             offset += bytes;

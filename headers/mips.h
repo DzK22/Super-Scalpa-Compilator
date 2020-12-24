@@ -18,6 +18,13 @@ void ferr    (char *s);
 char * nextTmpLabel ();
 char * opstr (qop);
 
+// common
+void qRead  (FILE *f, symbol *res);
+void qWrite (FILE *f, symbol *argv1);
+void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2);
+void qComp  (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2);
+void qNot   (FILE *f, symbol *res, symbol *argv1);
+
 // functions
 void fundec    (FILE *f, symbol *fun);
 void funend    (FILE *f, symbol *fun);
