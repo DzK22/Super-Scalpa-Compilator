@@ -30,18 +30,20 @@ void   ferr         (char *s);
 void   sFree        (symbol *);
 symbol *sAlloc      ();
 symbol *sAdd        (symbol **);
-symbol *search      (symbol *, char *);
+symbol *searchTable (symbol *, char *, symbol *);
+symbol *search      (symbol *, symbol *, char *);
 
-symbol *newVar      (symbol **, stype, char *, void *);
+symbol *newVar      (symbol **, stype, char *, void *, symbol *);
 symbol *newTmpInt   (symbol **, int);
 symbol *newTmpStr   (symbol **, char *);
 symbol *newTmpBool  (symbol **, bool);
 symbol *newTmpLabel (symbol **);
-symbol *newVarInt   (symbol **, char *, int);
-symbol *newVarStr   (symbol **, char *, char *);
-symbol *newVarBool  (symbol **, char *, bool);
-symbol *newVarUnit  (symbol **, char *);
+symbol *newVarInt   (symbol **, char *, int, symbol *);
+symbol *newVarStr   (symbol **, char *, char *, symbol *);
+symbol *newVarBool  (symbol **, char *, bool, symbol *);
+symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
+
 void   stablePrint  (symbol *);
 
 #endif

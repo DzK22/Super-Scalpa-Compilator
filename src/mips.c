@@ -8,7 +8,28 @@ void ferr (char *s) {
 void getMips (FILE *f, symbol *s, quad *q) {
     // data
     fprintf(f, "\t.data\n");
+    fprintf(f, "_true:\t.asciiz \"true\"\n");
+    fprintf(f, "_false:\t.asciiz \"false\"\n");
+    fprintf(f, "_read_int: .asciiz \"Enter int: \"\n");
+    fprintf(f, "_read_string: .asciiz \"Enter string: \"\n");
+    fprintf(f, ".align 2\n");
+    fprintf(f, "_buffer: .space %d\n", MIPS_BUFFER_SPACE);
+
+    // tos global
+    fprintf(f, "\n\t\t\t\t# TOS Global\n");
     getData(f, s);
+
+    // tos of each function
+    while (s != NULL) {
+        if (s->type == S_FUNCTION) {
+            fundata *fdata = (fundata *) s->fdata;
+
+            fprintf(f, "\n\t\t\t\t# TOS of function %s\n", s->id);
+            getData(f, fdata->tos);
+        }
+
+        s = s->next;
+    }
 
     // text
     fprintf(f, "\n\t.text\n\t.globl main\n");
@@ -21,14 +42,6 @@ void getMips (FILE *f, symbol *s, quad *q) {
 }
 
 void getData (FILE *f, symbol *s) {
-    // initial
-    fprintf(f, "_true:\t.asciiz \"true\"\n");
-    fprintf(f, "_false:\t.asciiz \"false\"\n");
-    fprintf(f, "_read_int: .asciiz \"Enter int: \"\n");
-    fprintf(f, "_read_string: .asciiz \"Enter string: \"\n");
-    fprintf(f, ".align 2\n");
-    fprintf(f, "_buffer: .space %d\n", MIPS_BUFFER_SPACE);
-
     while (s != NULL) {
         switch (s->type) {
             case S_INT:
