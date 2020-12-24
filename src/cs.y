@@ -93,14 +93,11 @@
     char  signe;
     stype type;
     qop   op;
-    struct s_array *sarray;
-    struct s_array *sarray_ref;
     struct {
         struct symbol *ptr;
         struct quad   *quad;
         struct quad   *ltrue;
         struct quad   *lfalse;
-        struct s_array *sarray_value;
     } gencode; // Pour les expressions
     struct {
         stype type;
@@ -166,7 +163,6 @@
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         symbol *ptr = newProg(&stable, $2);
         progName = strdup($2);
-        $$.sarray_value = NULL;
         $$.ltrue = NULL;
         $$.lfalse = NULL;
         $$.quad = $5.quad;
@@ -252,7 +248,6 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                 printf("J'ai %d dimensions\n", $3.ndims);
                 $$.ndims = $3.ndims;
-                //$$.base = newVarArray()
                 $$.quad = NULL;
             }
           ;

@@ -11,32 +11,6 @@ typedef enum stype {
     S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION, S_PROG
 } stype;
 
-typedef struct sarrIndex {
-    bool isID;
-    union {
-        char *id;
-        union {
-            int ival;
-            bool bval;
-        };
-    };
-} sarrIndex;
-
-typedef struct s_array {
-    char *id;
-    int ndims;
-    int *dimSizes; //taille de chaque dimensions
-    int dataSize; //Nombre de valeurs totales dans le tableaux
-    union {
-        //Valeurs entières
-        int *idatas;
-        //Valeurs booléennes
-        bool *bdatas;
-    };
-    // Représenter les indices (valeurs et variables)
-    sarrIndex *dimIndex;
-} s_array;
-
 typedef struct symbol {
     char   *id;
     bool   tmp; // is tmp var ? (true = cannot be modified by user)
