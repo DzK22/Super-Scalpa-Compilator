@@ -8,7 +8,7 @@
 #define LEN 128
 
 typedef enum stype {
-    S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION
+    S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION, S_PROG
 } stype;
 
 typedef struct symbol {
@@ -30,16 +30,20 @@ void   ferr         (char *s);
 void   sFree        (symbol *);
 symbol *sAlloc      ();
 symbol *sAdd        (symbol **);
-symbol *search      (symbol *, char *);
+symbol *searchTable (symbol *, char *, symbol *);
+symbol *search      (symbol *, symbol *, char *);
 
-symbol *newVar      (symbol **, stype, char *, void *);
+symbol *newVar      (symbol **, stype, char *, void *, symbol *);
 symbol *newTmpInt   (symbol **, int);
 symbol *newTmpStr   (symbol **, char *);
 symbol *newTmpBool  (symbol **, bool);
 symbol *newTmpLabel (symbol **);
-symbol *newVarInt   (symbol **, char *, int);
-symbol *newVarStr   (symbol **, char *, char *);
-symbol *newVarBool  (symbol **, char *, bool);
-symbol *newVarUnit  (symbol **, char *);
+symbol *newVarInt   (symbol **, char *, int, symbol *);
+symbol *newVarStr   (symbol **, char *, char *, symbol *);
+symbol *newVarBool  (symbol **, char *, bool, symbol *);
+symbol *newVarFun   (symbol **, char *);
+symbol *newProg     (symbol **, char *);
+
+void   stablePrint  (symbol *);
 
 #endif

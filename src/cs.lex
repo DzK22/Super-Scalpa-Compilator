@@ -123,6 +123,8 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 "/"                             { return DIV_;                      }
 
+{M}{O}{D}                       { return MOD_; }
+
 "^"                             { return EXP_;                      }
 
 "<"                             { return INF_;                      }

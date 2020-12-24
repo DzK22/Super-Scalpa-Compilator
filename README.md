@@ -1,4 +1,4 @@
-# Introduction Compilateur SCALPA
+# Compilateur SCALPA
 
 Membres du projet:
 
@@ -8,5 +8,3 @@ Membres du projet:
 - François Grabenstaetter
 
 © 2020
-
-Salut les machines

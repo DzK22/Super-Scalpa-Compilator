@@ -8,7 +8,28 @@ void ferr (char *s) {
 void getMips (FILE *f, symbol *s, quad *q) {
     // data
     fprintf(f, "\t.data\n");
+    fprintf(f, "_true:\t.asciiz \"true\"\n");
+    fprintf(f, "_false:\t.asciiz \"false\"\n");
+    fprintf(f, "_read_int: .asciiz \"Enter int: \"\n");
+    fprintf(f, "_read_string: .asciiz \"Enter string: \"\n");
+    fprintf(f, ".align 2\n");
+    fprintf(f, "_buffer: .space %d\n", MIPS_BUFFER_SPACE);
+
+    // tos global
+    fprintf(f, "\n\t\t\t\t# TOS Global\n");
     getData(f, s);
+
+    // tos of each function
+    while (s != NULL) {
+        if (s->type == S_FUNCTION) {
+            fundata *fdata = (fundata *) s->fdata;
+
+            fprintf(f, "\n\t\t\t\t# TOS of function %s\n", s->id);
+            getData(f, fdata->tos);
+        }
+
+        s = s->next;
+    }
 
     // text
     fprintf(f, "\n\t.text\n\t.globl main\n");
@@ -21,14 +42,6 @@ void getMips (FILE *f, symbol *s, quad *q) {
 }
 
 void getData (FILE *f, symbol *s) {
-    // initial
-    fprintf(f, "_true:\t.asciiz \"true\"\n");
-    fprintf(f, "_false:\t.asciiz \"false\"\n");
-    fprintf(f, "_read_int: .asciiz \"Enter int: \"\n");
-    fprintf(f, "_read_string: .asciiz \"Enter string: \"\n");
-    fprintf(f, ".align 2\n");
-    fprintf(f, "_buffer: .space %d\n", MIPS_BUFFER_SPACE);
-
     while (s != NULL) {
         switch (s->type) {
             case S_INT:
@@ -53,6 +66,7 @@ char * opstr (qop op) {
             case Q_MINUS : sprintf(str, "-")   ; break ;
             case Q_MULT  : sprintf(str, "*")   ; break ;
             case Q_DIV   : sprintf(str, "/")   ; break ;
+            case Q_MOD   : sprintf(str, "MOD")   ; break ;
             case Q_EXP   : sprintf(str, "^")   ; break ;
             case Q_EQUAL : sprintf(str, "=")   ; break ;
             case Q_DIFF  : sprintf(str, "!=")  ; break ;
@@ -85,11 +99,6 @@ char * nextTmpLabel () {
 void getText (FILE *f, quad *q) {
     symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
     char *label, *label2;
-    fundata *fdata;
-    arglist *al;
-
-    int offset, bytes, len;
-    symbol *sym;
 
     while (q != NULL) {
         res    = q->res;
@@ -104,6 +113,7 @@ void getText (FILE *f, quad *q) {
             case Q_MINUS:
             case Q_MULT:
             case Q_DIV:
+            case Q_MOD:
             case Q_EXP:
                 if (!res || !argv1 || !argv2)
                     ferr("mips.c getText arith quad error");
@@ -116,6 +126,7 @@ void getText (FILE *f, quad *q) {
                     case Q_MINUS : fprintf(f, "\tsub $t2, $t0, $t1\n") ; break ;
                     case Q_MULT  : fprintf(f, "\tmul $t2, $t0, $t1\n") ; break ;
                     case Q_DIV   : fprintf(f, "\tdiv $t2, $t0, $t1\n") ; break ;
+                    case Q_MOD   : fprintf(f, "\trem $t2, $t0, $t1\n") ; break ;
                     case Q_EXP   :
                         label  = nextTmpLabel();
                         label2 = nextTmpLabel();
@@ -335,176 +346,38 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_FUNDEC:
+                // argv1 = function symbol
                 if (!argv1)
                     ferr("mips.c getText Q_FUNDEC quad error");
-                // argv1 = function symbol
 
-                fprintf(f, "\n\t\t\t\t# function %s\n", argv1->id);
-                fprintf(f, "%s:\n", argv1->id);
-
-                fdata  = (fundata *) argv1->fdata;
-                offset = 0;
-                al = fdata->al;
-
-                // sauvegardage du ra
-                fprintf(f, "\t\t\t\t# on empile $ra et récupère chaque argument de la pile\n");
-                fprintf(f, "\tsub $sp, $sp, 4\n");
-                fprintf(f, "\tsw $ra, %d($sp)\n", offset);
-                offset += 4;
-
-                /* pile a ce moment:
-                  0  -> ra
-                  -4 -> arg 1
-                  -8 -> arg 2
-                  etc ...
-                */
-
-                while (al != NULL) {
-                  sym = al->sym;
-
-                  switch (sym->type) {
-                      case S_INT  : bytes = 4; break;
-                      case S_BOOL : bytes = 4; break;
-                      default: ferr("mips.c getText Q_FUNDEC wrong arg type");
-                  }
-
-                  fprintf(f, "\tlw $t0, %d($sp)\n", offset);
-                  fprintf(f, "\tsw $t0, %s\n", sym->id);
-                  offset += bytes;
-                  al = al->next;
-                }
-
-                fprintf(f, "\t\t\t\t# body of function %s\n\n", argv1->id);
+                fundec(f, argv1);
                 break;
 
-            case Q_FUNEND: // end of declaration of a function
+            case Q_FUNEND:
+                // argv1 = function symbol
                 if (!argv1)
                     ferr("mips.c getText Q_FUNEND quad error");
-                // argv1 = function symbol
 
-                // pop args from the stack and put sav ra in $ra
-                fprintf(f, "\n\t\t\t\t# epilogue of function %s\n", argv1->id);
-                // label où jumper après un return
-                fprintf(f, "end_%s:\n", argv1->id);
-
-                /* pile a ce moment:
-                  0  -> ra
-                  -4 -> arg n
-                  -8 -> arg n - 1
-                  etc ...
-                */
-
-                fdata = (fundata *) argv1->fdata;
-                al = fdata->al;
-                offset = 0;
-                fprintf(f, "\tlw $ra, %d($sp)\n", offset);
-                offset += 4;
-
-                while (al != NULL) {
-                  sym = al->sym;
-
-                  switch (sym->type) {
-                      case S_INT  : bytes = 4; break;
-                      case S_BOOL : bytes = 4; break;
-                      default: ferr("mips.c getText Q_FUNDEC wrong arg type");
-                  }
-
-                  offset += bytes;
-                  al = al->next;
-                }
-
-                fprintf(f, "\taddi $sp, $sp, %d\n", offset);
-                fprintf(f, "\tjr $ra\n");
-                fprintf(f, "\t\t\t\t# end of function %s\n", argv1->id);
+                funend(f, argv1);
                 break;
 
             case Q_FUNCALL:
-                // res can be NULL = fun type S_UNIT
-                // argv2 can be NULL = no args
+                // res   = where to put function return value (can be null = fun type S_UNIT)
+                // arvg1 = function symbol
+                // argv2 = list of symbol = symbol * (can be null = no args)
                 if (!argv1)
                     ferr("mips.c getText Q_FUNCALL quad error");
-                // res   = where to put function return value
-                // arvg1 = function symbol
-                // argv2 = list of symbol = symbol * (!= stable)
 
-                // caller push return adress + args to the stack if any, callee pop them before returning to $ra
-
-                // args str for debugging
-                char argsDebug[LEN] = "";
-                len    = 0;
-                offset = 0;
-                sym    = argv2;
-
-                // debug args string + calcul du total offset
-                while (sym != NULL) {
-                    bytes = snprintf(argsDebug + len, LEN - len, "%s, ", sym->id);
-                    if (bytes < 0 || bytes >= LEN)
-                        ferr("mips.c getText Q_FUNCALL snprintf");
-
-                    len += bytes;
-                    switch (sym->type) {
-                      case S_INT  : bytes = 4; break;
-                      case S_BOOL : bytes = 4; break;
-                      default: ferr("mips.c getText Q_FUNCALL wrong arg type");
-                    }
-
-                    offset += bytes;
-                    sym = sym->next;
-                }
-
-                // print debug args
-                if (len > 2)
-                    argsDebug[len - 2] = '\0'; // erase the last ", "
-
-                // empiler chaque arg
-                fprintf(f, "\tsub $sp, $sp, %d\n", offset);
-                sym = argv2;
-                offset = 0;
-
-                while (sym != NULL) {
-                    // push args
-                    switch (sym->type) {
-                      case S_INT  : bytes = 4; break;
-                      case S_BOOL : bytes = 4; break;
-                      default: ferr("mips.c getText Q_FUNCALL wrong arg type");
-                    }
-
-                    fprintf(f, "\t\t\t\t # on pousse larg %s\n", sym->id);
-                    fprintf(f, "\tlw $t0, %s\n", sym->id);
-                    fprintf(f, "\tsw $t0, %d($sp)\n", offset);
-
-                    offset += bytes;
-                    sym = sym->next;
-                }
-
-                // afficher debug mess
-                if (res)
-                    fprintf(f, "\t\t\t\t# funcall %s := %s ( %s )\n", res->id, argv1->id, argsDebug);
-                else
-                    fprintf(f, "\t\t\t\t# funcall %s ( %s )\n", argv1->id, argsDebug);
-
-                // jump to function and put actual addr in $ra
-                fprintf(f, "\tjal %s\n", argv1->id);
-
-                // store result ($v0) in res->id
-                if (res)
-                    fprintf(f, "\tsw $v0, %s\n", res->id);
+                funcall(f, argv1, argv2, res);
                 break;
 
             case Q_FUNRETURN:
-                if (!argv1) // argv2 optional
-                    ferr("mips.c getText Q_FUNRETURN quad error");
                 // arvg1 = function symbol
                 // arvg2 = symbol to return (can be NULL if fun unit)
+                if (!argv1)
+                    ferr("mips.c getText Q_FUNRETURN quad error");
 
-                if (argv2) {
-                    fprintf(f, "\t\t\t\t# funreturn %s\n", argv2->id);
-                    fprintf(f, "\tlw $v0, %s\n", argv2->id);
-                } else
-                    fprintf(f, "\t\t\t\t# funreturn (void)\n");
-
-                // goto function end label
-                fprintf(f, "\tj end_%s\n", argv1->id);
+                funreturn(f, argv1, argv2);
                 break;
 
             case Q_MAIN:
@@ -518,4 +391,167 @@ void getText (FILE *f, quad *q) {
 
         q = q->next;
     }
+}
+
+///////////////
+// FUNCTIONS //
+///////////////
+
+void fundec (FILE *f, symbol *fun) {
+    fprintf(f, "\n\t\t\t\t# function %s\n", fun->id);
+    fprintf(f, "%s:\n", fun->id);
+
+    // sauvegardage du ra
+    fprintf(f, "\t\t\t\t# push $ra to stack and load each arg from stack\n");
+    fprintf(f, "\tsub $sp, $sp, 4\n");
+    fprintf(f, "\tsw $ra, 0($sp)\n");
+
+    // load args from stack offset 4
+    funStackLoadArgs(f, fun, 4);
+    fprintf(f, "\t\t\t\t# body of function %s\n\n", fun->id);
+
+    /* Stack now:
+       0 -> ra
+       4 -> arg 1
+       8 -> arg 2
+       etc ...
+    */
+}
+
+void funend (FILE *f, symbol *fun) {
+    /* Stack now:
+       0 -> ra
+       4 -> arg 1
+       8 -> arg 2
+       etc ...
+    */
+
+    fprintf(f, "\n\t\t\t\t# epilogue of function %s\n", fun->id);
+    // label to jump to after a return
+    fprintf(f, "end_%s:\n", fun->id);
+    // load saved ra to $ra
+    fprintf(f, "\tlw $ra, 0($sp)\n");
+
+    int offset = 4 + funArgsSize(fun);
+    // pop ra and args from the stack
+    fprintf(f, "\taddi $sp, $sp, %d\n", offset);
+    // jump to $ra
+    fprintf(f, "\tjr $ra\n");
+    fprintf(f, "\t\t\t\t# end of function %s\n", fun->id);
+}
+
+void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
+    // caller push return adress + args to the stack if any, callee pop them before returning to $ra
+
+    // show args string for debugging
+    char argsDebug[LEN];
+    funArgsDebugString(fun, argsDebug, LEN);
+
+    if (res)
+        fprintf(f, "\t\t\t\t# funcall %s := %s ( %s )\n", res->id, fun->id, argsDebug);
+    else
+        fprintf(f, "\t\t\t\t# funcall %s ( %s )\n", fun->id, argsDebug);
+
+    // make space for args in the stack
+    int offset = funArgsSize(fun);
+    fprintf(f, "\tsub $sp, $sp, %d\n", offset);
+
+    // push args to stack
+    funStackPushArgs(f, args);
+
+    // jump to function and put actual addr in $ra
+    fprintf(f, "\tjal %s\n", fun->id);
+
+    // store result ($v0) in res->id
+    if (res)
+        fprintf(f, "\tsw $v0, %s\n", res->id);
+}
+
+void funreturn (FILE *f, symbol *fun, symbol *ret) {
+    if (ret) {
+        fprintf(f, "\t\t\t\t# funreturn %s\n", ret->id);
+        fprintf(f, "\tlw $v0, %s\n", ret->id);
+    } else
+        fprintf(f, "\t\t\t\t# funreturn (void)\n");
+
+    // goto function end label
+    fprintf(f, "\tj end_%s\n", fun->id);
+}
+
+//////////////////////
+// FUNCTION HELPERS //
+//////////////////////
+
+int funArgsSize (symbol *fun) {
+    int size = 0, bytes;
+    arglist *al = ((fundata *) fun->fdata)->al;
+
+    while (al != NULL) {
+        switch (al->sym->type) {
+            case S_INT  : bytes = 4; break;
+            case S_BOOL : bytes = 4; break;
+            default: ferr("mips.c funArgsSize arg wrong type");
+        }
+
+        size += bytes;
+        al = al->next;
+    }
+
+    return size;
+}
+
+/**
+ * @param offset Starting offset (= after saved ra)
+ */
+void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
+    int bytes;
+    arglist *al = ((fundata *) fun->fdata)->al;
+
+    while (al != NULL) {
+        switch (al->sym->type) {
+            case S_INT  : bytes = 4; break;
+            case S_BOOL : bytes = 4; break;
+            default: ferr("mips.c funStackLoadArgs arg wrong type");
+        }
+
+        fprintf(f, "\tlw $t0, %d($sp)\n", offset);
+        fprintf(f, "\tsw $t0, %s\n", al->sym->id);
+
+        offset += bytes;
+        al = al->next;
+    }
+}
+
+void funStackPushArgs (FILE *f, symbol *args) {
+    int offset = 0, bytes;
+
+    while (args != NULL) {
+        switch (args->type) {
+            case S_INT  : bytes = 4; break;
+            case S_BOOL : bytes = 4; break;
+            default: ferr("mips.c funStackPushArgs arg wrong type");
+        }
+
+        fprintf(f, "\tlw $t0, %s\n", args->id);
+        fprintf(f, "\tsw $t0, %d($sp)\n", offset);
+        offset += bytes;
+        args = args->next;
+    }
+}
+
+void funArgsDebugString (symbol *fun, char *dstring, int maxlen) {
+    int bytes, len = 0;
+    arglist *al = ((fundata *) fun->fdata)->al;
+
+    while (al != NULL) {
+        bytes = snprintf(dstring + len, maxlen - len, "%s, ", al->sym->id);
+        if (bytes < 0 || bytes >= LEN)
+            ferr("mips.c funArgsDebugString snprintf");
+
+        len += bytes;
+        al = al->next;
+    }
+
+    if (len > 2)
+        dstring[len - 2] = '\0'; // erase the last ", "
 }

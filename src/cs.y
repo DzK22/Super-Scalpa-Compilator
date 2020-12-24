@@ -3,6 +3,8 @@
     #include <stdint.h>
     #include <stdlib.h>
     #include <math.h>
+    #include <getopt.h>
+    #include <unistd.h>
     #include "../headers/stable.h"
     #include "../headers/quad.h"
     #include "../headers/mips.h"
@@ -14,11 +16,17 @@
     void freeLex (void);
     extern FILE *yyin;
 
-    symbol *stable = NULL;
+    symbol *stable = NULL; // global tos
     quad *all_code = NULL;
     symbol *curfun = NULL; // current parsing function symbol or NULL
     char *progName = NULL;
     int instr_cnt  = 0;
+
+    symbol ** curtos () {
+        if (curfun == NULL)
+            return &stable;
+        return &((fundata *) curfun->fdata)->tos;
+    }
 
     arglist *funcalls = NULL;
 
@@ -26,6 +34,8 @@
         if(s == NULL) {
             char s[LEN];
             snprintf(s, LEN, "cs.y ID \"%s\" not exists", name);
+            fundata *fdata = (fundata *) curfun->fdata;
+            stablePrint(fdata->tos);
             ferr(s);
         }
     }
@@ -53,7 +63,7 @@
 
     // qd et al = NULL for procedure (no args)
     void funcallExpression (quad **quadRes, symbol **symRes, char *id, quad *qd, arglist *al) {
-        symbol *fs = search(stable, id);
+        symbol *fs = search(stable, curfun, id);
         testID(fs, id);
 
         if (fs->type != S_FUNCTION)
@@ -91,7 +101,6 @@
     char  signe;
     stype type;
     qop   op;
-
     struct {
         struct symbol *ptr;
         struct quad   *quad;
@@ -133,7 +142,7 @@
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
-%token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ // operators (binary or unary)
+%token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ MOD_// operators (binary or unary)
 
 %type <sval>     IDENT_
 %type <cte>      CTE_
@@ -150,7 +159,7 @@
 %left   EQUAL_
 %left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
 %left   PLUS_ MINUS_
-%left   MULT_ DIV_
+%left   MULT_ DIV_ MOD_
 %right  NEG_ NOT_
 %right  AFFEC_
 %right  EXP_
@@ -160,9 +169,12 @@
 %%
 
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
-        newVarInt(&stable, $2, 0);
+        symbol *ptr = newProg(&stable, $2);
         progName = strdup($2);
-
+        $$.ltrue = NULL;
+        $$.lfalse = NULL;
+        $$.quad = $5.quad;
+        $$.ptr = ptr;
         quad *q  = qGen(Q_MAIN, NULL, NULL, NULL);
         all_code = concat($4.quad, q);
         all_code = concat(all_code, $5.quad);
@@ -196,17 +208,17 @@ varsdecl: VAR_ identlist DPOINT_ typename {
               while (al != NULL) {
                   switch ($4) {
                       case S_BOOL:
-                          newVarBool(&stable, al->id, false);
+                          newVarBool(&stable, al->id, false, curfun);
                           break;
                       case S_INT:
-                          newVarInt(&stable, al->id, 0);
+                          newVarInt(&stable, al->id, 0, curfun);
                           break;
                       case S_STRING:
-                          newVarStr(&stable, al->id, "\"\"");
+                          newVarStr(&stable, al->id, "\"\"", curfun);
                           break;
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
-                          //newVarArray(&stable, al->id, $4.sarray);
+                          //newVarArray(&stable, al->id, $4.sarray, curfun);
                           break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -242,8 +254,9 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-                int ndims = $3.ndims;
-                printf("J'ai %d dimensions\n", ndims);
+                printf("J'ai %d dimensions\n", $3.ndims);
+                $$.ndims = $3.ndims;
+                $$.quad = NULL;
             }
           ;
 
@@ -302,17 +315,22 @@ fundecllist : %empty {
                 }
            ;
 
-fundecl : FUNCTION_ IDENT_ PARLEFT_ parlist PARRIGHT_ DPOINT_ atomictype vardecllist {
-                arglist *al = $4.al;
-                symbol *fs  = newVarFun(&stable, $2, al, $7);
+fundecl : FUNCTION_ IDENT_ PARLEFT_ {
+                // we should init the function symbol as soon as possible to have curfun set
+                symbol *fs  = newVarFun(&stable, $2);
                 curfun      = fs;
             }
+          parlist PARRIGHT_ DPOINT_ atomictype  vardecllist {
+                fundata *fdata = (fundata *) curfun->fdata;
+                fdata->al      = $5.al;
+                fdata->rtype   = $8;
+            }
           instr {
-                quad *qdec  = qGen(Q_FUNDEC, NULL, curfun, NULL);
-                quad *qend  = qGen(Q_FUNEND, NULL, curfun, NULL);
+                quad *qdec = qGen(Q_FUNDEC, NULL, curfun, NULL);
+                quad *qend = qGen(Q_FUNEND, NULL, curfun, NULL);
 
                 curfun  = NULL;
-                $$.quad = concat(qdec, $10.quad);
+                $$.quad = concat(qdec, $11.quad);
                 $$.quad = concat($$.quad, qend);
             }
         ;
@@ -331,8 +349,8 @@ parlist : %empty {
 par : IDENT_ DPOINT_ typename {
             symbol *s;
             switch ($3) {
-                case S_INT  : s = newVarInt(&stable, $1, 0)      ; break ;
-                case S_BOOL : s = newVarBool(&stable, $1, false) ; break ;
+                case S_INT  : s = newVarInt(curtos(), $1, 0, curfun)      ; break ;
+                case S_BOOL : s = newVarBool(curtos(), $1, false, curfun) ; break ;
                 default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
             }
 
@@ -349,7 +367,7 @@ instr: lvalue AFFEC_ expr {
                 if ($1.ptr->type != $3.ptr->type) {
                   printf("type lvalue %d \n ", $1.ptr->type) ;
                   printf("type expr %d \n ", $3.ptr->type) ;
-                  ferr("cs.y instr: lvalue and expr type differ");
+                  ferr("cs.y instr: lvalue AFFEC_ expr - Expr type differ");
                 }
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
@@ -359,17 +377,17 @@ instr: lvalue AFFEC_ expr {
             }
         | RETURN_ expr {
                 if (curfun == NULL)
-                    ferr("cs.y instr : RETURN_ expr not in function");
+                    ferr("cs.y instr : RETURN_ expr - Not in function");
 
                 if ($2.ptr->type != ((fundata *) curfun->fdata)->rtype)
-                    ferr("cs.y instr : RETURN_ expr return expr type != fun ret type");
+                    ferr("cs.y instr : RETURN_ expr - Return expr type != fun ret type");
 
                 quad *qr = qGen(Q_FUNRETURN, NULL, curfun, $2.ptr);
                 $$.quad  = concat($2.quad, qr);
             }
         | RETURN_ {
                 if (curfun == NULL)
-                    ferr("cs.y instr : RETURN_ not in function");
+                    ferr("cs.y instr : RETURN_ - Not in function");
 
                 $$.quad = qGen(Q_FUNRETURN, NULL, curfun, NULL);
             }
@@ -451,7 +469,7 @@ sequence : instr DOTCOMMA_ sequence  {
         ;
 
 lvalue: IDENT_ {
-                symbol *ptr = search(stable, $1);
+                symbol *ptr = search(stable, curfun, $1);
                 testID(ptr, $1);
 
                 $$.ptr  = ptr;
@@ -460,7 +478,7 @@ lvalue: IDENT_ {
             }
 
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
-              symbol *ptr = search(stable, $1);
+              symbol *ptr = search(stable, curfun, $1);
               testID(ptr, $1);
             }
       ;
@@ -494,8 +512,8 @@ expr :  expr PLUS_ expr {
           if ($2.ptr->type != S_INT)
               ferr("cs.y MINUS expr INT type error");
 
-          symbol *ptr = newTmpInt(&stable, 0);
-          symbol *tmp = newTmpInt(&stable, 0);
+          symbol *ptr = newTmpInt(curtos(), 0);
+          symbol *tmp = newTmpInt(curtos(), 0);
           $$.ptr      = ptr;
           quad *q     = qGen(Q_MINUS, ptr, tmp, $2.ptr);
           $$.quad     = $2.quad;
@@ -516,6 +534,13 @@ expr :  expr PLUS_ expr {
             arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
+      | expr MOD_ expr {
+          if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+              ferr("cs.y expr MOD expr type error");
+
+          arithmeticExpression(Q_MOD, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
+      }
+
       | expr EXP_ expr {
           if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
               ferr("cs.y expr MULT expr type error");
@@ -527,7 +552,7 @@ expr :  expr PLUS_ expr {
             if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
                 ferr("cs.y expr OR expr type error");
 
-            symbol *ptr = newTmpBool(&stable, false);
+            symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
 
@@ -544,7 +569,7 @@ expr :  expr PLUS_ expr {
       | expr AND_ m expr {
             if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
                 ferr("cs.y expr AND expr type error");
-            symbol *ptr = newTmpBool(&stable, false);
+            symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
             complete($1.ltrue, true, $3.quad->res);
@@ -561,7 +586,7 @@ expr :  expr PLUS_ expr {
             if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
                 ferr("cs.y expr XOR expr type error");
 
-            symbol *ptr = newTmpBool(&stable, false);
+            symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
             // complete true false etc
@@ -615,7 +640,7 @@ expr :  expr PLUS_ expr {
            if ($2.ptr->type != S_BOOL)
                ferr("cs.y expr NOT type error");
 
-           symbol *ptr = newTmpBool(&stable, false);
+           symbol *ptr = newTmpBool(curtos(), false);
            $$.ptr      = ptr;
 
            quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
@@ -632,7 +657,7 @@ expr :  expr PLUS_ expr {
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
 
-        symbol *ptr = search(stable, $1);
+        symbol *ptr = search(stable, curfun, $1);
         testID(ptr, $1);
 
         // calcul de l'indice dans le tableau
@@ -645,7 +670,7 @@ expr :  expr PLUS_ expr {
 
              }
       | IDENT_ {
-            symbol *ptr = search(stable, $1);
+            symbol *ptr = search(stable, curfun, $1);
             testID(ptr, $1);
 
             $$.ptr    = ptr;
@@ -657,11 +682,11 @@ expr :  expr PLUS_ expr {
       | CTE_ {
               symbol *ptr;
               switch ($1.type) {
-                  case S_INT    : ptr = newTmpInt (&stable, $1.ival);
+                  case S_INT    : ptr = newTmpInt (curtos(), $1.ival);
                                   break;
-                  case S_BOOL   : ptr = newTmpBool(&stable, $1.bval);
+                  case S_BOOL   : ptr = newTmpBool(curtos(), $1.bval);
                                   break;
-                  case S_STRING : ptr = newTmpStr (&stable, $1.sval);
+                  case S_STRING : ptr = newTmpStr (curtos(), $1.sval);
                                   break;
                   default: ferr("cs.y expr : CTE_ Unknow cte type");
               }
@@ -680,7 +705,7 @@ expr :  expr PLUS_ expr {
       ;
 
 m : %empty {
-          $$.quad = qGen(Q_LABEL, newTmpLabel(&stable), NULL, NULL);
+          $$.quad = qGen(Q_LABEL, newTmpLabel(curtos()), NULL, NULL);
       }
   ;
 
@@ -697,20 +722,69 @@ int yywrap (void)
 }
 
 int main (int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <scalpa_file>\n", argv[0]);
-        return EXIT_FAILURE;
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <scalpa_file> [-v --version] [-t --tos] [-o] <progName>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    char filename[LEN];
+    char arg;
+    bool tos = false, version = false, o = false;
+    int opt = 1, res;
+    while (1) {
+        static struct option long_options[] =
+        {
+          {"version",     no_argument,   0, 'v'},
+          {"tos", no_argument, 0, 't'},
+          {"o", required_argument, 0, 'o'},
+          {0, 0, 0, 0}
+        };
+        int option_index = 0;
+        arg = getopt_long_only(argc, argv, "", long_options, &option_index);
+        if (arg == -1)
+            break;
+        switch (arg) {
+            case 'v':
+                version = true;
+                opt++;
+                break;
+            case 't':
+                tos = true;
+                opt++;
+                break;
+            case 'o':
+                o = true;
+                res = snprintf(filename, LEN, "%s", optarg);
+                printf("tata : %s\n", filename);
+                if (res < 0 || res >= LEN) {
+                    fprintf(stderr, "snprintf error\n");
+                    return EXIT_FAILURE;
+                }
+                opt += 2;
+                break;
+            default:
+                fprintf(stderr, "Usage: %s <scalpa_file>\n", argv[0]);
+                return EXIT_FAILURE;
+        }
+    }
+
+    if (version) {
+        fprintf(stdout, "Members:\n");
+        fprintf(stdout, "Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n");
     }
 
     #if YYDEBUG
-         //yydebug = 1;
+         /* yydebug = 1; */
     #endif
-
-    yyin = fopen(argv[1], "r");
+    // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
+    yyin = fopen(argv[opt], "r");
+    if (yyin == NULL) {
+        fprintf(stderr, "Error fopen\n");
+        return EXIT_FAILURE;
+    }
     yyparse();
     char out[LEN];
 
-    int res = snprintf(out, LEN, "%s.s", *progName ? progName : "out");
+    res = snprintf(out, LEN, "%s.s", o ? filename : (*progName ? progName : "out"));
     if (res < 0 || res >= LEN) {
         fprintf(stderr, "snprintf error\n");
         return EXIT_FAILURE;
@@ -720,7 +794,8 @@ int main (int argc, char **argv) {
     if (yydebug)
         qPrint(all_code);
     getMips(output, stable, all_code);
-
+    if (tos)
+        stablePrint(stable);
     freeLex();
     qFree(all_code);
     sFree(stable);

@@ -16,6 +16,7 @@ typedef struct arglist {
 typedef struct fundata {
     arglist *al;
     stype rtype;
+		symbol *tos;
 } fundata;
 
 typedef struct exprlist {
@@ -27,8 +28,5 @@ arglist * arglistNew       (char *, symbol *);
 arglist * arglistConcat    (arglist *, arglist *);
 void arglistPrint          (arglist *);
 symbol  * arglistToSymlist (arglist *);
-
-// dans stable.h normalement, mais pb inclusion en boucle ou jsp quoi mdr interblocage du pauvre de declaration mdr
-symbol *newVarFun (symbol **, char *, arglist *, stype);
 
 #endif

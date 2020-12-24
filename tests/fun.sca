@@ -18,16 +18,14 @@ program Fun
     var x : int;
     begin
       x := 5;
-      return t * 2 - 5;
+      return t * 2 - x;
     end;
 
     (* main *)
     begin
-        (*
         toto(1, true, 22);
         toto(3, false, 15);
-        *)
-
+        write ", res titi=";
         write titi(6);
-        write "\n"
+        write "\n";
     end

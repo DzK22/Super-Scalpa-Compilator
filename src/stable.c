@@ -18,13 +18,13 @@ symbol *sAlloc () {
     return ns;
 }
 
-symbol *sAdd (symbol **stable) {
-    if (*stable == NULL) {
-        *stable = sAlloc();
-        return *stable;
+symbol *sAdd (symbol **tos) {
+    if (*tos == NULL) {
+        *tos = sAlloc();
+        return *tos;
 
     } else {
-        symbol *cur = *stable;
+        symbol *cur = *tos;
         while (cur->next != NULL)
             cur = cur->next;
 
@@ -49,10 +49,13 @@ void sFree (symbol *s) {
     }
 }
 
-// ID == NULL => var temporaire
-// data auto cast in the good type
-// do not call this function directry, use helpers
-symbol *newVar (symbol **stable, stype type, char *id, void *data) {
+/**
+ * ID == NULL => var temporaire
+ * data auto cast in the good type
+ * do not call this function directry, use helpers
+ * @param curfun Current function symbol or NULL if not in function
+ */
+symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun) {
     static int nsym = 0;
     static int nlabels = 0;
     bool isTmp;
@@ -64,26 +67,32 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     char tid[LEN];
     int res;
 
-    if (isTmp) { // is tmp var
-        if (type != S_LABEL) {
-            res = snprintf(tid, LEN, "temp_%d", nsym ++);
-            if (res < 0 || res >= LEN)
-                ferr("stable.c newVar temp snprintf");
-        } else {
+    if (isTmp) {
+        if (type == S_LABEL)
             res = snprintf(tid, LEN, "label_%d", nlabels ++);
-            if (res < 0 || res >= LEN)
-                ferr("stable.c newVar label snprintf");
-        }
+        else
+            res = snprintf(tid, LEN, "temp_%d", nsym ++);
+
     } else {
-        if (search(*stable, id) != NULL)
+        if (searchTable(*tos, id, curfun) != NULL)
             ferr("stable.c newVar var ID already exists");
 
-        res = sprintf(tid, "var_%s", id);
-        if (res < 0 || res >= LEN)
-            ferr("stable.c newVar var snprintf");
+        if (type == S_PROG)
+            res = sprintf(tid, "prog_%s", id);
+        else if (type == S_FUNCTION)
+            res = sprintf(tid, "fun_%s", id);
+        else { // int, bool, string
+            if (curfun == NULL)
+                res = sprintf(tid, "var_%s", id);
+            else
+                res = sprintf(tid, "funvar_%s_%s", curfun->id, id);
+        }
     }
 
-    symbol *nt = sAdd(stable);
+    if (res < 0 || res >= LEN)
+        ferr("stable.c newVar tid snprintf");
+
+    symbol *nt = sAdd(tos);
     if ((nt->id = strdup(tid)) == NULL)
         ferr("stable.c newVar strdup data ID");
 
@@ -108,6 +117,8 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
         case S_FUNCTION:
             nt->fdata = data;
             break;
+        case S_PROG:
+            break;
         default:
             ferr("stable.c newVar unknow type");
     }
@@ -115,59 +126,128 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     return nt;
 }
 
-// helpers functions which call newVar
+// Helpers functions which call newVar
 
-symbol *newTmpInt (symbol **stable, int val) {
-    return newVar(stable, S_INT, NULL, &val);
+symbol *newTmpInt (symbol **tos, int val) {
+    return newVar(tos, S_INT, NULL, &val, NULL);
 }
 
-symbol *newTmpStr (symbol **stable, char *str) {
-    return newVar(stable, S_STRING, NULL, str);
+symbol *newTmpStr (symbol **tos, char *str) {
+    return newVar(tos, S_STRING, NULL, str, NULL);
 }
 
-symbol *newTmpBool (symbol **stable, bool bol) {
-    return newVar(stable, S_BOOL, NULL, &bol);
+symbol *newTmpBool (symbol **tos, bool bol) {
+    return newVar(tos, S_BOOL, NULL, &bol, NULL);
 }
 
-symbol *newTmpLabel (symbol **stable) {
-    return newVar(stable, S_LABEL, NULL, NULL);
+symbol *newTmpLabel (symbol **tos) {
+    return newVar(tos, S_LABEL, NULL, NULL, NULL);
 }
 
-symbol *newVarInt (symbol **stable, char *id, int val) {
-    return newVar(stable, S_INT, id, &val);
+symbol *newVarInt (symbol **tos, char *id, int val, symbol *curfun) {
+    return newVar(tos, S_INT, id, &val, curfun);
 }
 
-symbol *newVarStr (symbol **stable, char *id, char *str) {
-    return newVar(stable, S_STRING, id, str);
+symbol *newVarStr (symbol **tos, char *id, char *str, symbol *curfun) {
+    return newVar(tos, S_STRING, id, str, curfun);
 }
 
-symbol *newVarBool (symbol **stable, char *id, bool bol) {
-    return newVar(stable, S_BOOL, id, &bol);
+symbol *newVarBool (symbol **tos, char *id, bool bol, symbol *curfun) {
+    return newVar(tos, S_BOOL, id, &bol, curfun);
 }
 
-symbol *newVarUnit (symbol **stable, char *id) {
-    return newVar(stable, S_UNIT, id, NULL);
-}
-
-symbol *newVarFun (symbol **stable, char *id, arglist *al, stype rtype) {
+symbol *newVarFun (symbol **tos, char *id) {
     fundata *fdata = malloc(sizeof(fundata));
-    fdata->al      = al;
-    fdata->rtype   = rtype;
+    fdata->al      = NULL;
+    fdata->rtype   = S_NONE;
+    fdata->tos     = NULL;
+    // do not forget to set fdata->al and fdata->rtype after init !
 
-    return newVar(stable, S_FUNCTION, id, fdata);
+    return newVar(tos, S_FUNCTION, id, fdata, NULL);
 }
 
-symbol *search (symbol *stable, char *id) {
-    char str[LEN];
-    int res = snprintf(str, LEN, "var_%s", id);
-    if (res < 0 || res >= LEN)
-        ferr("stable.c search snprintf");
+symbol *newProg (symbol **tos, char *id) {
+    return newVar(tos, S_PROG, id, NULL, NULL);
+}
 
-    while (stable != NULL) {
-        if (strcmp(stable->id, str) == 0)
-            return stable;
-        stable = stable->next;
+symbol *searchTable (symbol *tos, char *id, symbol *curfun) {
+    char var[LEN], fun[LEN];
+    int res;
+
+    if (curfun == NULL)
+        res = snprintf(var, LEN, "var_%s", id);
+    else
+        res = snprintf(var, LEN, "funvar_%s_%s", curfun->id, id);
+
+    if (res < 0 || res >= LEN)
+        ferr("stable.c searchTable snprintf");
+
+    res = snprintf(fun, LEN, "fun_%s", id);
+    if (res < 0 || res >= LEN)
+        ferr("stable.c searchTable snprintf");
+
+    while (tos != NULL) {
+        if (((strcmp(tos->id, var)) == 0) || (strcmp(tos->id, fun) == 0))
+            return tos;
+        tos = tos->next;
     }
 
     return NULL;
+}
+
+/**
+ * @param gtos Global table of symbols
+ * @param curfun Current function symbol (NULL if not in function)
+ * @param id Symbol ID to search
+ */
+
+symbol *search (symbol *gtos, symbol *curfun, char *id) {
+    symbol *s;
+    symbol *ftos = NULL;
+    if (curfun != NULL)
+        ftos = ((fundata *) curfun->fdata)->tos;
+
+    if (ftos != NULL && (s = searchTable(ftos, id, curfun)) != NULL)
+        return s;
+
+    return searchTable(gtos, id, curfun);
+}
+
+void stablePrint (symbol *tos) {
+    while (tos != NULL) {
+        fprintf(stdout, "%s: ", tos->id);
+        switch (tos->type) {
+            case S_INT:
+                fprintf(stdout, "INTEGER\n");
+                break;
+            case S_BOOL:
+                fprintf(stdout, "BOOLEAN\n");
+                break;
+            case S_ARRAY:
+                fprintf(stdout, "ARRAY\n"); // ajouter type de valeurs quand tableaux seront faits
+                break;
+            case S_STRING:
+                fprintf(stdout, "STRING\n");
+                break;
+            case S_PROG:
+                fprintf(stdout, "PROGRAM NAME\n");
+                break;
+            case S_FUNCTION:
+                fprintf(stdout, "Function : returns => ");
+                switch (((fundata *) tos->fdata)->rtype) {
+                    case S_INT:
+                        fprintf(stdout, "INTEGER\n");
+                        break;
+                    case S_BOOL:
+                        fprintf(stdout, "BOOLEAN\n");
+                        break;
+                    case S_UNIT:
+                        fprintf(stdout, "UNIT\n");
+                        break;
+                }
+                break;
+        }
+        // fprintf(stdout, "\n");
+        tos = tos->next;
+    }
 }

@@ -1,0 +1,19 @@
+program facto
+    var d : int;
+
+    function fact (n : int) : int
+    begin
+        if (n = 0 or n = 1) then return 1;
+
+        return n * fact(n - 1);
+    end;
+
+    begin
+        d := 3;
+        write "fact(";
+        write d;
+        write ") = ";
+        write fact(d);
+        write "\n";
+    end
+
