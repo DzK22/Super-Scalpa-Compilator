@@ -77,23 +77,16 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     } else {
         if (search(*stable, id) != NULL)
             ferr("stable.c newVar var ID already exists");
-        if (type != S_PROG) {
-            if (type == S_FUNCTION) {
-                res = sprintf(tid, "fun_%s", id);
-                    if (res < 0 || res >= LEN)
-                        ferr("stable.c newVar var snprintf");
-            }
-            else {
-                res = sprintf(tid, "var_%s", id);
-                    if (res < 0 || res >= LEN)
-                        ferr("stable.c newVar var snprintf");
-            }
-        }
-        else {
+
+        if (type == S_PROG)
             res = sprintf(tid, "prog_%s", id);
-                if (res < 0 || res >= LEN)
-                    ferr("stable.c newVar var snprintf");
-        }
+        else if (type == S_FUNCTION)
+            res = sprintf(tid, "fun_%s", id);
+        else
+            res = sprintf(tid, "var_%s", id);
+
+        if (res < 0 || res >= LEN)
+            ferr("stable.c newVar var snprintf");
     }
 
     symbol *nt = sAdd(stable);
