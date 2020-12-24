@@ -5,11 +5,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "lstTab.h"
 #define LEN 128
 
 typedef enum stype {
     S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION, S_PROG
 } stype;
+
+typedef struct arr_range {
+    int min;
+    int max;
+    int dim;
+    struct arr_range *next;
+} dimProp;
+
+typedef struct s_array {
+    int ndims;
+    int size;
+    dimProp *dim;           //pointeur sur la première dimension
+    struct lstInt *values;  //Liste des valeurs
+    stype type;
+} s_array;
 
 typedef struct symbol {
     char   *id;
@@ -22,6 +38,7 @@ typedef struct symbol {
         char *sval;
         bool bval;
         void *fdata; // function data ( = fundata)
+        s_array *arr;
         // probleme = on peut pas declarer arglist fdata sinon ca cause interblocage du pauvre de déclarations entre arglist et symbol des fichiers stable.h et arglist.h
     };
 } symbol;
@@ -43,6 +60,7 @@ symbol *newVarStr   (symbol **, char *, char *, symbol *);
 symbol *newVarBool  (symbol **, char *, bool, symbol *);
 symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
+symbol *newVarArray (symbol **, char *, s_array);
 
 void   stablePrint  (symbol *);
 

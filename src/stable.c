@@ -117,6 +117,9 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun) 
         case S_FUNCTION:
             nt->fdata = data;
             break;
+        case S_ARRAY:
+            nt->arr = (s_array *) data;
+            break;
         case S_PROG:
             break;
         default:
@@ -168,6 +171,10 @@ symbol *newVarFun (symbol **tos, char *id) {
 
 symbol *newProg (symbol **tos, char *id) {
     return newVar(tos, S_PROG, id, NULL, NULL);
+}
+
+symbol *newVarArray (symbol **tos, char *id, s_array arr) {
+    return newVar(tos, S_ARRAY, id, &arr, NULL);
 }
 
 symbol *searchTable (symbol *tos, char *id, symbol *curfun) {

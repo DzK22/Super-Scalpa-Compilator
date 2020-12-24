@@ -22,6 +22,15 @@
     char *progName = NULL;
     int instr_cnt  = 0;
 
+    void printRange (dimProp *list) {
+        dimProp *cur = list;
+        while (cur != NULL) {
+                fprintf(stdout, "min:%d[]max:%d[]ndim:%d\n", cur->min, cur->max, cur->dim);
+            cur = cur->next;
+        }
+    }
+
+
     symbol ** curtos () {
         if (curfun == NULL)
             return &stable;
@@ -101,6 +110,9 @@
     char  signe;
     stype type;
     qop   op;
+    struct arr_range dimprop;
+    struct s_array *sarray;
+
     struct {
         struct symbol *ptr;
         struct quad   *quad;
@@ -128,17 +140,9 @@
     } exprl;
 
     struct {
-        int min;
-        int max;
-        int ndims;
-    } range;
-
-    struct {
-        struct symbol *offset;
-        struct symbol *base;
-        struct quad *quad;
-        int ndims;
-    } array;
+        stype type;
+        struct s_array *sarray;
+    } ctype;
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
@@ -147,12 +151,13 @@
 %type <sval>     IDENT_
 %type <cte>      CTE_
 %type <gencode>  expr instr program sequence lvalue m fundecllist  fundecl
-%type <type>     atomictype typename
+%type <type>     atomictype
 %type <signe>    sign
 %type <argl>     identlist varsdecl parlist par
 %type <exprl>    exprlist
-%type <array>    arraytype
-%type <range>    rangelist
+%type <sarray>    arraytype
+%type <dimprop>    rangelist
+%type <ctype>    typename
 
 %left   OR_
 %left   AND_
@@ -188,7 +193,7 @@ vardecllist : %empty                         { }
 
 varsdecl: VAR_ identlist DPOINT_ typename {
              arglistPrint($2.al);
-             switch ($4) {
+             switch ($4.type) {
                  case S_INT:
                     fprintf(stdout, "integer\n");
                     break;
@@ -206,7 +211,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
              arglist *al = $2.al;
 
               while (al != NULL) {
-                  switch ($4) {
+                  switch ($4.type) {
                       case S_BOOL:
                           newVarBool(&stable, al->id, false, curfun);
                           break;
@@ -218,7 +223,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                           break;
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
-                          //newVarArray(&stable, al->id, $4.sarray, curfun);
+                          newVarArray(&stable, al->id, *($4.sarray));
                           break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -239,10 +244,11 @@ identlist : IDENT_ {
          ;
 
 typename : atomictype {
-            $$ = $1;
+            $$.type = $1;
           }
           | arraytype {
-            $$ = S_ARRAY;
+            $$.type = S_ARRAY;
+            $$.sarray = $1;
           }
          ;
 
@@ -254,9 +260,31 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-                printf("J'ai %d dimensions\n", $3.ndims);
-                $$.ndims = $3.ndims;
-                $$.quad = NULL;
+                dimProp *rg = &($3);
+                s_array *arr = malloc(sizeof(s_array));
+                if (arr == NULL) {
+                    fprintf(stderr, "malloc error\n");
+                     exit(EXIT_FAILURE);
+                 }
+                 printRange(rg);
+                 arr->dim = rg;
+                 arr->type = $6;
+                 int cpt = 1;
+                 dimProp *cur = rg;
+                 //calcule de size
+                 while (cur != NULL) {
+                     cpt *= (cur->max - cur->min + 1);
+                     cur = cur->next;
+                 }
+                 arr->size = cpt;
+                 switch (arr->type) {
+                     case S_INT:
+                        arr->values = newLstInt(arr->size);
+                        break;
+                     case S_BOOL:
+                        break;
+                 }
+                 $$ = arr;
             }
           ;
 
@@ -276,10 +304,11 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-                $$.ndims = 1;
+                $$.dim = 1;
                 $$.min = min;
                 $$.max = max;
-                fprintf(stdout, "borne inf : %d et borne sup : %d\n", min, max);
+                $$.next = NULL;
+                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", min, max, $$.dim);
 
             }
             |sign CTE_ TWO_POINTS_ sign CTE_ COMMA_ rangelist {
@@ -296,10 +325,11 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-                $$.ndims = $7.ndims + 1;
+                $$.dim = $7.dim + 1;
                 $$.min = min;
                 $$.max = max;
-                fprintf(stdout, "borne inf : %d et borne sup : %d\n", min, max);
+                $$.next = &($7);
+                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", min, max, $$.dim);
             }
             ;
 
@@ -348,7 +378,7 @@ parlist : %empty {
 
 par : IDENT_ DPOINT_ typename {
             symbol *s;
-            switch ($3) {
+            switch ($3.type) {
                 case S_INT  : s = newVarInt(curtos(), $1, 0, curfun)      ; break ;
                 case S_BOOL : s = newVarBool(curtos(), $1, false, curfun) ; break ;
                 default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
