@@ -473,7 +473,7 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
             pinstr4("beq", "$t2", "$zero", label);
             break;
         case Q_OR:
-            pinstr4("r", "$t2", "$t0", "$t1");
+            pinstr4("or", "$t2", "$t0", "$t1");
             pinstr4("beq", "$t2", "$zero", label);
             break;
         case Q_AND:
