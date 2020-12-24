@@ -1,5 +1,9 @@
 #include "../headers/mips.h"
 
+static symbol *curfun = NULL;
+// curfun is used to know if a funcall is done inside a function or not
+// If a funcall is done inside a function, save all function local vars to the stack and restore them after the call
+
 void ferr (char *s) {
     fprintf(stderr, "Error: %s\n", s);
     exit(EXIT_FAILURE);
@@ -416,6 +420,8 @@ void fundec (FILE *f, symbol *fun) {
        8 -> arg 2
        etc ...
     */
+
+    curfun = fun;
 }
 
 void funend (FILE *f, symbol *fun) {
@@ -435,9 +441,12 @@ void funend (FILE *f, symbol *fun) {
     int offset = 4 + funArgsSize(fun);
     // pop ra and args from the stack
     fprintf(f, "\taddi $sp, $sp, %d\n", offset);
+
     // jump to $ra
     fprintf(f, "\tjr $ra\n");
     fprintf(f, "\t\t\t\t# end of function %s\n", fun->id);
+
+    curfun = NULL;
 }
 
 void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
@@ -452,12 +461,34 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     else
         fprintf(f, "\t\t\t\t# funcall %s ( %s )\n", fun->id, argsDebug);
 
+    int size;
+
+    if (curfun != NULL) {
+        fprintf(f, "\t\t\t\t# push local vars to the stack\n");
+        // make space for local var save in the stack
+        size = curfunVarSize();
+        fprintf(f, "\tsub $sp, $sp, %d\n", size);
+
+        // push local vars to the stack
+        curfunStackPushVars(f);
+    }
+
+    fprintf(f, "\t\t\t\t# push funcall args to the stack\n");
     // make space for args in the stack
-    int offset = funArgsSize(fun);
-    fprintf(f, "\tsub $sp, $sp, %d\n", offset);
+    size = funArgsSize(fun);
+    fprintf(f, "\tsub $sp, $sp, %d\n", size);
 
     // push args to stack
     funStackPushArgs(f, args);
+
+    /* Stack now (no curfun)    Stack now (curfun != NULL)
+       0 -> arg 1               0 -> arg 1
+       4 -> arg 2               4 -> arg 2
+         etc ...                  etc ...
+                                8  -> var1
+                                12 -> var2
+                                etc ...
+    */
 
     // jump to function and put actual addr in $ra
     fprintf(f, "\tjal %s\n", fun->id);
@@ -465,6 +496,22 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     // store result ($v0) in res->id
     if (res)
         fprintf(f, "\tsw $v0, %s\n", res->id);
+
+    if (curfun != NULL) {
+        /* Stack now (curfun != NULL)
+           0 -> var1
+           4 -> var2
+           etc ...
+       */
+
+        fprintf(f, "\t\t\t\t# push local vars to the stack\n");
+        // load local vars from stack
+        curfunStackLoadVars(f);
+        size = curfunVarSize();
+
+        // pop local vars from stack
+        fprintf(f, "\taddi $sp, $sp, %d\n", size);
+    }
 }
 
 void funreturn (FILE *f, symbol *fun, symbol *ret) {
@@ -487,17 +534,24 @@ int funArgsSize (symbol *fun) {
     arglist *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
-        switch (al->sym->type) {
-            case S_INT  : bytes = 4; break;
-            case S_BOOL : bytes = 4; break;
-            default: ferr("mips.c funArgsSize arg wrong type");
-        }
-
+        bytes = funSymTypeSize(al->sym);
         size += bytes;
-        al = al->next;
+        al    = al->next;
     }
 
     return size;
+}
+
+int funSymTypeSize (symbol *sym) {
+    int bytes;
+
+    switch (sym->type) {
+        case S_INT    : bytes = sizeof(int) ; break ;
+        case S_BOOL   : bytes = sizeof(int) ; break ;
+        default: ferr("mips.c funSymTypeSize arg wrong type");
+    }
+
+    return bytes;
 }
 
 /**
@@ -508,17 +562,12 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
     arglist *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
-        switch (al->sym->type) {
-            case S_INT  : bytes = 4; break;
-            case S_BOOL : bytes = 4; break;
-            default: ferr("mips.c funStackLoadArgs arg wrong type");
-        }
-
         fprintf(f, "\tlw $t0, %d($sp)\n", offset);
         fprintf(f, "\tsw $t0, %s\n", al->sym->id);
 
+        bytes   = funSymTypeSize(al->sym);
         offset += bytes;
-        al = al->next;
+        al      = al->next;
     }
 }
 
@@ -526,16 +575,12 @@ void funStackPushArgs (FILE *f, symbol *args) {
     int offset = 0, bytes;
 
     while (args != NULL) {
-        switch (args->type) {
-            case S_INT  : bytes = 4; break;
-            case S_BOOL : bytes = 4; break;
-            default: ferr("mips.c funStackPushArgs arg wrong type");
-        }
-
         fprintf(f, "\tlw $t0, %s\n", args->id);
         fprintf(f, "\tsw $t0, %d($sp)\n", offset);
+
+        bytes   = funSymTypeSize(args);
         offset += bytes;
-        args = args->next;
+        args    = args->next;
     }
 }
 
@@ -554,4 +599,65 @@ void funArgsDebugString (symbol *fun, char *dstring, int maxlen) {
 
     if (len > 2)
         dstring[len - 2] = '\0'; // erase the last ", "
+}
+
+// curfun functions
+
+int curfunVarSize () {
+    if (curfun == NULL)
+        ferr("mips.c curfunVarSize - curfun is NULL");
+
+    int size = 0, bytes;
+    symbol *tos = ((fundata *) curfun->fdata)->tos;
+
+    while (tos != NULL) {
+        if (tos->type == S_INT || tos->type == S_BOOL) {
+            bytes = funSymTypeSize(tos);
+            size += bytes;
+        }
+
+        tos = tos->next;
+    }
+
+    return size;
+}
+
+void curfunStackPushVars (FILE *f) {
+    if (curfun == NULL)
+        ferr("mips.c curfunStackPushVars - curfun is NULL");
+
+    int offset = 0, bytes;
+    symbol *tos = ((fundata *) curfun->fdata)->tos;
+
+    while (tos != NULL) {
+        if (tos->type == S_INT || tos->type == S_BOOL) {
+            fprintf(f, "\tlw $t0, %s\n", tos->id);
+            fprintf(f, "\tsw $t0, %d($sp)\n", offset);
+
+            bytes = funSymTypeSize(tos);
+            offset += bytes;
+        }
+
+        tos = tos->next;
+    }
+}
+
+void curfunStackLoadVars (FILE *f) {
+    if (curfun == NULL)
+        ferr("mips.c curfunStackLoadVars - curfun is NULL");
+
+    int offset = 0, bytes;
+    symbol *tos = ((fundata *) curfun->fdata)->tos;
+
+    while (tos != NULL) {
+        if (tos->type == S_INT || tos->type == S_BOOL) {
+            fprintf(f, "\tlw $t0, %d($sp)\n", offset);
+            fprintf(f, "\tsw $t0, %s\n", tos->id);
+
+            bytes = funSymTypeSize(tos);
+            offset += bytes;
+        }
+
+        tos = tos->next;
+    }
 }

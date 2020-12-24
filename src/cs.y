@@ -17,10 +17,11 @@
     extern FILE *yyin;
 
     symbol *stable = NULL; // global tos
-    quad *all_code = NULL;
-    symbol *curfun = NULL; // current parsing function symbol or NULL
+    quad *all_code = NULL; // all quads
     char *progName = NULL;
-    int instr_cnt  = 0;
+
+    // current parsing function symbol or NULL
+    static symbol *curfun = NULL;
 
     void printRange (dimProp *list) {
         dimProp *cur = list;

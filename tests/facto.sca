@@ -9,7 +9,7 @@ program facto
     end;
 
     begin
-        d := 3;
+        read d;
         write "fact(";
         write d;
         write ") = ";
