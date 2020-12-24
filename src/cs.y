@@ -93,12 +93,14 @@
     char  signe;
     stype type;
     qop   op;
-
+    struct s_array *sarray;
+    struct s_array *sarray_ref;
     struct {
         struct symbol *ptr;
         struct quad   *quad;
         struct quad   *ltrue;
         struct quad   *lfalse;
+        struct s_array *sarray_value;
     } gencode; // Pour les expressions
     struct {
         stype type;
@@ -162,9 +164,13 @@
 %%
 
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
-        newVarInt(&stable, $2, 0);
+        symbol *ptr = newProg(&stable, $2);
         progName = strdup($2);
-
+        $$.sarray_value = NULL;
+        $$.ltrue = NULL;
+        $$.lfalse = NULL;
+        $$.quad = $5.quad;
+        $$.ptr = ptr;
         quad *q  = qGen(Q_MAIN, NULL, NULL, NULL);
         all_code = concat($4.quad, q);
         all_code = concat(all_code, $5.quad);

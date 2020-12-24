@@ -77,10 +77,23 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     } else {
         if (search(*stable, id) != NULL)
             ferr("stable.c newVar var ID already exists");
-
-        res = sprintf(tid, "var_%s", id);
-        if (res < 0 || res >= LEN)
-            ferr("stable.c newVar var snprintf");
+        if (type != S_PROG) {
+            if (type == S_FUNCTION) {
+                res = sprintf(tid, "fun_%s", id);
+                    if (res < 0 || res >= LEN)
+                        ferr("stable.c newVar var snprintf");
+            }
+            else {
+                res = sprintf(tid, "var_%s", id);
+                    if (res < 0 || res >= LEN)
+                        ferr("stable.c newVar var snprintf");
+            }
+        }
+        else {
+            res = sprintf(tid, "prog_%s", id);
+                if (res < 0 || res >= LEN)
+                    ferr("stable.c newVar var snprintf");
+        }
     }
 
     symbol *nt = sAdd(stable);
@@ -107,6 +120,8 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
             break;
         case S_FUNCTION:
             nt->fdata = data;
+            break;
+        case S_PROG:
             break;
         default:
             ferr("stable.c newVar unknow type");
@@ -157,14 +172,22 @@ symbol *newVarFun (symbol **stable, char *id, arglist *al, stype rtype) {
     return newVar(stable, S_FUNCTION, id, fdata);
 }
 
+symbol *newProg (symbol **stable, char *id) {
+    return newVar(stable, S_PROG, id, NULL);
+}
+
 symbol *search (symbol *stable, char *id) {
-    char str[LEN];
-    int res = snprintf(str, LEN, "var_%s", id);
+    char var[LEN], fun[LEN];
+    int res;
+    res = snprintf(var, LEN, "var_%s", id);
+    if (res < 0 || res >= LEN)
+        ferr("stable.c search snprintf");
+    res = snprintf(fun, LEN, "fun_%s", id);
     if (res < 0 || res >= LEN)
         ferr("stable.c search snprintf");
 
     while (stable != NULL) {
-        if (strcmp(stable->id, str) == 0)
+        if (((strcmp(stable->id, var)) == 0) || (strcmp(stable->id, fun) == 0))
             return stable;
         stable = stable->next;
     }
@@ -185,8 +208,14 @@ void stablePrint  (symbol *stable) {
             case S_ARRAY:
                 fprintf(stdout, "ARRAY\n"); // ajouter type de valeurs quand tableaux seront faits
                 break;
+            case S_STRING:
+                fprintf(stdout, "STRING\n");
+                break;
+            case S_PROG:
+                fprintf(stdout, "PROGRAM NAME\n");
+                break;
             case S_FUNCTION:
-                fprintf(stdout, "Function : return => ");
+                fprintf(stdout, "Function : returns => ");
                 switch (((fundata *)stable->fdata)->rtype) {
                     case S_INT:
                         fprintf(stdout, "INTEGER\n");
@@ -200,6 +229,7 @@ void stablePrint  (symbol *stable) {
                 }
                 break;
         }
+        //fprintf(stdout, "\n");
         stable = stable->next;
     }
 }
