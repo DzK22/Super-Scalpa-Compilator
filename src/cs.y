@@ -110,7 +110,13 @@
     char  signe;
     stype type;
     qop   op;
-    struct arr_range dimprop;
+    struct {
+        int min;
+        int max;
+        int dim;
+        struct arr_range *next;
+    } dimprop;
+    //struct arr_range dimprop;
     struct s_array *sarray;
 
     struct {
@@ -223,7 +229,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                           break;
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
-                          newVarArray(&stable, al->id, *($4.sarray));
+                          newVarArray(&stable, al->id, $4.sarray);
                           break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -260,15 +266,25 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-                dimProp *rg = &($3);
+                dimProp *rg = malloc(sizeof(dimProp));
+                if(rg == NULL )
+                {
+                  fprintf(stderr,"error malloc  \n") ;
+                  exit(0)  ;
+                }
+                rg->min = $3.min;
+                rg->max = $3.max;
+                rg->dim = $3.dim;
+
                 s_array *arr = malloc(sizeof(s_array));
                 if (arr == NULL) {
                     fprintf(stderr, "malloc error\n");
                      exit(EXIT_FAILURE);
                  }
-                 printRange(rg);
-                 arr->dim = rg;
+                 //printRange(rg);
+                 arr->dims = rg;
                  arr->type = $6;
+                 arr->index = 1;
                  int cpt = 1;
                  dimProp *cur = rg;
                  //calcule de size
@@ -308,7 +324,7 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                 $$.min = min;
                 $$.max = max;
                 $$.next = NULL;
-                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", min, max, $$.dim);
+                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$.min, $$.max, $$.dim);
 
             }
             |sign CTE_ TWO_POINTS_ sign CTE_ COMMA_ rangelist {
@@ -328,8 +344,17 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                 $$.dim = $7.dim + 1;
                 $$.min = min;
                 $$.max = max;
-                $$.next = &($7);
-                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", min, max, $$.dim);
+                dimProp *rg = malloc(sizeof(dimProp));
+                if(rg == NULL )
+                {
+                  fprintf(stderr,"error malloc  \n") ;
+                  exit(0)  ;
+                }
+                rg->min = min;
+                rg->max = max;
+                rg->dim = $$.dim;
+                $$.next = rg;
+                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$.min, $$.max, $$.dim);
             }
             ;
 
@@ -393,12 +418,27 @@ par : IDENT_ DPOINT_ typename {
     ;
 
 instr: lvalue AFFEC_ expr {
-
-                if ($1.ptr->type != $3.ptr->type) {
+                if ($1.ptr->type == S_ARRAY) {
+                  if($3.ptr->type != $1.ptr->arr->type) {
+                      printf("type lvalue %d \n ", $1.ptr->arr->type) ;
+                      printf("type expr %d \n ", $3.ptr->type) ;
+                      ferr("cs.y instr: lvalue AFFEC_ expr - 1");
+                  }
+                }
+                else if ($3.ptr->type == S_ARRAY ) {
+                  if($1.ptr->type != $3.ptr->arr->type) {
+                      printf("type lvalue %d \n ", $1.ptr->type) ;
+                      printf("type expr %d \n ", $3.ptr->type) ;
+                      ferr("cs.y instr: lvalue AFFEC_ expr - 2");
+                  }
+                }
+                else if ($1.ptr->type != $3.ptr->type) {
                   printf("type lvalue %d \n ", $1.ptr->type) ;
                   printf("type expr %d \n ", $3.ptr->type) ;
-                  ferr("cs.y instr: lvalue AFFEC_ expr - Expr type differ");
+                  ferr("cs.y instr: lvalue AFFEC_ expr - 3");
                 }
+                if ($1.ptr->type == S_ARRAY)
+                    printf("TATALAND = %d\n", $1.ptr->arr->index);
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
@@ -509,7 +549,23 @@ lvalue: IDENT_ {
 
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
               symbol *ptr = search(stable, curfun, $1);
-              testID(ptr, $1);
+               testID(ptr, $1);
+              printf("TOTOT %d et %s \n",ptr->arr->type, ptr->id);
+              // calcul de la valeur de l'indice du tableau
+              arglist *cur = $3.al;
+              ptr->arr->index = 1;
+              while (cur != NULL) {
+                  ptr->arr->index *= cur->sym->ival;
+                  cur = cur->next;
+              }
+              printf("TOTOLAND: min et %d max %d dim %d\n",
+               ptr->arr->dims->min , ptr->arr->dims->max, ptr->arr->dims->dim);
+              if (ptr->arr->index < ptr->arr->dims->min || ptr->arr->index > ptr->arr->dims->max) {
+                  fprintf(stderr, "index out of range\n");
+                  exit(EXIT_FAILURE);
+              }
+              $$.ptr = ptr;
+              $$.quad = NULL ;
             }
       ;
 
@@ -687,8 +743,12 @@ expr :  expr PLUS_ expr {
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
 
-        symbol *ptr = search(stable, curfun, $1);
+      /*  symbol *ptr = search(stable, curfun, $1);
         testID(ptr, $1);
+
+        // mettre le type de retour
+        $$.ptr->type = ptr->arr->type ;
+        $$.quad = NULL ;
 
         // calcul de l'indice dans le tableau
         int index = 0 ;
@@ -696,7 +756,7 @@ expr :  expr PLUS_ expr {
              while (toto != NULL) {
             fprintf(stdout, "liste indices de expr = ident[i, .. ,n]  %d\n", toto->sym->ival);
              toto = toto->next;
-        }
+        }*/
 
              }
       | IDENT_ {
@@ -803,7 +863,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-         /* yydebug = 1; */
+          //yydebug = 1;
     #endif
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");

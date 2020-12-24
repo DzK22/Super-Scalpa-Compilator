@@ -53,6 +53,10 @@ void getData (FILE *f, symbol *s) {
             case S_STRING:
                 fprintf(f, "%s:\t.asciiz %s\n", s->id, s->sval);
                 break;
+            case S_ARRAY:
+                if (s->arr->type == S_INT)
+                    fprintf(f, "%s:\t.space %d\n", s->id, s->arr->size * 4);
+                break;
         }
 
         s = s->next;

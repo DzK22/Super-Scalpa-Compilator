@@ -22,9 +22,10 @@ typedef struct arr_range {
 typedef struct s_array {
     int ndims;
     int size;
-    dimProp *dim;           //pointeur sur la première dimension
+    dimProp *dims;           //pointeur sur la première dimension
     struct lstInt *values;  //Liste des valeurs
     stype type;
+    int index;
 } s_array;
 
 typedef struct symbol {
@@ -60,7 +61,7 @@ symbol *newVarStr   (symbol **, char *, char *, symbol *);
 symbol *newVarBool  (symbol **, char *, bool, symbol *);
 symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
-symbol *newVarArray (symbol **, char *, s_array);
+symbol *newVarArray (symbol **, char *, s_array *);
 
 void   stablePrint  (symbol *);
 
