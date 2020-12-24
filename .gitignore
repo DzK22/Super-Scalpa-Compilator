@@ -1,4 +1,4 @@
-*.out
+scalpa
 *.s
 tmp/*
 tags
