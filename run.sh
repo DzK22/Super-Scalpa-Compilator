@@ -1,7 +1,8 @@
 #!/bin/bash
+ make
  for file in `ls tests`; do
   echo "Compiling File ----------> $file"
-  ./cs.out tests/$file
+  ./scalpa tests/$file
   echo ""
 
  done
