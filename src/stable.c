@@ -64,16 +64,12 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
     char tid[LEN];
     int res;
 
-    if (isTmp) { // is tmp var
-        if (type != S_LABEL) {
-            res = snprintf(tid, LEN, "temp_%d", nsym ++);
-            if (res < 0 || res >= LEN)
-                ferr("stable.c newVar temp snprintf");
-        } else {
+    if (isTmp) {
+        if (type == S_LABEL)
             res = snprintf(tid, LEN, "label_%d", nlabels ++);
-            if (res < 0 || res >= LEN)
-                ferr("stable.c newVar label snprintf");
-        }
+        else
+            res = snprintf(tid, LEN, "temp_%d", nsym ++);
+
     } else {
         if (search(*stable, id) != NULL)
             ferr("stable.c newVar var ID already exists");
@@ -84,10 +80,10 @@ symbol *newVar (symbol **stable, stype type, char *id, void *data) {
             res = sprintf(tid, "fun_%s", id);
         else
             res = sprintf(tid, "var_%s", id);
-
-        if (res < 0 || res >= LEN)
-            ferr("stable.c newVar var snprintf");
     }
+
+    if (res < 0 || res >= LEN)
+        ferr("stable.c newVar tid snprintf");
 
     symbol *nt = sAdd(stable);
     if ((nt->id = strdup(tid)) == NULL)
