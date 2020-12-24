@@ -406,7 +406,7 @@ void qWrite (FILE *f, symbol *argv1) {
 }
 
 void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
-    snprintf(tbuf, LEN, "%s = %s %s %s", res->id, argv1->id, opstr(op), argv2->id);
+    snprintf(tbuf, LEN, "%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id);
     pcom(tbuf);
 
     pinstr3("lw", "$t0", argv1->id);
