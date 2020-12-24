@@ -18,4 +18,16 @@ void ferr    (char *s);
 char * nextTmpLabel ();
 char * opstr (qop);
 
+// functions
+void fundec    (FILE *f, symbol *fun);
+void funend    (FILE *f, symbol *fun);
+void funcall   (FILE *f, symbol *fun, symbol *args, symbol *res);
+void funreturn (FILE *f, symbol *fun, symbol *ret);
+
+// function helpers
+int funArgsSize         (symbol *fun);
+void funStackLoadArgs   (FILE *f, symbol *fun, int offset);
+void funStackPushArgs   (FILE *f, symbol *args);
+void funArgsDebugString (symbol *fun, char *dstring, int maxlen);
+
 #endif
