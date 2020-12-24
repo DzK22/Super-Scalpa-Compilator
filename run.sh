@@ -8,6 +8,7 @@
 
  for file in `ls *.s`; do
   echo "Run MIPS  -------------------> $file"
-  spim -f $file
+  spim -f $file | tail -n +6
   echo ""
+  #rm $file
  done

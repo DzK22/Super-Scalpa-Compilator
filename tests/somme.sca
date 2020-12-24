@@ -16,4 +16,5 @@ program somme
         end;
 
         write s;
+        write "\n";
     end

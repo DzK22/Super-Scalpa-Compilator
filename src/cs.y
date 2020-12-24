@@ -117,6 +117,19 @@
         struct quad *quad;
         struct arglist *al;
     } exprl;
+
+    struct {
+        int min;
+        int max;
+        int ndims;
+    } range;
+
+    struct {
+        struct symbol *offset;
+        struct symbol *base;
+        struct quad *quad;
+        int ndims;
+    } array;
 }
 
 %token PROGRAM_ IDENT_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
@@ -129,6 +142,8 @@
 %type <signe>    sign
 %type <argl>     identlist varsdecl parlist par
 %type <exprl>    exprlist
+%type <array>    arraytype
+%type <range>    rangelist
 
 %left   OR_
 %left   AND_
@@ -227,7 +242,8 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-
+                int ndims = $3.ndims;
+                printf("J'ai %d dimensions\n", ndims);
             }
           ;
 
@@ -247,7 +263,9 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-
+                $$.ndims = 1;
+                $$.min = min;
+                $$.max = max;
                 fprintf(stdout, "borne inf : %d et borne sup : %d\n", min, max);
 
             }
@@ -265,7 +283,9 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-
+                $$.ndims = $7.ndims + 1;
+                $$.min = min;
+                $$.max = max;
                 fprintf(stdout, "borne inf : %d et borne sup : %d\n", min, max);
             }
             ;
@@ -491,7 +511,8 @@ expr :  expr PLUS_ expr {
       | expr DIV_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
                 ferr("cs.y expr MULT expr type error");
-
+            if ($3.ptr->ival == 0)
+                ferr("Error division by 0");
             arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 

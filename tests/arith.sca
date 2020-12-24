@@ -1,0 +1,22 @@
+(* Test basique sur les opérations arithmétiques *)
+
+program arith
+   var a, b, c, i, j : int;
+   var b1, b2 : bool;
+   begin
+     a := 10;
+     b := a * 5 - 20;
+     c := 5 * (a + b);
+     i := a + b / 2 * (c - a);
+     j := i ^ 2;
+     write a;       (* 10 *)
+     write "\n";
+     write b;       (* 30 *)
+     write "\n";
+     write c;       (* 200 *)
+     write "\n";
+     write i;       (* 2860 *)
+     write "\n";
+     write j;       (* 8179600 *)
+     write "\n"
+   end

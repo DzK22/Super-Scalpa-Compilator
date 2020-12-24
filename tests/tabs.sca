@@ -1,0 +1,6 @@
+program tabz
+  var a, c, t : int;
+  var fdd : array[1..10, 5..7, 10..20] of int ;
+    begin
+        write "toto"
+    end

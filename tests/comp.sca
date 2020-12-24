@@ -1,7 +1,0 @@
-program comp
-  var a, c, t : int;
-  var test : bool;
-  var fdd : array[1..10, 5..7] of int ;
-    begin
-        write "toto"
-     end
