@@ -21,4 +21,4 @@ all:
 	gcc -o $(NAME).out $(TMP)stable.o $(TMP)quad.o $(TMP)arglist.o $(TMP)mips.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 
 clean:
-	rm -rf $(TMP) $(NAME).out
+	rm -rf $(TMP) $(NAME).out *.s
