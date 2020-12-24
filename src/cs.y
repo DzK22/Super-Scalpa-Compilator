@@ -3,6 +3,8 @@
     #include <stdint.h>
     #include <stdlib.h>
     #include <math.h>
+    #include <getopt.h>
+    #include <unistd.h>
     #include "../headers/stable.h"
     #include "../headers/quad.h"
     #include "../headers/mips.h"
@@ -706,20 +708,69 @@ int yywrap (void)
 }
 
 int main (int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <scalpa_file>\n", argv[0]);
-        return EXIT_FAILURE;
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <scalpa_file> [-v --version] [-t --tos] [-o] <progName>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    char filename[LEN];
+    char arg;
+    bool tos = false, version = false, o = false;
+    int opt = 1, res;
+    while (1) {
+        static struct option long_options[] =
+        {
+          {"version",     no_argument,   0, 'v'},
+          {"tos", no_argument, 0, 't'},
+          {"o", required_argument, 0, 'o'},
+          {0, 0, 0, 0}
+        };
+        int option_index = 0;
+        arg = getopt_long_only(argc, argv, "", long_options, &option_index);
+        if (arg == -1)
+            break;
+        switch (arg) {
+            case 'v':
+                version = true;
+                opt++;
+                break;
+            case 't':
+                tos = true;
+                opt++;
+                break;
+            case 'o':
+                o = true;
+                res = snprintf(filename, LEN, "%s", optarg);
+                printf("tata : %s\n", filename);
+                if (res < 0 || res >= LEN) {
+                    fprintf(stderr, "snprintf error\n");
+                    return EXIT_FAILURE;
+                }
+                opt += 2;
+                break;
+            default:
+                fprintf(stderr, "Usage: %s <scalpa_file>\n", argv[0]);
+                return EXIT_FAILURE;
+        }
+    }
+
+    if (version) {
+        fprintf(stdout, "Members:\n");
+        fprintf(stdout, "Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n");
     }
 
     #if YYDEBUG
          //yydebug = 1;
     #endif
-
-    yyin = fopen(argv[1], "r");
+    // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
+    yyin = fopen(argv[opt], "r");
+    if (yyin == NULL) {
+        fprintf(stderr, "Error fopen\n");
+        return EXIT_FAILURE;
+    }
     yyparse();
     char out[LEN];
 
-    int res = snprintf(out, LEN, "%s.s", *progName ? progName : "out");
+    res = snprintf(out, LEN, "%s.s", o ? filename : (*progName ? progName : "out"));
     if (res < 0 || res >= LEN) {
         fprintf(stderr, "snprintf error\n");
         return EXIT_FAILURE;
