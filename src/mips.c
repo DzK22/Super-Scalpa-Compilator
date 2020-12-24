@@ -1,8 +1,10 @@
 #include "../headers/mips.h"
 
 static symbol *curfun = NULL;
-// curfun is used to know if a funcall is done inside a function or not
-// If a funcall is done inside a function, save all function local vars to the stack and restore them after the call
+/**
+ * curfun is used to know if a funcall is done inside a function or not
+ * If a funcall is done inside a function, save all function local vars to the stack and restore them after the call
+ */
 
 void ferr (char *s) {
     fprintf(stderr, "Error: %s\n", s);
@@ -601,7 +603,7 @@ void funArgsDebugString (symbol *fun, char *dstring, int maxlen) {
         dstring[len - 2] = '\0'; // erase the last ", "
 }
 
-// curfun functions
+// curfun functions (only for function calls inside a function)
 
 int curfunVarSize () {
     if (curfun == NULL)
@@ -661,3 +663,22 @@ void curfunStackLoadVars (FILE *f) {
         tos = tos->next;
     }
 }
+
+/**
+ * -----------------------------------
+ * ###### AIDE GESTION DU STACK ######
+ * -----------------------------------
+ * - l'appelant empile les arguments de l'appel de fonction (1er argument en sommet de pile) et jump sur la fonction
+ * - l'appelé empile par dessus l'adresse de retour depuis $ra
+ * - l'appelé charge les arguments de l'appel de fonction dans les symboles de sa table des symboles
+ * - A la fin de la fonction, l'appelé place le résultat (si fonction type != unit) dans $v0, que l'appelant récupère ensuite)
+ * - l'appelé charge ensuite l'adresse de retour sauvegardée (en sommet de pile) du stack vers son registre $ra, puis la dépile du stack ainsi que les arguments initiaux de l'appel de fonction
+ *   l'appelé jump sur $ra, pour revenir juste après l'appel de fonction initial
+ *
+ *  -----------------------
+ *  Si l'appel de fonction se déroule à l'intérieur d'une fonction (= ailleur que dans le main), cela se rajoute:
+ *  - l'appelant sauvegarde (empile) toutes les variables INT ou BOOL de sa table des symboles (tos) dans le stack (juste en-dessous des arguments de l'appel de fonction, avec la 1ere var locale juste après le dernier argument)
+ *  - l'appelé ne touchera pas à ces variables locales sauvegardées
+ *  - Une fois de retour juste après l'appel de fonction, l'appelant restaure ses variables locales depuis le stack et les dépiles de celui-ci.
+ */
+
