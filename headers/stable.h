@@ -41,5 +41,6 @@ symbol *newVarInt   (symbol **, char *, int);
 symbol *newVarStr   (symbol **, char *, char *);
 symbol *newVarBool  (symbol **, char *, bool);
 symbol *newVarUnit  (symbol **, char *);
+void   stablePrint  (symbol *);
 
 #endif

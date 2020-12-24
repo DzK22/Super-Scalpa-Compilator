@@ -171,3 +171,35 @@ symbol *search (symbol *stable, char *id) {
 
     return NULL;
 }
+
+void stablePrint  (symbol *stable) {
+    while (stable != NULL) {
+        fprintf(stdout, "%s: ", stable->id);
+        switch (stable->type) {
+            case S_INT:
+                fprintf(stdout, "INTEGER\n");
+                break;
+            case S_BOOL:
+                fprintf(stdout, "BOOLEAN\n");
+                break;
+            case S_ARRAY:
+                fprintf(stdout, "ARRAY\n"); // ajouter type de valeurs quand tableaux seront faits
+                break;
+            case S_FUNCTION:
+                fprintf(stdout, "Function : return => ");
+                switch (((fundata *)stable->fdata)->rtype) {
+                    case S_INT:
+                        fprintf(stdout, "INTEGER\n");
+                        break;
+                    case S_BOOL:
+                        fprintf(stdout, "BOOLEAN\n");
+                        break;
+                    case S_UNIT:
+                        fprintf(stdout, "UNIT\n");
+                        break;
+                }
+                break;
+        }
+        stable = stable->next;
+    }
+}

@@ -780,7 +780,8 @@ int main (int argc, char **argv) {
     if (yydebug)
         qPrint(all_code);
     getMips(output, stable, all_code);
-
+    if (tos)
+        stablePrint(stable);
     freeLex();
     qFree(all_code);
     sFree(stable);
