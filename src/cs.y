@@ -111,14 +111,7 @@
     char  signe;
     stype type;
     qop   op;
-    struct {
-        int min;
-        int max;
-        int dim;
-        struct arr_range *me;
-        struct arr_range *next;
-    } dimprop;
-    //struct arr_range dimprop;
+    struct arr_range *dimprop;
     struct s_array *sarray;
 
     struct {
@@ -274,10 +267,6 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                   fprintf(stderr,"error malloc  \n") ;
                   exit(0)  ;
                 }
-                rg->min = $3.min;
-                rg->max = $3.max;
-                rg->dim = $3.dim;
-                rg->next = $3.me;
 
                 s_array *arr = malloc(sizeof(s_array));
                 if (arr == NULL) {
@@ -285,7 +274,7 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                      exit(EXIT_FAILURE);
                  }
                  //printRange(rg);
-                 arr->dims = rg;
+                 arr->dims = $3;
                  arr->type = $6;
                  arr->index = 1;
                  int cpt = 1;
@@ -323,11 +312,18 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-                $$.dim = 1;
-                $$.min = min;
-                $$.max = max;
-                $$.next = NULL;
-                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$.min, $$.max, $$.dim);
+
+                $$ = malloc(sizeof(dimProp));
+                if($$ == NULL )
+                {
+                  fprintf(stderr,"error malloc  \n") ;
+                  exit(0)  ;
+                }
+                $$->dim = 1;
+                $$->min = min;
+                $$->max = max;
+                $$->next = NULL;
+                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$->min, $$->max, $$->dim);
 
             }
             |sign CTE_ TWO_POINTS_ sign CTE_ COMMA_ rangelist {
@@ -344,21 +340,17 @@ rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
                     fprintf(stderr, "Bornes inf > Borne sup\n");
                     exit(EXIT_FAILURE);
                 }
-                $$.dim = $7.dim + 1;
-                $$.min = min;
-                $$.max = max;
-                dimProp *rg = malloc(sizeof(dimProp));
-                if(rg == NULL )
+                $$ = malloc(sizeof(dimProp));
+                if($$ == NULL )
                 {
                   fprintf(stderr,"error malloc  \n") ;
                   exit(0)  ;
                 }
-                rg->min = min;
-                rg->max = max;
-                rg->dim = $$.dim;
-                rg->next = NULL;
-                $$.next = rg;
-                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$.min, $$.max, $$.dim);
+                $$->dim = $7->dim + 1;
+                $$->min = min;
+                $$->max = max;
+                $$->next = $7;
+                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$->min, $$->max, $$->dim);
             }
             ;
 
@@ -554,21 +546,22 @@ lvalue: IDENT_ {
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
               symbol *ptr = search(stable, curfun, $1);
                testID(ptr, $1);
-              printf("TOTOT %d et %s \n",ptr->arr->type, ptr->id);
               // calcul de la valeur de l'indice du tableau
               arglist *cur = $3.al;
               dimProp *test = ptr->arr->dims;
               int cpt = 1;
-
-              while ( test != NULL) {
+              while (test != NULL) {
+                  printf("HAHAHAH\n");
                   printf(" dims min %d || dims max %d\n",test->min, test->max);
-                //  cpt *= cur->sym->ival;
-                   test = test->next;
+                  test = test->next;
+              }
+              while ( cur != NULL) {
+                   cpt *= cur->sym->ival;
+                   cur = cur->next;
               }
               ptr->arr->index = cpt;
 
-              printf("TOTOLAND: min et %d max %d dim %d\n",
-               ptr->arr->dims->min , ptr->arr->dims->max, ptr->arr->dims->dim);
+              printf("TOTOLAND: %d\n", ptr->arr->index);
 
                if (ptr->arr->index < ptr->arr->dims->min || ptr->arr->index > ptr->arr->dims->max) {
                   fprintf(stderr, "index out of range\n");
