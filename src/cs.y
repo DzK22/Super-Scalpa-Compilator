@@ -555,7 +555,7 @@ lvalue: IDENT_ {
               // calcul de la valeur de l'indice du tableau
               arglist *indicesLst = $3.al;
               dimProp *dimension = ptr->arr->dims;
-              int cpt = 1, curind, dimnum = 1;
+              int cpt = 1, curind, dimnum = 1, indPos = 0;
               while (indicesLst != NULL && dimension != NULL) {
                   //printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
                   curind = indicesLst->sym->ival;
@@ -563,7 +563,8 @@ lvalue: IDENT_ {
                       fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
                       exit(EXIT_FAILURE);
                   }
-                  cpt *= (indicesLst->sym->ival - dimension->min) + 1;
+                  indPos= (indicesLst->sym->ival - dimension->min) + 1;
+                  cpt *= indPos + (dimension->max - dimension->min) 
                   dimension = dimension->next;
                   indicesLst = indicesLst->next;
                   dimnum++;
