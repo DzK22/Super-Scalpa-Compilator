@@ -853,7 +853,7 @@ void curfunStackLoadVars (FILE *f) {
  * to save in the stack before the funcall and reload it again after
  * The returned symbol should be push to the stack and call again this function with the result->next until the function returns NULL
  *
- * Returned symbols are used after the funcall and are used by operation (and are affected before the funcall)
+ * Returned symbols are used after the funcall in argument of an operation
  *
  * @param tos Current symbol in the curfun tos
  */
