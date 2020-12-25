@@ -1,18 +1,46 @@
 #!/bin/bash
- make
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
+# Update files
+     make
+
+ echo ""
+ echo "#####################################################"
+ echo "###########   COMPILING SCALPA FILES    #############"
+ echo "#####################################################"
+ echo ""
+
  for file in `ls tests`; do
-  echo "Compiling File ----------> $file"
+  echo "----------  Compiling $file  ----------"
   ./scalpa tests/$file
   echo ""
 
  done
+
+ echo ""
+ echo "#####################################################"
+ echo "#############   RUN MIPS FILES    ###################"
+ echo "#####################################################"
+ echo ""
 
  # move mips files
  mkdir -p mips
  mv *.s mips/
 
  for file in `ls mips`; do
-  echo "Run MIPS  -------------------> $file"
-  spim -f mips/$file | tail -n +6
-  echo ""
+   echo "----------  SPIM -f $file  ----------"
+   spim -f mips/$file | tail -n +6 > tmp_res
+   if cmp -s tmp_res tests/results/$file.res; then
+        echo  "${green}>>>>>>>>>>> Test mips/$file passed ${reset} "
+
+   else
+        echo  "${red}>>>>>>>>>>> Test mips/$file failed ${reset}"
+        exit 1 ;
+   fi
+   echo ""
  done
+
+ rm tmp_res
