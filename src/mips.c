@@ -38,11 +38,12 @@
         ferr("mips.c snprintf");
 
 static char tbuf[LEN];
-static symbol *curfun = NULL;
+static symbol *curfun    = NULL;
+static quad *curquad     = NULL;
 
 /**
  * curfun is used to know if a funcall is done inside a function or not
- * If a funcall is done inside a function, save all function local vars to the stack and restore them after the call
+ * If a funcall is done inside a function, save all usefull function local vars to the stack and restore them after the call
  */
 
 void ferr (char *s) {
@@ -170,12 +171,13 @@ void getText (FILE *f, quad *q) {
     symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
 
     while (q != NULL) {
-        res    = q->res;
-        argv1  = q->argv1;
-        argv2  = q->argv2;
-        gtrue  = q->gtrue;
-        gfalse = q->gfalse;
-        gnext  = q->gnext;
+        curquad = q;
+        res     = q->res;
+        argv1   = q->argv1;
+        argv2   = q->argv2;
+        gtrue   = q->gtrue;
+        gfalse  = q->gfalse;
+        gnext   = q->gnext;
 
         switch (q->op) {
             case Q_PLUS:
@@ -605,7 +607,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     int size;
 
     if (curfun != NULL) {
-        pcom("push local vars to the stack for funcall");
+        pcom("push usefull local vars to the stack for funcall");
         // make space for local var save in the stack
         size = curfunVarSize();
         snpt(snprintf(tbuf, LEN, "%d", size));
@@ -655,7 +657,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
            etc ...
         */
 
-        pcom("load local vars from the stack");
+        pcom("load usefull local vars from the stack");
         // load local vars from stack
         curfunStackLoadVars(f);
         size = curfunVarSize();
@@ -770,13 +772,10 @@ int curfunVarSize () {
     int size = 0, bytes;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
 
-    while (tos != NULL) {
-        if (tos->type == S_INT || tos->type == S_BOOL) {
-            bytes = funSymTypeSize(tos);
-            size += bytes;
-        }
-
-        tos = tos->next;
+    while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
+        bytes = funSymTypeSize(tos);
+        size += bytes;
+        tos   = tos->next;
     }
 
     return size;
@@ -789,17 +788,14 @@ void curfunStackPushVars (FILE *f) {
     int offset = 0, bytes, res;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
 
-    while (tos != NULL) {
-        if (tos->type == S_INT || tos->type == S_BOOL) {
-            pins3("lw", "$t0", tos->id);
-            snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-            pins3("sw", "$t0", tbuf);
+    while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
+        pins3("lw", "$t0", tos->id);
+        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+        pins3("sw", "$t0", tbuf);
 
-            bytes = funSymTypeSize(tos);
-            offset += bytes;
-        }
-
-        tos = tos->next;
+        bytes   = funSymTypeSize(tos);
+        offset += bytes;
+        tos     = tos->next;
     }
 }
 
@@ -810,18 +806,52 @@ void curfunStackLoadVars (FILE *f) {
     int offset = 0, bytes, res;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
 
-    while (tos != NULL) {
-        if (tos->type == S_INT || tos->type == S_BOOL) {
-            snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-            pins3("lw", "$t0", tbuf);
-            pins3("sw", "$t0", tos->id);
+    while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
+        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+        pins3("lw", "$t0", tbuf);
+        pins3("sw", "$t0", tos->id);
 
-            bytes = funSymTypeSize(tos);
-            offset += bytes;
+        bytes   = funSymTypeSize(tos);
+        offset += bytes;
+        tos     = tos->next;
+    }
+}
+
+/**
+ * This function is used to get the next local var of a function tos, which is usefull
+ * to save in the stack before the funcall and reload it again after
+ * The returned symbol should be push to the stack and call again this function with the result->next until the function returns NULL
+ *
+ * Returned symbols are used after the funcall and are used by operation (and are affected before the funcall)
+ *
+ * @param tos Current symbol in the curfun tos
+ */
+symbol * curfunNextUsefullLocalVar (symbol *tos) {
+    if (curfun == NULL)
+        ferr("mips.c curfunNextUsefullLocalVar - curfun is NULL");
+
+    quad *q;
+
+    while (tos != NULL) {
+        if (tos->type != S_INT && tos->type != S_BOOL) {
+            tos = tos->next;
+            continue;
+        }
+
+        q = curquad;
+        // check if this symbol is used in an operation after the funcall
+
+        while (q->op != Q_FUNEND) {
+            if (q->argv1 == tos || q->argv2 == tos)
+                return tos;
+
+            q = q->next;
         }
 
         tos = tos->next;
     }
+
+    return NULL;
 }
 
 /**
@@ -837,7 +867,7 @@ void curfunStackLoadVars (FILE *f) {
  *
  *  -----------------------
  *  Si l'appel de fonction se déroule à l'intérieur d'une fonction (= ailleur que dans le main), cela se rajoute:
- *  - l'appelant sauvegarde (empile) toutes les variables INT ou BOOL de sa table des symboles (tos) dans le stack (juste en-dessous des arguments de l'appel de fonction, avec la 1ere var locale juste après le dernier argument)
+ *  - l'appelant sauvegarde (empile) toutes les variables INT ou BOOL utiles (= utilisées après l'appel de fonction) de sa table des symboles (tos) dans le stack (juste en-dessous des arguments de l'appel de fonction, avec la 1ere var locale utile juste après le dernier argument)
  *  - l'appelé ne touchera pas à ces variables locales sauvegardées
- *  - Une fois de retour juste après l'appel de fonction, l'appelant restaure ses variables locales depuis le stack et les dépiles de celui-ci.
+ *  - Une fois de retour juste après l'appel de fonction, l'appelant restaure ses variables locales utiles depuis le stack et les dépiles de celui-ci.
  */

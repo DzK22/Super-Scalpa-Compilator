@@ -16,17 +16,17 @@ typedef enum {
 typedef struct gotoLst gotoLst;
 
 typedef struct quad {
-    qop             op;
-    int             num;
-    struct quad     *next;
+    qop          op;
+    int          num;
+    struct quad  *next;
 
-    symbol          *res;
-    symbol          *argv1;
-    symbol          *argv2;
+    symbol       *res;
+    symbol       *argv1;
+    symbol       *argv2;
 
-    symbol          *gtrue;
-    symbol          *gfalse;
-    symbol          *gnext;
+    symbol       *gtrue;
+    symbol       *gfalse;
+    symbol       *gnext;
 } quad;
 
 quad *qGen     (qop, symbol *, symbol *, symbol *);
