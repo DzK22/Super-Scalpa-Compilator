@@ -12,10 +12,10 @@ program fibo
     end;
 
     begin
-        d := 4;
+        read d;
         write "fib(";
         write d;
         write ") = ";
-        write fib(4);
+        write fib(d);
         write "\n";
     end

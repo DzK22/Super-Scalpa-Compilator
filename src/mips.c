@@ -1,27 +1,27 @@
 #include "../headers/mips.h"
 
 // print instr 1 arg
-#define pinstr1(s1) \
+#define pins1(s1) \
     fprintf(f, "\t%s\n", s1);
 
 // print instr 2 args
-#define pinstr2(s1, s2) \
+#define pins2(s1, s2) \
     fprintf(f, "\t%-5s %s\n", s1, s2);
 
 // print instr 3 args
-#define pinstr3(s1, s2, s3) \
+#define pins3(s1, s2, s3) \
     fprintf(f, "\t%-5s %-5s %s\n", s1, s2, s3);
 
 // print instr 4 args
-#define pinstr4(s1, s2, s3, s4) \
+#define pins4(s1, s2, s3, s4) \
     fprintf(f, "\t%-5s %-5s %-5s %s\n", s1, s2, s3, s4);
 
 // print data
-#define pdata(s1, s2) \
+#define pdat(s1, s2) \
     fprintf(f, "\t%-16s :  %s\n", s1, s2);
 
 // print label
-#define plabel(s) \
+#define plab(s) \
     fprintf(f, "\n%s:\n", s);
 
 // print commentary
@@ -53,13 +53,13 @@ void ferr (char *s) {
 void getMips (FILE *f, symbol *s, quad *q) {
     // data
     pdir(".data");
-    pdata("_true", ".asciiz \"true\"");
-    pdata("_false", ".asciiz \"false\"");
-    pdata("_read_int", ".asciiz \"Enter int: \"");
-    pdata("_read_string", ".asciiz \"Enter string: \"");
+    pdat("_true", ".asciiz \"true\"");
+    pdat("_false", ".asciiz \"false\"");
+    pdat("_read_int", ".asciiz \"Enter int: \"");
+    pdat("_read_string", ".asciiz \"Enter string: \"");
     pdir(".align 2");
     snpt(snprintf(tbuf, LEN, ".space %d", MIPS_BUFFER_SPACE));
-    pdata("_buffer", tbuf);
+    pdat("_buffer", tbuf);
 
     // tos global
     pdir("");
@@ -85,9 +85,9 @@ void getMips (FILE *f, symbol *s, quad *q) {
     getText(f, q);
 
     // quitter le programme proprement
-    plabel("exit");
-    pinstr3("li", "$v0", "10");
-    pinstr1("syscall");
+    plab("exit");
+    pins3("li", "$v0", "10");
+    pins1("syscall");
 }
 
 void getData (FILE *f, symbol *s) {
@@ -95,20 +95,20 @@ void getData (FILE *f, symbol *s) {
         switch (s->type) {
             case S_INT:
                 snpt(snprintf(tbuf, LEN, ".word %d", s->ival));
-                pdata(s->id, tbuf);
+                pdat(s->id, tbuf);
                 break;
             case S_BOOL:
                 snpt(snprintf(tbuf, LEN, ".word %d", s->bval));
-                pdata(s->id, tbuf);
+                pdat(s->id, tbuf);
                 break;
             case S_STRING:
                 snpt(snprintf(tbuf, LEN, ".asciiz %s", s->sval));
-                pdata(s->id, tbuf);
+                pdat(s->id, tbuf);
                 break;
             case S_ARRAY:
                 if (s->arr->type == S_INT) {
                     snpt(snprintf(tbuf, LEN, ".space %d", s->arr->size * 4));
-                    pdata(s->id, tbuf);
+                    pdat(s->id, tbuf);
                 }
                 break;
         }
@@ -142,14 +142,14 @@ char * opstr (qop op) {
     return str;
 }
 
-char * nextTmpLabel () {
+char * nextTmplab () {
     static int nlabel = 0;
-    char tmplabel[LEN];
-    sprintf(tmplabel, "tmplabel_%d", nlabel ++);
+    char tmplab[LEN];
+    sprintf(tmplab, "tmplab_%d", nlabel ++);
 
-    char *res = strdup(tmplabel);
+    char *res = strdup(tmplab);
     if (res == NULL)
-        ferr("mips.c nextTmpLabel strdup");
+        ferr("mips.c nextTmplab strdup");
 
     return res;
 }
@@ -200,15 +200,15 @@ void getText (FILE *f, quad *q) {
                 snpt(snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id));
                 pcom(tbuf);
 
-                pinstr3("lw", "$t0", argv1->id);
-                pinstr3("sw", "$t0", res->id);
+                pins3("lw", "$t0", argv1->id);
+                pins3("sw", "$t0", res->id);
                 break;
 
             case Q_LABEL:
                 if (!res)
                     ferr("mips.c getText Q_LABEL quad error");
 
-                plabel(res->id);
+                plab(res->id);
                 break;
 
             case Q_GOTO:
@@ -218,7 +218,7 @@ void getText (FILE *f, quad *q) {
                 snpt(snprintf(tbuf, LEN, "goto %s", res->id));
                 pcom(tbuf);
 
-                pinstr2("j", res->id);
+                pins2("j", res->id);
                 break;
 
             case Q_IF:
@@ -228,8 +228,8 @@ void getText (FILE *f, quad *q) {
                 snpt(snprintf(tbuf, LEN, "if %s is false then goto %s", argv1->id, gfalse->sval));
                 pcom(tbuf);
 
-                pinstr3("lw", "$t0", argv1->id);
-                pinstr4("beq", "$t0", "$zero", gfalse->sval);
+                pins3("lw", "$t0", argv1->id);
+                pins4("beq", "$t0", "$zero", gfalse->sval);
                 break;
 
             case Q_EQUAL:
@@ -291,7 +291,7 @@ void getText (FILE *f, quad *q) {
 
             case Q_MAIN:
                 pcom("main function");
-                plabel("main");
+                plab("main");
                 break;
 
             default:
@@ -314,51 +314,51 @@ void qRead (FILE *f, symbol *res) {
             snpt(snprintf(tbuf, LEN, "read integer %s", res->id));
             pcom(tbuf);
 
-            pinstr3("li", "$v0", "4");
-            pinstr3("la", "$a0", "_read_int");
-            pinstr1("syscall");
-            pinstr3("li", "$v0", "5");
-            pinstr1("syscall");
-            pinstr3("sw", "$v0", res->id);
+            pins3("li", "$v0", "4");
+            pins3("la", "$a0", "_read_int");
+            pins1("syscall");
+            pins3("li", "$v0", "5");
+            pins1("syscall");
+            pins3("sw", "$v0", res->id);
             break;
 
         case S_STRING:
             snpt(snprintf(tbuf, LEN, "read string %s", res->id));
             pcom(tbuf);
 
-            pinstr3("li", "$v0", "4");
-            pinstr3("la", "$a0", "_read_string");
-            pinstr1("syscall");
-            pinstr3("li", "$v0", "8");
-            pinstr3("la", "$a0", "_buffer");
+            pins3("li", "$v0", "4");
+            pins3("la", "$a0", "_read_string");
+            pins1("syscall");
+            pins3("li", "$v0", "8");
+            pins3("la", "$a0", "_buffer");
             snpt(snprintf(tbuf, LEN, "%d", MIPS_BUFFER_SPACE));
-            pinstr3("li", "$a1", tbuf);
-            pinstr3("move", "$s0", "$a0");
-            pinstr1("syscall");
+            pins3("li", "$a1", tbuf);
+            pins3("move", "$s0", "$a0");
+            pins1("syscall");
             break;
 
         case S_BOOL:
-            label  = nextTmpLabel();
-            label2 = nextTmpLabel();
+            label  = nextTmplab();
+            label2 = nextTmplab();
 
             snpt(snprintf(tbuf, LEN, "read bool %s", res->id));
             pcom(tbuf);
 
-            pinstr3("li", "$v0", "4");
-            pinstr3("la", "$a0", "_read_int");
-            pinstr1("syscall");
-            pinstr3("li", "$v0", "5");
-            pinstr1("syscall");
+            pins3("li", "$v0", "4");
+            pins3("la", "$a0", "_read_int");
+            pins1("syscall");
+            pins3("li", "$v0", "5");
+            pins1("syscall");
 
-            pinstr4("beq", "$v0", "$zero", label);
-            pinstr3("li", "$t0", "1");
-            pinstr2("j", label2);
+            pins4("beq", "$v0", "$zero", label);
+            pins3("li", "$t0", "1");
+            pins2("j", label2);
 
-            plabel(label);
-            pinstr3("li", "$t0", "0");
+            plab(label);
+            pins3("li", "$t0", "0");
 
-            plabel(label2);
-            pinstr3("sw", "$t0", res->id);
+            plab(label2);
+            pins3("sw", "$t0", res->id);
 
             free(label);
             free(label2);
@@ -374,134 +374,134 @@ void qWrite (FILE *f, symbol *argv1) {
             snpt(snprintf(tbuf, LEN, "print integer %s", argv1->id));
             pcom(tbuf);
 
-            pinstr3("li", "$v0", "1");
-            pinstr3("lw", "$a0", argv1->id);
+            pins3("li", "$v0", "1");
+            pins3("lw", "$a0", argv1->id);
             break;
 
         case S_STRING:
             snpt(snprintf(tbuf, LEN, "print string %s", argv1->id));
             pcom(tbuf);
 
-            pinstr3("li", "$v0", "4");
-            pinstr3("la", "$a0", argv1->id);
+            pins3("li", "$v0", "4");
+            pins3("la", "$a0", argv1->id);
             if(!argv1->tmp)
-                pinstr3("move", "$a0", "$s0");
+                pins3("move", "$a0", "$s0");
             break;
 
         case S_BOOL:
-            label  = nextTmpLabel();
-            label2 = nextTmpLabel();
+            label  = nextTmplab();
+            label2 = nextTmplab();
 
             snpt(snprintf(tbuf, LEN, "print bool %s", argv1->id));
             pcom(tbuf);
 
-            pinstr3("lw", "$t0", argv1->id);
-            pinstr4("beq", "$t0", "$zero", label);
-            pinstr3("la", "$a0", "_true");
-            pinstr2("j", label2);
+            pins3("lw", "$t0", argv1->id);
+            pins4("beq", "$t0", "$zero", label);
+            pins3("la", "$a0", "_true");
+            pins2("j", label2);
 
-            plabel(label);
-            pinstr3("la", "$a0", "_false");
+            plab(label);
+            pins3("la", "$a0", "_false");
 
-            plabel(label2);
-            pinstr3("li", "$v0", "4");
+            plab(label2);
+            pins3("li", "$v0", "4");
             break;
     }
 
-    pinstr1("syscall");
+    pins1("syscall");
 }
 
 void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     snpt(snprintf(tbuf, LEN, "%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
     pcom(tbuf);
 
-    pinstr3("lw", "$t0", argv1->id);
-    pinstr3("lw", "$t1", argv2->id);
+    pins3("lw", "$t0", argv1->id);
+    pins3("lw", "$t1", argv2->id);
 
     char *label, *label2;
     switch (op) {
-        case Q_PLUS  : pinstr4("add", "$t2", "$t0", "$t1") ; break ;
-        case Q_MINUS : pinstr4("sub", "$t2", "$t0", "$t1") ; break ;
-        case Q_MULT  : pinstr4("mul", "$t2", "$t0", "$t1") ; break ;
-        case Q_DIV   : pinstr4("div", "$t2", "$t0", "$t1") ; break ;
-        case Q_MOD   : pinstr4("rem", "$t2", "$t0", "$t1") ; break ;
+        case Q_PLUS  : pins4("add", "$t2", "$t0", "$t1") ; break ;
+        case Q_MINUS : pins4("sub", "$t2", "$t0", "$t1") ; break ;
+        case Q_MULT  : pins4("mul", "$t2", "$t0", "$t1") ; break ;
+        case Q_DIV   : pins4("div", "$t2", "$t0", "$t1") ; break ;
+        case Q_MOD   : pins4("rem", "$t2", "$t0", "$t1") ; break ;
         case Q_EXP   :
-           label  = nextTmpLabel();
-           label2 = nextTmpLabel();
+           label  = nextTmplab();
+           label2 = nextTmplab();
 
-           pinstr3("lw", "$t2", argv1->id);
-           pinstr3("li", "$t3", "1");
+           pins3("lw", "$t2", argv1->id);
+           pins3("li", "$t3", "1");
 
            // warning: seulement les puissances > 0 fonctionnent avec ce code
-           plabel(label);
-           pinstr4("ble", "$t1", "$t3", label2);
-           pinstr4("mul", "$t2", "$t2", "$t0");
-           pinstr4("sub", "$t1", "$t1", "$t3");
-           pinstr2("j", label);
-           plabel(label2);
+           plab(label);
+           pins4("ble", "$t1", "$t3", label2);
+           pins4("mul", "$t2", "$t2", "$t0");
+           pins4("sub", "$t1", "$t1", "$t3");
+           pins2("j", label);
+           plab(label2);
 
            free(label);
            free(label2);
            break;
     }
 
-    pinstr3("sw", "$t2", res->id);
+    pins3("sw", "$t2", res->id);
 }
 
 void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     char *label, *label2;
-    label  = nextTmpLabel();
-    label2 = nextTmpLabel();
+    label  = nextTmplab();
+    label2 = nextTmplab();
 
     snpt(snprintf(tbuf, LEN, ")%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
     pcom(tbuf);
 
-    pinstr3("lw", "$t0", argv1->id);
-    pinstr3("lw", "$t1", argv2->id);
+    pins3("lw", "$t0", argv1->id);
+    pins3("lw", "$t1", argv2->id);
 
     switch (op) {
         case Q_EQUAL:
-            pinstr4("bne", "$t0", "$t1", label);
+            pins4("bne", "$t0", "$t1", label);
             break;
         case Q_DIFF:
-            pinstr4("beq", "$t0", "$t1", label); break;
+            pins4("beq", "$t0", "$t1", label); break;
         case Q_INF:
-            pinstr4("bge", "$t0", "$t1", label);
+            pins4("bge", "$t0", "$t1", label);
             break;
         case Q_INFEQ:
-            pinstr4("bgt", "$t0", "$t1", label);
+            pins4("bgt", "$t0", "$t1", label);
             break;
         case Q_SUP:
-            pinstr4("ble", "$t0", "$t1", label);
+            pins4("ble", "$t0", "$t1", label);
             break;
         case Q_SUPEQ:
-            pinstr4("blt", "$t0", "$t1", label);
-            pinstr4("beq", "$t2", "$zero", label);
+            pins4("blt", "$t0", "$t1", label);
+            pins4("beq", "$t2", "$zero", label);
             break;
         case Q_OR:
-            pinstr4("or", "$t2", "$t0", "$t1");
-            pinstr4("beq", "$t2", "$zero", label);
+            pins4("or", "$t2", "$t0", "$t1");
+            pins4("beq", "$t2", "$zero", label);
             break;
         case Q_AND:
-            pinstr4("and", "$t2", "$t0", "$t1");
-            pinstr4("beq", "$t2", "$zero", label);
+            pins4("and", "$t2", "$t0", "$t1");
+            pins4("beq", "$t2", "$zero", label);
             break;
         case Q_XOR:
-            pinstr4("xor", "$t2", "$t0", "$t1");
-            pinstr4("beq", "$t2", "$zero", label);
+            pins4("xor", "$t2", "$t0", "$t1");
+            pins4("beq", "$t2", "$zero", label);
             break;
         default:
             ferr("mips.c qComp wrong op");
     }
 
-    pinstr3("li", "$t3", "1");
-    pinstr2("j", label2);
+    pins3("li", "$t3", "1");
+    pins2("j", label2);
 
-    plabel(label);
-    pinstr3("li", "$t3", "0");
+    plab(label);
+    pins3("li", "$t3", "0");
 
-    plabel(label2);
-    pinstr3("sw", "$t3", res->id);
+    plab(label2);
+    pins3("sw", "$t3", res->id);
 
     free(label);
     free(label2);
@@ -509,22 +509,22 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
 
 void qNot (FILE *f, symbol *res, symbol *argv1) {
     char *label, *label2;
-    label  = nextTmpLabel();
-    label2 = nextTmpLabel();
+    label  = nextTmplab();
+    label2 = nextTmplab();
 
     snpt(snprintf(tbuf, LEN, ")%s := NOT %s", res->id, argv1->id));
     pcom(tbuf);
 
-    pinstr3("lw", "$t0", argv1->id);
-    pinstr4("bne", "$t0", "$zero", label);
-    pinstr3("li", "$t3", "1");
-    pinstr2("j", label2);
+    pins3("lw", "$t0", argv1->id);
+    pins4("bne", "$t0", "$zero", label);
+    pins3("li", "$t3", "1");
+    pins2("j", label2);
 
-    plabel(label);
-    pinstr3("li", "$t3", "0");
+    plab(label);
+    pins3("li", "$t3", "0");
 
-    plabel(label2);
-    pinstr3("sw", "$t3", res->id);
+    plab(label2);
+    pins3("sw", "$t3", res->id);
 
     free(label);
     free(label2);
@@ -537,13 +537,13 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
 void fundec (FILE *f, symbol *fun) {
     snpt(snprintf(tbuf, LEN, "function %s", fun->id));
     pcom(tbuf);
-    plabel(fun->id);
+    plab(fun->id);
 
     // sauvegardage du ra
     pcom("push $ra to stack and load each arg from stack");
 
-    pinstr4("sub", "$sp", "$sp", "4");
-    pinstr3("sw", "$ra", "0($sp)");
+    pins4("sub", "$sp", "$sp", "4");
+    pins3("sw", "$ra", "0($sp)");
 
     // load args from stack offset 4
     funStackLoadArgs(f, fun, 4);
@@ -574,18 +574,18 @@ void funend (FILE *f, symbol *fun) {
 
     // label to jump to after a return
     snpt(snprintf(tbuf, LEN, "end_%s", fun->id));
-    plabel(tbuf);
+    plab(tbuf);
 
     // load saved ra to $ra
-    pinstr3("lw", "$ra", "0($sp)");
+    pins3("lw", "$ra", "0($sp)");
 
     int offset = 4 + funArgsSize(fun);
     // pop ra and args from the stack
     snpt(snprintf(tbuf, LEN, "%d", offset));
-    pinstr4("addi", "$sp", "$sp", tbuf);
+    pins4("addi", "$sp", "$sp", tbuf);
 
     // jump to $ra
-    pinstr2("jr", "$ra");
+    pins2("jr", "$ra");
     snpt(snprintf(tbuf, LEN, "end of function %s", fun->id));
     pcom(tbuf);
 
@@ -613,7 +613,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
         // make space for local var save in the stack
         size = curfunVarSize();
         snpt(snprintf(tbuf, LEN, "%d", size));
-        pinstr4("sub", "$sp", "$sp", tbuf);
+        pins4("sub", "$sp", "$sp", tbuf);
 
         // push local vars to the stack
         curfunStackPushVars(f);
@@ -623,7 +623,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     // make space for args in the stack
     size = funArgsSize(fun);
     snpt(snprintf(tbuf, LEN, "%d", size));
-    pinstr4("sub", "$sp", "$sp", tbuf);
+    pins4("sub", "$sp", "$sp", tbuf);
 
     // push args to stack
     funStackPushArgs(f, args);
@@ -638,11 +638,11 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     */
 
     // jump to function and put actual addr in $ra
-    pinstr2("jal", fun->id);
+    pins2("jal", fun->id);
 
     // store result ($v0) in res->id
     if (res)
-        pinstr3("sw", "$v0", res->id);
+        pins3("sw", "$v0", res->id);
 
     if (curfun != NULL) {
         /* Stack now (curfun != NULL)
@@ -658,7 +658,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
 
         // pop local vars from stack
         snpt(snprintf(tbuf, LEN, "%d", size));
-        pinstr4("addi", "$sp", "$sp", tbuf);
+        pins4("addi", "$sp", "$sp", tbuf);
     }
 }
 
@@ -666,13 +666,13 @@ void funreturn (FILE *f, symbol *fun, symbol *ret) {
     if (ret) {
         snpt(snprintf(tbuf, LEN, "funreturn %s", ret->id));
         pcom(tbuf);
-        pinstr3("lw", "$v0", ret->id);
+        pins3("lw", "$v0", ret->id);
     } else
         pcom("funreturn (void)");
 
     // goto function end label
     snpt(snprintf(tbuf, LEN, "end_%s", fun->id));
-    pinstr2("j", tbuf);
+    pins2("j", tbuf);
 }
 
 //////////////////////
@@ -713,8 +713,8 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
 
     while (al != NULL) {
         snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pinstr3("lw", "$t0", tbuf);
-        pinstr3("sw", "$t0", al->sym->id);
+        pins3("lw", "$t0", tbuf);
+        pins3("sw", "$t0", al->sym->id);
 
         bytes   = funSymTypeSize(al->sym);
         offset += bytes;
@@ -726,9 +726,9 @@ void funStackPushArgs (FILE *f, symbol *args) {
     int offset = 0, bytes, res;
 
     while (args != NULL) {
-        pinstr3("lw", "$t0", args->id);
+        pins3("lw", "$t0", args->id);
         snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pinstr3("sw", "$t0", tbuf);
+        pins3("sw", "$t0", tbuf);
 
         bytes   = funSymTypeSize(args);
         offset += bytes;
@@ -780,9 +780,9 @@ void curfunStackPushVars (FILE *f) {
 
     while (tos != NULL) {
         if (tos->type == S_INT || tos->type == S_BOOL) {
-            pinstr3("lw", "$t0", tos->id);
+            pins3("lw", "$t0", tos->id);
             snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-            pinstr3("sw", "$t0", tbuf);
+            pins3("sw", "$t0", tbuf);
 
             bytes = funSymTypeSize(tos);
             offset += bytes;
@@ -802,8 +802,8 @@ void curfunStackLoadVars (FILE *f) {
     while (tos != NULL) {
         if (tos->type == S_INT || tos->type == S_BOOL) {
             snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-            pinstr3("lw", "$t0", tbuf);
-            pinstr3("sw", "$t0", tos->id);
+            pins3("lw", "$t0", tbuf);
+            pins3("sw", "$t0", tos->id);
 
             bytes = funSymTypeSize(tos);
             offset += bytes;
