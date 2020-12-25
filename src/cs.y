@@ -261,13 +261,6 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-                dimProp *rg = malloc(sizeof(dimProp));
-                if(rg == NULL )
-                {
-                  fprintf(stderr,"error malloc  \n") ;
-                  exit(0)  ;
-                }
-
                 s_array *arr = malloc(sizeof(s_array));
                 if (arr == NULL) {
                     fprintf(stderr, "malloc error\n");
@@ -278,7 +271,7 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                  arr->type = $6;
                  arr->index = 1;
                  int cpt = 1;
-                 dimProp *cur = rg;
+                 dimProp *cur = $3;
                  //calcule de size
                  while (cur != NULL) {
                      cpt *= (cur->max - cur->min + 1);
@@ -547,23 +540,27 @@ lvalue: IDENT_ {
               symbol *ptr = search(stable, curfun, $1);
                testID(ptr, $1);
               // calcul de la valeur de l'indice du tableau
-              arglist *cur = $3.al;
-              dimProp *test = ptr->arr->dims;
-              int cpt = 1;
-              while (test != NULL) {
-                  printf("HAHAHAH\n");
-                  printf(" dims min %d || dims max %d\n",test->min, test->max);
-                  test = test->next;
-              }
-              while ( cur != NULL) {
-                   cpt *= cur->sym->ival;
-                   cur = cur->next;
+              arglist *indicesLst = $3.al;
+              dimProp *dimension = ptr->arr->dims;
+             // printf("YOOO\n");
+              int cpt = 1, curind, dimnum = 1;;
+              while (dimension != NULL && indicesLst != NULL) {
+                  printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
+                  curind = indicesLst->sym->ival;
+                  if (curind < dimension->min || curind > dimension->max) {
+                      fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
+                      exit(EXIT_FAILURE);
+                  }
+                  cpt *= indicesLst->sym->ival;
+                  dimension = dimension->next;
+                  indicesLst = indicesLst->next;
+                  dimnum++;
               }
               ptr->arr->index = cpt;
 
-              printf("TOTOLAND: %d\n", ptr->arr->index);
-
-               if (ptr->arr->index < ptr->arr->dims->min || ptr->arr->index > ptr->arr->dims->max) {
+              //printf("TOTOLAND: %d\n", ptr->arr->index);
+              printf("SIZE = %d\n", ptr->arr->size);
+               if (ptr->arr->index > ptr->arr->size) {
                   fprintf(stderr, "index out of range\n");
                   exit(EXIT_FAILURE);
               }
@@ -772,7 +769,7 @@ expr :  expr PLUS_ expr {
             $$.lfalse = NULL;
             free($1);
         }
-      |   CTE_ {
+      | CTE_ {
               symbol *ptr;
                switch ($1.type) {
                   case S_INT    :
