@@ -563,7 +563,7 @@ lvalue: IDENT_ {
                       fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
                       exit(EXIT_FAILURE);
                   }
-                  cpt *= indicesLst->sym->ival;
+                  cpt *= (indicesLst->sym->ival - dimension->min) + 1;
                   dimension = dimension->next;
                   indicesLst = indicesLst->next;
                   dimnum++;
@@ -581,14 +581,22 @@ lvalue: IDENT_ {
             }
       ;
 
-exprlist : expr {
-                $$.al   = arglistNew(NULL, $1.ptr);
-                $$.quad = $1.quad;
+exprlist : sign expr {
+                int temp = 1;
+                if ($1 == '-')
+                    temp = -1;
+                $2.ptr->ival *= temp;
+                $$.al   = arglistNew(NULL, $2.ptr);
+                $$.quad = $2.quad;
              }
-        |  expr COMMA_ exprlist {
-                arglist *al = arglistNew(NULL, $1.ptr);
-                $$.al       = arglistConcat(al, $3.al);
-                $$.quad     = concat($1.quad, $3.quad);
+        |  sign expr COMMA_ exprlist {
+                int temp = 1;
+                if ($1 == '-')
+                    temp = -1;
+                $2.ptr->ival *= temp;
+                arglist *al = arglistNew(NULL, $2.ptr);
+                $$.al       = arglistConcat(al, $4.al);
+                $$.quad     = concat($2.quad, $4.quad);
             }
         ;
 
@@ -765,7 +773,8 @@ expr :  expr PLUS_ expr {
                 fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
                 exit(EXIT_FAILURE);
             }
-            cpt *= indicesLst->sym->ival;
+            cpt *= (indicesLst->sym->ival - dimension->min) + 1;
+            //printf("ind %d et expr : %d et dimmin %d\n", indicesLst->sym->ival, curind, dimension->min);
             dimension = dimension->next;
             indicesLst = indicesLst->next;
             dimnum++;
