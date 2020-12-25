@@ -209,11 +209,22 @@ void getText (FILE *f, quad *q) {
                     ferr("mips.c getText Q_AFFEC quad error");
 
                 // ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
-                snpt(snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id));
-                pcom(tbuf);
+                if (res->type == S_ARRAY) {
+                    pins3("la", "$t3", res->id);
+                    snpt(snprintf(tbuf, LEN, "%d", res->arr->index));
+                    pins3("li", "$t2", tbuf);
+                    pins4("add", "$t2", "$t2", "$t2");
+                    pins4("add", "$t2", "$t2", "$t2");
+                    pins4("add", "$t1", "$t2", "$t3");
+                    pins3("sw", "$t4", "0($t1)");
+                }
+                else {
+                    snpt(snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id));
+                    pcom(tbuf);
 
-                pins3("lw", "$t0", argv1->id);
-                pins3("sw", "$t0", res->id);
+                    pins3("lw", "$t0", argv1->id);
+                    pins3("sw", "$t0", res->id);
+                }
                 break;
 
             case Q_LABEL:

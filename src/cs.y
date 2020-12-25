@@ -434,6 +434,9 @@ instr: lvalue AFFEC_ expr {
                 }
                 //if ($1.ptr->type == S_ARRAY)
                 //    printf("TATALAND = %d\n", $1.ptr->arr->index);
+                /*if ($1.ptr->type == S_ARRAY) {
+                    $1.ptr->arr->values[$1.ptr->arr->index] = $3.ptr->ival;
+                }*/
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
