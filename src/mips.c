@@ -440,16 +440,16 @@ void qWrite (FILE *f, symbol *argv1) {
             pins3("li", "$v0", "4");
             break;
 
-    //    case S_ARRAY:
-    //        snpt(snprintf(tbuf, LEN, "%d", argv1->arr->index));
-    //        //pins3("move", "$a0", "$t4");
-    //        pins3("li", "$t2", tbuf);
-    ////        pins3("la", "$t3", argv1->id);
-    ////        pins4("mul", "$t4", "$t2", "4");
-    //// //       pins4("add", "$t1", "$t4", "$t3");
-    //  //      pins3("lw", "$a0", "($t1)");
-    //  //      pins3("li", "$v0", "1");
-      //      break;
+        case S_ARRAY:
+            snpt(snprintf(tbuf, LEN, "%d", argv1->arr->index - 1));
+            //printf("HAHAHA %d\n", argv1->arr->index);
+            pins3("li", "$t2", tbuf);
+            pins3("la", "$t3", argv1->id);
+            pins4("mul", "$t4", "$t2", "4");
+            pins4("add", "$t1", "$t4", "$t3");
+            pins3("lw", "$a0", "($t1)");
+            pins3("li", "$v0", "1");
+            break;
     }
 
     pins1("syscall");
