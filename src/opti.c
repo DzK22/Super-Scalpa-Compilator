@@ -5,17 +5,17 @@
 
 static char tbuf[LEN];
 
-void optiLoop (quad *q, symbol *gtos) {
+void optiLoop (quad **code, symbol **gtos) {
 	int loops = 0, cnt = 1, res;
+	optideb("BEGIN OPTIMIZATION");
 	(void) gtos;
-	optideb("BEGIN OPTIMISATION");
 
 	while (cnt > 0) {
 		loops ++;
 		cnt = 0;
 
-		cnt += optiDeadCode(q);
-		cnt += optiVarDuplicate(q);
+		cnt += optiDeadCode(code);
+		cnt += optiVarDuplicate(code);
 
 		res = snprintf(tbuf, LEN, "LOOP [%d] => %2d changes", loops, cnt);
 		if (res < 0 || res >= LEN)
@@ -25,8 +25,9 @@ void optiLoop (quad *q, symbol *gtos) {
 	}
 }
 
-int optiDeadCode (quad *q) {
+int optiDeadCode (quad **code) {
 	int cnt = 0;
+	quad *q = *code;
 
 	while (q != NULL) {
 		// sup code mort
@@ -36,8 +37,9 @@ int optiDeadCode (quad *q) {
 	return cnt;
 }
 
-int optiVarDuplicate (quad *q) {
+int optiVarDuplicate (quad **code) {
 	int cnt = 0;
+	quad *q = *code;
 
 	while (q != NULL) {
 		// sup variables dupliquées

@@ -887,8 +887,8 @@ int main (int argc, char **argv) {
     if (yydebug)
         qPrint(all_code);
 
+    optiLoop(&all_code, &stable);
     getMips(output, stable, all_code);
-    optiLoop(all_code, stable);
 
     if (tos)
         stablePrint(stable);

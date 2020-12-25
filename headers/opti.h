@@ -9,9 +9,9 @@
 #include "stable.h"
 #include "arglist.h"
 
-void optiLoop        (quad *q, symbol *gtos);
-int optiDeadCode     (quad *q);
-int optiVarDuplicate (quad *q);
+void optiLoop        (quad **code, symbol **gtos);
+int optiDeadCode     (quad **code);
+int optiVarDuplicate (quad **code);
 
 #endif
 
