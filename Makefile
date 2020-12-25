@@ -27,4 +27,4 @@ all:
 	gcc -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)arglist.o $(TMP)mips.o $(TMP)opti.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 
 clean:
-	rm -rf $(TMP) scalpa $(MIPS) *.s
+	rm -rf $(TMP) scalpa $(MIPS) *.s tmp_res

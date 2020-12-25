@@ -564,7 +564,7 @@ lvalue: IDENT_ {
                       exit(EXIT_FAILURE);
                   }
                   indPos= (indicesLst->sym->ival - dimension->min) + 1;
-                  cpt *= indPos + (dimension->max - dimension->min) 
+                  cpt *= indPos + (dimension->max - dimension->min) ;
                   dimension = dimension->next;
                   indicesLst = indicesLst->next;
                   dimnum++;
