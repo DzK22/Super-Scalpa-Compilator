@@ -52,7 +52,7 @@
 
     void arithmeticExpression (qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
-        symbol *ptr = newTmpInt(&stable, 0);
+        symbol *ptr = newTmpInt(curtos(), 0);
         quad *q     = qGen(op, ptr, arg1, arg2);
 
         *res        = ptr;
@@ -62,7 +62,7 @@
 
     void booleanExpression (qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
-        symbol *ptr  = newTmpInt(&stable, 0);
+        symbol *ptr  = newTmpInt(curtos(), 0);
         quad *q      = qGen(op, ptr, arg1, arg2);
 
         *res         = ptr;
@@ -83,9 +83,9 @@
         fundata *fdata = (fundata *) fs->fdata;
 
         switch (fdata->rtype) {
-            case S_INT  : res = newTmpInt(&stable, 0)      ; break ;
-            case S_BOOL : res = newTmpBool(&stable, false) ; break ;
-            case S_UNIT : res = NULL                       ; break ;
+            case S_INT  : res = newTmpInt(curtos(), 0)      ; break ;
+            case S_BOOL : res = newTmpBool(curtos(), false) ; break ;
+            case S_UNIT : res = NULL                        ; break ;
             default: ferr("cs.y funcallExpression wrong return type");
         }
 
@@ -214,17 +214,17 @@ varsdecl: VAR_ identlist DPOINT_ typename {
               while (al != NULL) {
                   switch ($4.type) {
                       case S_BOOL:
-                          newVarBool(&stable, al->id, false, curfun);
+                          newVarBool(curtos(), al->id, false, curfun);
                           break;
                       case S_INT:
-                          newVarInt(&stable, al->id, 0, curfun);
+                          newVarInt(curtos(), al->id, 0, curfun);
                           break;
                       case S_STRING:
-                          newVarStr(&stable, al->id, "\"\"", curfun);
+                          newVarStr(curtos(), al->id, "\"\"", curfun);
                           break;
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
-                          newVarArray(&stable, al->id, $4.sarray);
+                          newVarArray(curtos(), al->id, $4.sarray);
                           break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -475,37 +475,35 @@ instr: lvalue AFFEC_ expr {
                 quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
                 $$.quad = concat($2.quad, q);
             }
-        | IF_ expr THEN_ m instr m {
+        | IF_ expr THEN_ instr m {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gtrue  = $4.quad->res;
-                qif->gfalse = $6.quad->res;
-                qif->gnext  = $6.quad->res;
+                qif->gtrue  = NULL;
+                qif->gfalse = $5.quad->res;
+                qif->gnext  = $5.quad->res;
 
                 $$.quad = concat($2.quad, qif);
                 $$.quad = concat($$.quad, $4.quad);
                 $$.quad = concat($$.quad, $5.quad);
-                $$.quad = concat($$.quad, $6.quad);
             }
-        | IF_ expr THEN_ m instr ELSE_ m instr m {
+        | IF_ expr THEN_ instr ELSE_ m instr m {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gtrue  = $4.quad->res;
-                qif->gfalse = $7.quad->res;
-                qif->gnext  = $9.quad->res;
+                qif->gtrue  = NULL;
+                qif->gfalse = $6.quad->res;
+                qif->gnext  = $8.quad->res;
 
                 quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
 
                 $$.quad = concat($2.quad, qif);
                 $$.quad = concat($$.quad, $4.quad);
-                $$.quad = concat($$.quad, $5.quad);
                 $$.quad = concat($$.quad, go);
+                $$.quad = concat($$.quad, $6.quad);
                 $$.quad = concat($$.quad, $7.quad);
                 $$.quad = concat($$.quad, $8.quad);
-                $$.quad = concat($$.quad, $9.quad);
             }
-        | WHILE_ m expr DO_ m instr m {
+        | WHILE_ m expr DO_ instr m {
                 quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
-                qif->gtrue  = $5.quad->res;
-                qif->gfalse = $7.quad->res;
+                qif->gtrue  = NULL;
+                qif->gfalse = $6.quad->res;
                 qif->gnext  = $2.quad->res;
 
                 quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
@@ -513,9 +511,8 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = concat($2.quad, $3.quad);
                 $$.quad = concat($$.quad, qif);
                 $$.quad = concat($$.quad, $5.quad);
-                $$.quad = concat($$.quad, $6.quad);
                 $$.quad = concat($$.quad, go);
-                $$.quad = concat($$.quad, $7.quad);
+                $$.quad = concat($$.quad, $6.quad);
             }
       ;
 
@@ -647,7 +644,6 @@ expr :  expr PLUS_ expr {
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
-
             complete($1.lfalse, false, $3.quad->res);
             $$.lfalse = $4.lfalse;
             $$.ltrue  = concat($1.ltrue, $4.ltrue);
@@ -690,7 +686,6 @@ expr :  expr PLUS_ expr {
           }
 
        | expr SUP_ expr {
-
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
                ferr("cs.y expr SUP_ expr type error");
 

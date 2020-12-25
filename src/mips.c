@@ -237,7 +237,7 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_IF:
-                if (!argv1 || !gtrue || !gfalse || !gnext)
+                if (!argv1 || !gfalse)
                     ferr("mips.c getText Q_IF quad error");
 
                 snpt(snprintf(tbuf, LEN, "if %s is false then goto %s", argv1->id, gfalse->sval));
@@ -305,7 +305,6 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_MAIN:
-                pcom("main function");
                 plab("main");
                 break;
 
@@ -468,7 +467,7 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     label  = nextTmplab();
     label2 = nextTmplab();
 
-    snpt(snprintf(tbuf, LEN, ")%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
+    snpt(snprintf(tbuf, LEN, "%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
     pcom(tbuf);
 
     pins3("lw", "$t0", argv1->id);
@@ -527,7 +526,7 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
     label  = nextTmplab();
     label2 = nextTmplab();
 
-    snpt(snprintf(tbuf, LEN, ")%s := NOT %s", res->id, argv1->id));
+    snpt(snprintf(tbuf, LEN, "%s := NOT %s", res->id, argv1->id));
     pcom(tbuf);
 
     pins3("lw", "$t0", argv1->id);
@@ -550,8 +549,6 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
 ///////////////
 
 void fundec (FILE *f, symbol *fun) {
-    snpt(snprintf(tbuf, LEN, "function %s", fun->id));
-    pcom(tbuf);
     plab(fun->id);
 
     // sauvegardage du ra
@@ -584,12 +581,11 @@ void funend (FILE *f, symbol *fun) {
        etc ...
     */
 
-    snpt(snprintf(tbuf, LEN, "epilogue of function %s", fun->id));
-    pcom(tbuf);
-
     // label to jump to after a return
     snpt(snprintf(tbuf, LEN, "end_%s", fun->id));
     plab(tbuf);
+    snpt(snprintf(tbuf, LEN, "epilogue of function %s", fun->id));
+    pcom(tbuf);
 
     // load saved ra to $ra
     pins3("lw", "$ra", "0($sp)");
@@ -609,22 +605,10 @@ void funend (FILE *f, symbol *fun) {
 
 void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     // caller push return adress + args to the stack if any, callee pop them before returning to $ra
-
-    // show args string for debugging
-    char argsDebug[LEN];
-    funArgsDebugString(args, argsDebug, LEN);
-
-    if (res) {
-        snpt(snprintf(tbuf, LEN, "funcall %s := %s ( %s )", res->id, fun->id, argsDebug));
-    } else {
-        snpt(snprintf(tbuf, LEN, "funcall %s ( %s )", fun->id, argsDebug));
-    }
-
-    pcom(tbuf);
     int size;
 
     if (curfun != NULL) {
-        pcom("push local vars to the stack");
+        pcom("push local vars to the stack for funcall");
         // make space for local var save in the stack
         size = curfunVarSize();
         snpt(snprintf(tbuf, LEN, "%d", size));
@@ -652,12 +636,20 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
                                 etc ...
     */
 
+    // show funcall args string for debugging
+    char argsDebug[LEN];
+    funArgsDebugString(args, argsDebug, LEN);
+
+    if (res) {
+        snpt(snprintf(tbuf, LEN, "funcall %s := %s ( %s )", res->id, fun->id, argsDebug));
+    } else {
+        snpt(snprintf(tbuf, LEN, "funcall %s ( %s )", fun->id, argsDebug));
+    }
+
+    pcom(tbuf);
+
     // jump to function and put actual addr in $ra
     pins2("jal", fun->id);
-
-    // store result ($v0) in res->id
-    if (res)
-        pins3("sw", "$v0", res->id);
 
     if (curfun != NULL) {
         /* Stack now (curfun != NULL)
@@ -675,6 +667,11 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
         snpt(snprintf(tbuf, LEN, "%d", size));
         pins4("addi", "$sp", "$sp", tbuf);
     }
+
+    // store result ($v0) in res->id
+    if (res)
+        pins3("sw", "$v0", res->id);
+
 }
 
 void funreturn (FILE *f, symbol *fun, symbol *ret) {
