@@ -636,10 +636,6 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     // jump to function and put actual addr in $ra
     pins2("jal", fun->id);
 
-    // store result ($v0) in res->id
-    if (res)
-        pins3("sw", "$v0", res->id);
-
     if (curfun != NULL) {
         /* Stack now (curfun != NULL)
            0 -> var1
@@ -656,6 +652,11 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
         snpt(snprintf(tbuf, LEN, "%d", size));
         pins4("addi", "$sp", "$sp", tbuf);
     }
+
+    // store result ($v0) in res->id
+    if (res)
+        pins3("sw", "$v0", res->id);
+
 }
 
 void funreturn (FILE *f, symbol *fun, symbol *ret) {

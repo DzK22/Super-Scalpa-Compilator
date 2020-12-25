@@ -52,7 +52,7 @@
 
     void arithmeticExpression (qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
-        symbol *ptr = newTmpInt(&stable, 0);
+        symbol *ptr = newTmpInt(curtos(), 0);
         quad *q     = qGen(op, ptr, arg1, arg2);
 
         *res        = ptr;
@@ -62,7 +62,7 @@
 
     void booleanExpression (qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
-        symbol *ptr  = newTmpInt(&stable, 0);
+        symbol *ptr  = newTmpInt(curtos(), 0);
         quad *q      = qGen(op, ptr, arg1, arg2);
 
         *res         = ptr;
@@ -83,9 +83,9 @@
         fundata *fdata = (fundata *) fs->fdata;
 
         switch (fdata->rtype) {
-            case S_INT  : res = newTmpInt(&stable, 0)      ; break ;
-            case S_BOOL : res = newTmpBool(&stable, false) ; break ;
-            case S_UNIT : res = NULL                       ; break ;
+            case S_INT  : res = newTmpInt(curtos(), 0)      ; break ;
+            case S_BOOL : res = newTmpBool(curtos(), false) ; break ;
+            case S_UNIT : res = NULL                        ; break ;
             default: ferr("cs.y funcallExpression wrong return type");
         }
 
@@ -214,17 +214,17 @@ varsdecl: VAR_ identlist DPOINT_ typename {
               while (al != NULL) {
                   switch ($4.type) {
                       case S_BOOL:
-                          newVarBool(&stable, al->id, false, curfun);
+                          newVarBool(curtos(), al->id, false, curfun);
                           break;
                       case S_INT:
-                          newVarInt(&stable, al->id, 0, curfun);
+                          newVarInt(curtos(), al->id, 0, curfun);
                           break;
                       case S_STRING:
-                          newVarStr(&stable, al->id, "\"\"", curfun);
+                          newVarStr(curtos(), al->id, "\"\"", curfun);
                           break;
                       case S_ARRAY:
                       // CREER une nouvelle variable de table
-                          newVarArray(&stable, al->id, $4.sarray);
+                          newVarArray(curtos(), al->id, $4.sarray);
                           break;
                     default:
                         ferr("cs.y varsdecl identlist An arg has wrong type");
@@ -644,7 +644,6 @@ expr :  expr PLUS_ expr {
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
-
             complete($1.lfalse, false, $3.quad->res);
             $$.lfalse = $4.lfalse;
             $$.ltrue  = concat($1.ltrue, $4.ltrue);
@@ -687,7 +686,6 @@ expr :  expr PLUS_ expr {
           }
 
        | expr SUP_ expr {
-
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
                ferr("cs.y expr SUP_ expr type error");
 
