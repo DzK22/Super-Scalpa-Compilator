@@ -41,5 +41,6 @@ void funArgsDebugString  (symbol *fun, char *dstring, int maxlen);
 int  curfunVarSize       ();
 void curfunStackPushVars (FILE *f);
 void curfunStackLoadVars (FILE *f);
+symbol * curfunNextUsefullLocalVar (symbol *tos);
 
 #endif
