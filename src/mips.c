@@ -32,6 +32,11 @@
 #define pdir(s) \
     fprintf(f, "%s\n", s);
 
+// snprintf test
+#define snpt(res) \
+    if (res < 0 || res >= LEN) \
+        ferr("mips.c snprintf");
+
 static char tbuf[LEN];
 static symbol *curfun = NULL;
 
@@ -53,11 +58,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
     pdata("_read_int", ".asciiz \"Enter int: \"");
     pdata("_read_string", ".asciiz \"Enter string: \"");
     pdir(".align 2");
-    int res = snprintf(tbuf, LEN, ".space %d", MIPS_BUFFER_SPACE);
-    if (res < 0 || res >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, ".space %d", MIPS_BUFFER_SPACE));
     pdata("_buffer", tbuf);
 
     // tos global
@@ -70,11 +71,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
         if (s->type == S_FUNCTION) {
             fundata *fdata = (fundata *) s->fdata;
 
-            res = snprintf(tbuf, LEN, "TOS of function %s", s->id);
-            if (res < 0 || res >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "TOS of function %s", s->id));
             pcom(tbuf);
             getData(f, fdata->tos);
         }
@@ -94,40 +91,23 @@ void getMips (FILE *f, symbol *s, quad *q) {
 }
 
 void getData (FILE *f, symbol *s) {
-    int res;
     while (s != NULL) {
         switch (s->type) {
             case S_INT:
-                res = snprintf(tbuf, LEN, ".word %d", s->ival);
-                if (res < 0 || res >= LEN) {
-                    fprintf(stderr, "snprintf error\n");
-                    exit(EXIT_FAILURE);
-                }
+                snpt(snprintf(tbuf, LEN, ".word %d", s->ival));
                 pdata(s->id, tbuf);
                 break;
             case S_BOOL:
-                res = snprintf(tbuf, LEN, ".word %d", s->bval);
-                if (res < 0 || res >= LEN) {
-                    fprintf(stderr, "snprintf error\n");
-                    exit(EXIT_FAILURE);
-                }
+                snpt(snprintf(tbuf, LEN, ".word %d", s->bval));
                 pdata(s->id, tbuf);
                 break;
             case S_STRING:
-                res = snprintf(tbuf, LEN, ".asciiz %s", s->sval);
-                if (res < 0 || res >= LEN) {
-                    fprintf(stderr, "snprintf error\n");
-                    exit(EXIT_FAILURE);
-                }
+                snpt(snprintf(tbuf, LEN, ".asciiz %s", s->sval));
                 pdata(s->id, tbuf);
                 break;
             case S_ARRAY:
                 if (s->arr->type == S_INT) {
-                    res = snprintf(tbuf, LEN, ".space %d", s->arr->size * 4);
-                    if (res < 0 || res >= LEN) {
-                        fprintf(stderr, "snprintf error\n");
-                        exit(EXIT_FAILURE);
-                    }
+                    snpt(snprintf(tbuf, LEN, ".space %d", s->arr->size * 4));
                     pdata(s->id, tbuf);
                 }
                 break;
@@ -176,7 +156,7 @@ char * nextTmpLabel () {
 
 void getText (FILE *f, quad *q) {
     symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
-    int ret;
+
     while (q != NULL) {
         res    = q->res;
         argv1  = q->argv1;
@@ -215,12 +195,9 @@ void getText (FILE *f, quad *q) {
             case Q_AFFEC:
                 if (!res || !argv1)
                     ferr("mips.c getText Q_AFFEC quad error");
-                //ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
-                ret = snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id);
-                if (ret < 0 || ret >= LEN) {
-                    fprintf(stderr, "snprintf error\n");
-                    exit(EXIT_FAILURE);
-                }
+
+                // ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
+                snpt(snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id));
                 pcom(tbuf);
 
                 pinstr3("lw", "$t0", argv1->id);
@@ -238,11 +215,7 @@ void getText (FILE *f, quad *q) {
                 if (!res)
                     ferr("mips.c getText Q_GOTO quad error");
 
-                ret = snprintf(tbuf, LEN, "goto %s", res->id);
-                if (ret < 0 || ret >= LEN) {
-                    fprintf(stderr, "snprintf error\n");
-                    exit(EXIT_FAILURE);
-                }
+                snpt(snprintf(tbuf, LEN, "goto %s", res->id));
                 pcom(tbuf);
 
                 pinstr2("j", res->id);
@@ -252,11 +225,7 @@ void getText (FILE *f, quad *q) {
                 if (!argv1 || !gtrue || !gfalse || !gnext)
                     ferr("mips.c getText Q_IF quad error");
 
-                ret = snprintf(tbuf, LEN, "if %s is false then goto %s", argv1->id, gfalse->sval);
-                if (ret < 0 || ret >= LEN) {
-                    fprintf(stderr, "snprintf error\n");
-                    exit(EXIT_FAILURE);
-                }
+                snpt(snprintf(tbuf, LEN, "if %s is false then goto %s", argv1->id, gfalse->sval));
                 pcom(tbuf);
 
                 pinstr3("lw", "$t0", argv1->id);
@@ -339,14 +308,10 @@ void getText (FILE *f, quad *q) {
 
 void qRead (FILE *f, symbol *res) {
     char *label, *label2;
-    int ret;
+
     switch (res->type) {
         case S_INT:
-            ret = snprintf(tbuf, LEN, "read integer %s", res->id);
-            if (ret < 0 || ret >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "read integer %s", res->id));
             pcom(tbuf);
 
             pinstr3("li", "$v0", "4");
@@ -358,11 +323,7 @@ void qRead (FILE *f, symbol *res) {
             break;
 
         case S_STRING:
-            ret = snprintf(tbuf, LEN, "read string %s", res->id);
-            if (ret < 0 || ret >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "read string %s", res->id));
             pcom(tbuf);
 
             pinstr3("li", "$v0", "4");
@@ -370,11 +331,7 @@ void qRead (FILE *f, symbol *res) {
             pinstr1("syscall");
             pinstr3("li", "$v0", "8");
             pinstr3("la", "$a0", "_buffer");
-            ret = snprintf(tbuf, LEN, "%d", MIPS_BUFFER_SPACE);
-            if (ret < 0 || ret >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "%d", MIPS_BUFFER_SPACE));
             pinstr3("li", "$a1", tbuf);
             pinstr3("move", "$s0", "$a0");
             pinstr1("syscall");
@@ -384,11 +341,7 @@ void qRead (FILE *f, symbol *res) {
             label  = nextTmpLabel();
             label2 = nextTmpLabel();
 
-            ret = snprintf(tbuf, LEN, "read bool %s", res->id);
-            if (ret < 0 || ret >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "read bool %s", res->id));
             pcom(tbuf);
 
             pinstr3("li", "$v0", "4");
@@ -415,14 +368,10 @@ void qRead (FILE *f, symbol *res) {
 
 void qWrite (FILE *f, symbol *argv1) {
     char *label, *label2;
-    int ret;
+
     switch (argv1->type) {
         case S_INT:
-            ret = snprintf(tbuf, LEN, "print integer %s", argv1->id);
-            if (ret < 0 || ret >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "print integer %s", argv1->id));
             pcom(tbuf);
 
             pinstr3("li", "$v0", "1");
@@ -430,11 +379,7 @@ void qWrite (FILE *f, symbol *argv1) {
             break;
 
         case S_STRING:
-            ret = snprintf(tbuf, LEN, "print string %s", argv1->id);
-            if (ret < 0 || ret >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "print string %s", argv1->id));
             pcom(tbuf);
 
             pinstr3("li", "$v0", "4");
@@ -447,11 +392,7 @@ void qWrite (FILE *f, symbol *argv1) {
             label  = nextTmpLabel();
             label2 = nextTmpLabel();
 
-            ret = snprintf(tbuf, LEN, "print bool %s", argv1->id);
-            if (ret < 0 || ret >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "print bool %s", argv1->id));
             pcom(tbuf);
 
             pinstr3("lw", "$t0", argv1->id);
@@ -471,11 +412,7 @@ void qWrite (FILE *f, symbol *argv1) {
 }
 
 void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
-    int ret = snprintf(tbuf, LEN, "%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
     pcom(tbuf);
 
     pinstr3("lw", "$t0", argv1->id);
@@ -516,11 +453,7 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     label  = nextTmpLabel();
     label2 = nextTmpLabel();
 
-    int ret = snprintf(tbuf, LEN, ")%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, ")%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
     pcom(tbuf);
 
     pinstr3("lw", "$t0", argv1->id);
@@ -579,11 +512,7 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
     label  = nextTmpLabel();
     label2 = nextTmpLabel();
 
-    int ret = snprintf(tbuf, LEN, ")%s := NOT %s", res->id, argv1->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, ")%s := NOT %s", res->id, argv1->id));
     pcom(tbuf);
 
     pinstr3("lw", "$t0", argv1->id);
@@ -606,11 +535,7 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
 ///////////////
 
 void fundec (FILE *f, symbol *fun) {
-    int ret = snprintf(tbuf, LEN, "function %s", fun->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "function %s", fun->id));
     pcom(tbuf);
     plabel(fun->id);
 
@@ -623,11 +548,7 @@ void fundec (FILE *f, symbol *fun) {
     // load args from stack offset 4
     funStackLoadArgs(f, fun, 4);
 
-    ret = snprintf(tbuf, LEN, "body of function %s", fun->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "body of function %s", fun->id));
     pcom(tbuf);
 
     /* Stack now:
@@ -648,19 +569,11 @@ void funend (FILE *f, symbol *fun) {
        etc ...
     */
 
-    int ret = snprintf(tbuf, LEN, "epilogue of function %s", fun->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "epilogue of function %s", fun->id));
     pcom(tbuf);
 
     // label to jump to after a return
-    ret = snprintf(tbuf, LEN, "end_%s", fun->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "end_%s", fun->id));
     plabel(tbuf);
 
     // load saved ra to $ra
@@ -668,20 +581,12 @@ void funend (FILE *f, symbol *fun) {
 
     int offset = 4 + funArgsSize(fun);
     // pop ra and args from the stack
-    ret = snprintf(tbuf, LEN, "%d", offset);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "%d", offset));
     pinstr4("addi", "$sp", "$sp", tbuf);
 
     // jump to $ra
     pinstr2("jr", "$ra");
-    ret = snprintf(tbuf, LEN, "end of function %s", fun->id);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "end of function %s", fun->id));
     pcom(tbuf);
 
     curfun = NULL;
@@ -693,34 +598,21 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     // show args string for debugging
     char argsDebug[LEN];
     funArgsDebugString(fun, argsDebug, LEN);
-    int ret;
+
     if (res) {
-        ret = snprintf(tbuf, LEN, "funcall %s := %s ( %s )", res->id, fun->id, argsDebug);
-        if (ret < 0 || ret >= LEN) {
-            fprintf(stderr, "snprintf error\n");
-            exit(EXIT_FAILURE);
-        }
-        pcom(tbuf);
+        snpt(snprintf(tbuf, LEN, "funcall %s := %s ( %s )", res->id, fun->id, argsDebug));
     } else {
-        ret = snprintf(tbuf, LEN, "funcall %s ( %s )", fun->id, argsDebug);
-        if (ret < 0 || ret >= LEN) {
-            fprintf(stderr, "snprintf error\n");
-            exit(EXIT_FAILURE);
-        }
-        pcom(tbuf);
+        snpt(snprintf(tbuf, LEN, "funcall %s ( %s )", fun->id, argsDebug));
     }
 
+    pcom(tbuf);
     int size;
 
     if (curfun != NULL) {
         pcom("push local vars to the stack");
         // make space for local var save in the stack
         size = curfunVarSize();
-        ret = snprintf(tbuf, LEN, "%d", size);
-        if (ret < 0 || ret >= LEN) {
-            fprintf(stderr, "snprintf error\n");
-            exit(EXIT_FAILURE);
-        }
+        snpt(snprintf(tbuf, LEN, "%d", size));
         pinstr4("sub", "$sp", "$sp", tbuf);
 
         // push local vars to the stack
@@ -730,11 +622,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     pcom("push funcall args to the stack");
     // make space for args in the stack
     size = funArgsSize(fun);
-    ret = snprintf(tbuf, LEN, "%d", size);
-    if (ret < 0 || ret >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "%d", size));
     pinstr4("sub", "$sp", "$sp", tbuf);
 
     // push args to stack
@@ -761,7 +649,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
            0 -> var1
            4 -> var2
            etc ...
-       */
+        */
 
         pcom("load local vars from the stack");
         // load local vars from stack
@@ -769,34 +657,21 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
         size = curfunVarSize();
 
         // pop local vars from stack
-        ret = snprintf(tbuf, LEN, "%d", size);
-        if (ret < 0 || ret >= LEN) {
-            fprintf(stderr, "snprintf error\n");
-            exit(EXIT_FAILURE);
-        }
+        snpt(snprintf(tbuf, LEN, "%d", size));
         pinstr4("addi", "$sp", "$sp", tbuf);
     }
 }
 
 void funreturn (FILE *f, symbol *fun, symbol *ret) {
-    int res;
     if (ret) {
-        res = snprintf(tbuf, LEN, "funreturn %s", ret->id);
-        if (res < 0 || res >= LEN) {
-            fprintf(stderr, "snprintf error\n");
-            exit(EXIT_FAILURE);
-        }
+        snpt(snprintf(tbuf, LEN, "funreturn %s", ret->id));
         pcom(tbuf);
         pinstr3("lw", "$v0", ret->id);
     } else
         pcom("funreturn (void)");
 
     // goto function end label
-    res = snprintf(tbuf, LEN, "end_%s", fun->id);
-    if (res < 0 || res >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        exit(EXIT_FAILURE);
-    }
+    snpt(snprintf(tbuf, LEN, "end_%s", fun->id));
     pinstr2("j", tbuf);
 }
 
@@ -837,11 +712,7 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
     arglist *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
-        res = snprintf(tbuf, LEN, "%d($sp)", offset);
-        if (res < 0 || res >= LEN) {
-            fprintf(stderr, "snprintf error\n");
-            exit(EXIT_FAILURE);
-        }
+        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
         pinstr3("lw", "$t0", tbuf);
         pinstr3("sw", "$t0", al->sym->id);
 
@@ -856,11 +727,7 @@ void funStackPushArgs (FILE *f, symbol *args) {
 
     while (args != NULL) {
         pinstr3("lw", "$t0", args->id);
-        res = snprintf(tbuf, LEN, "%d($sp)", offset);
-        if (res < 0 || res >= LEN) {
-            fprintf(stderr, "snprintf error\n");
-            exit(EXIT_FAILURE);
-        }
+        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
         pinstr3("sw", "$t0", tbuf);
 
         bytes   = funSymTypeSize(args);
@@ -874,10 +741,7 @@ void funArgsDebugString (symbol *fun, char *dstring, int maxlen) {
     arglist *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
-        bytes = snprintf(dstring + len, maxlen - len, "%s, ", al->sym->id);
-        if (bytes < 0 || bytes >= LEN)
-            ferr("mips.c funArgsDebugString snprintf");
-
+        snpt(snprintf(dstring + len, maxlen - len, "%s, ", al->sym->id));
         len += bytes;
         al = al->next;
     }
@@ -917,11 +781,7 @@ void curfunStackPushVars (FILE *f) {
     while (tos != NULL) {
         if (tos->type == S_INT || tos->type == S_BOOL) {
             pinstr3("lw", "$t0", tos->id);
-            res = snprintf(tbuf, LEN, "%d($sp)", offset);
-            if (res < 0 || res >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
             pinstr3("sw", "$t0", tbuf);
 
             bytes = funSymTypeSize(tos);
@@ -941,11 +801,7 @@ void curfunStackLoadVars (FILE *f) {
 
     while (tos != NULL) {
         if (tos->type == S_INT || tos->type == S_BOOL) {
-            res = snprintf(tbuf, LEN, "%d($sp)", offset);
-            if (res < 0 || res >= LEN) {
-                fprintf(stderr, "snprintf error\n");
-                exit(EXIT_FAILURE);
-            }
+            snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
             pinstr3("lw", "$t0", tbuf);
             pinstr3("sw", "$t0", tos->id);
 
