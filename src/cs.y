@@ -285,6 +285,11 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                      case S_BOOL:
                         break;
                  }
+                 /*lstInt *toto = arr->values;
+                 while (toto != NULL) {
+                     fprintf(stdout, "%d\n", toto->ival);
+                     toto = toto->next;
+                 }*/
                  $$ = arr;
             }
           ;
@@ -545,7 +550,7 @@ lvalue: IDENT_ {
              // printf("YOOO\n");
               int cpt = 1, curind, dimnum = 1;;
               while (dimension != NULL && indicesLst != NULL) {
-                  printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
+                  //printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
                   curind = indicesLst->sym->ival;
                   if (curind < dimension->min || curind > dimension->max) {
                       fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
@@ -559,7 +564,7 @@ lvalue: IDENT_ {
               ptr->arr->index = cpt;
 
               //printf("TOTOLAND: %d\n", ptr->arr->index);
-              printf("SIZE = %d\n", ptr->arr->size);
+              //printf("SIZE = %d\n", ptr->arr->size);
                if (ptr->arr->index > ptr->arr->size) {
                   fprintf(stderr, "index out of range\n");
                   exit(EXIT_FAILURE);

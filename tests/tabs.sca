@@ -4,7 +4,7 @@ program tabz
     begin
         (* write "toto"; *)
         a := 8;
-        tab[2,10,104] := a;
+        tab[2,11,104] := a;
         write a;
         write "\n";
      end

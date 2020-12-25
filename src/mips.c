@@ -215,7 +215,7 @@ void getText (FILE *f, quad *q) {
             case Q_AFFEC:
                 if (!res || !argv1)
                     ferr("mips.c getText Q_AFFEC quad error");
-
+                //ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
                 ret = snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id);
                 if (ret < 0 || ret >= LEN) {
                     fprintf(stderr, "snprintf error\n");
