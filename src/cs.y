@@ -270,7 +270,7 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                  arr->dims = $3;
                  arr->type = $6;
                  arr->index = 1;
-                 int cpt = 1;
+                 int cpt = 1, i;
                  dimProp *cur = $3;
                  //calcule de size
                  while (cur != NULL) {
@@ -280,16 +280,15 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                  arr->size = cpt;
                  switch (arr->type) {
                      case S_INT:
-                        arr->values = newLstInt(arr->size);
+                        arr->values = malloc(sizeof(int) * arr->size);
+                        if (arr->values == NULL)
+                            ferr("malloc error");
+                        for (i = 0; i < arr->size; i++)
+                            arr->values[i] = 0;
                         break;
                      case S_BOOL:
                         break;
                  }
-                 /*lstInt *toto = arr->values;
-                 while (toto != NULL) {
-                     fprintf(stdout, "%d\n", toto->ival);
-                     toto = toto->next;
-                 }*/
                  $$ = arr;
             }
           ;

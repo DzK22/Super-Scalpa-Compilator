@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "lstTab.h"
 #define LEN 128
 
 typedef enum stype {
@@ -23,7 +22,7 @@ typedef struct s_array {
     int ndims;
     int size;
     dimProp *dims;           //pointeur sur la première dimension
-    struct lstInt *values;  //Liste des valeurs
+    int *values;  //Liste des valeurs
     stype type;
     int index;
 } s_array;
