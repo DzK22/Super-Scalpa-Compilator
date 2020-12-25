@@ -765,7 +765,7 @@ expr :  expr PLUS_ expr {
         testID(ptr, $1);
         arglist *indicesLst = $3.al;
         dimProp *dimension = ptr->arr->dims;
-        int cpt = 1, curind, dimnum = 1;
+        int cpt = 0, curind, dimnum = 1;
         while (indicesLst != NULL && dimension != NULL) {
             //printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
             curind = indicesLst->sym->ival;
@@ -773,7 +773,21 @@ expr :  expr PLUS_ expr {
                 fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
                 exit(EXIT_FAILURE);
             }
-            cpt *= (indicesLst->sym->ival - dimension->min) + 1;
+            printf("dimnum = %d\n", dimnum);
+            if (dimnum == dimension->dim - 1) {
+                printf("%d - %d\n", curind, dimension->min);
+                cpt *= cpt;
+                cpt += curind - dimension->min;
+            }
+            else {
+                int tata = abs(dimension->max) - abs(dimension->min);
+                int toto = curind - dimension->min;
+                int resu = toto * tata;
+                fprintf(stdout, "%d - %d\n", abs(dimension->max), abs(dimension->min));
+                cpt *= cpt;
+                cpt += resu;
+            }
+            //cpt += dimnum;
             //printf("ind %d et expr : %d et dimmin %d\n", indicesLst->sym->ival, curind, dimension->min);
             dimension = dimension->next;
             indicesLst = indicesLst->next;
