@@ -209,16 +209,25 @@ void getText (FILE *f, quad *q) {
             case Q_AFFEC:
                 if (!res || !argv1)
                     ferr("mips.c getText Q_AFFEC quad error");
-
                 // ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
                 if (res->type == S_ARRAY) {
-                    pins3("la", "$t3", res->id);
-                    snpt(snprintf(tbuf, LEN, "%d", res->arr->index));
+                    snpt(snprintf(tbuf, LEN, "%d", res->arr->index - 1));
                     pins3("li", "$t2", tbuf);
-                    pins4("add", "$t2", "$t2", "$t2");
-                    pins4("add", "$t2", "$t2", "$t2");
-                    pins4("add", "$t1", "$t2", "$t3");
-                    pins3("sw", "$t4", "0($t1)");
+                    pins3("la", "$t3", res->id);
+                    pins4("mul", "$t4", "$t2", "4");
+                    pins4("add", "$t1", "$t4", "$t3");
+                    pins3("lw", "$t5", argv1->id);
+                    pins3("sw", "$t5", "($t1)");
+                }
+                else if (argv1->type == S_ARRAY) {
+                    snpt(snprintf(tbuf, LEN, "%d", argv1->arr->index - 1));
+                    //printf("HAHAHA %d\n", argv1->arr->index);
+                    pins3("li", "$t2", tbuf);
+                    pins3("la", "$t3", argv1->id);
+                    pins4("mul", "$t4", "$t2", "4");
+                    pins4("add", "$t1", "$t4", "$t3");
+                    pins3("lw", "$t5", "($t1)");
+                    pins3("sw", "$t5", res->id);
                 }
                 else {
                     snpt(snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id));
@@ -430,6 +439,17 @@ void qWrite (FILE *f, symbol *argv1) {
             plab(label2);
             pins3("li", "$v0", "4");
             break;
+
+    //    case S_ARRAY:
+    //        snpt(snprintf(tbuf, LEN, "%d", argv1->arr->index));
+    //        //pins3("move", "$a0", "$t4");
+    //        pins3("li", "$t2", tbuf);
+    ////        pins3("la", "$t3", argv1->id);
+    ////        pins4("mul", "$t4", "$t2", "4");
+    //// //       pins4("add", "$t1", "$t4", "$t3");
+    //  //      pins3("lw", "$a0", "($t1)");
+    //  //      pins3("li", "$v0", "1");
+      //      break;
     }
 
     pins1("syscall");

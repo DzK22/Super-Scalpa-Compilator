@@ -3,6 +3,7 @@
     #include <stdint.h>
     #include <stdlib.h>
     #include <math.h>
+    #include <time.h>
     #include <getopt.h>
     #include <unistd.h>
     #include "../headers/stable.h"
@@ -279,13 +280,17 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                      cur = cur->next;
                  }
                  arr->size = cpt;
+                 // ONLY FOR TESTS
+                 time_t t;
+                 srand((unsigned)time(&t));
                  switch (arr->type) {
                      case S_INT:
                         arr->values = malloc(sizeof(int) * arr->size);
                         if (arr->values == NULL)
                             ferr("malloc error");
-                        for (i = 0; i < arr->size; i++)
-                            arr->values[i] = 0;
+                        for (i = 0; i < arr->size; i++) {
+                            arr->values[i] = rand() % arr->size;
+                        }
                         break;
                      case S_BOOL:
                         break;
@@ -434,9 +439,10 @@ instr: lvalue AFFEC_ expr {
                 }
                 //if ($1.ptr->type == S_ARRAY)
                 //    printf("TATALAND = %d\n", $1.ptr->arr->index);
-                /*if ($1.ptr->type == S_ARRAY) {
-                    $1.ptr->arr->values[$1.ptr->arr->index] = $3.ptr->ival;
-                }*/
+                //if ($1.ptr->type == S_ARRAY) {
+                //    $1.ptr->arr->values[$1.ptr->arr->index] = $3.ptr->ival;
+                //    printf("TOTO %d\n", $3.ptr->ival);
+                //}
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
@@ -561,7 +567,6 @@ lvalue: IDENT_ {
                   indicesLst = indicesLst->next;
                   dimnum++;
               }
-              printf("dimnum %d et hello %d\n", dimnum, ptr->arr->ndims);
               if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
                 ferr("Nb dimension ne correspond pas");
               ptr->arr->index = cpt;
@@ -747,11 +752,35 @@ expr :  expr PLUS_ expr {
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
 
-      /*  symbol *ptr = search(stable, curfun, $1);
+        symbol *ptr = search(stable, curfun, $1);
         testID(ptr, $1);
-
+        arglist *indicesLst = $3.al;
+        dimProp *dimension = ptr->arr->dims;
+        int cpt = 1, curind, dimnum = 1;
+        while (indicesLst != NULL && dimension != NULL) {
+            //printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
+            curind = indicesLst->sym->ival;
+            if (curind < dimension->min || curind > dimension->max) {
+                fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
+                exit(EXIT_FAILURE);
+            }
+            cpt *= indicesLst->sym->ival;
+            dimension = dimension->next;
+            indicesLst = indicesLst->next;
+            dimnum++;
+        }
+        if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
+          ferr("Nb dimension ne correspond pas");
+        ptr->arr->index = cpt;
+        printf("indexuu = %d\n", ptr->arr->index);
+         if (ptr->arr->index > ptr->arr->size) {
+            fprintf(stderr, "index out of range\n");
+            exit(EXIT_FAILURE);
+        }
+        $$.ptr = ptr;
+        $$.quad = NULL;
         // mettre le type de retour
-        $$.ptr->type = ptr->arr->type ;
+        /*$$.ptr->type = ptr->arr->type ;
         $$.quad = NULL ;
 
         // calcul de l'indice dans le tableau

@@ -1,10 +1,14 @@
 program tabz
   var a, c, t : int;
-  var tab : array[1..10,1..10] of int ;
+  var tab : array[1..3,1..3] of int ;
     begin
-        (* write "toto"; *)
-        a := 44;
-        tab[1,1] := a;
+        a := tab[1,1];
+        c := tab[2,2];
+        t := tab[3,3];
         write a;
+        write "\n";
+        write c;
+        write "\n";
+        write t;
         write "\n";
      end
