@@ -268,6 +268,7 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                  }
                  //printRange(rg);
                  arr->dims = $3;
+                 arr->ndims = $3->dim;
                  arr->type = $6;
                  arr->index = 1;
                  int cpt = 1, i;
@@ -431,8 +432,8 @@ instr: lvalue AFFEC_ expr {
                   printf("type expr %d \n ", $3.ptr->type) ;
                   ferr("cs.y instr: lvalue AFFEC_ expr - 3");
                 }
-                if ($1.ptr->type == S_ARRAY)
-                    printf("TATALAND = %d\n", $1.ptr->arr->index);
+                //if ($1.ptr->type == S_ARRAY)
+                //    printf("TATALAND = %d\n", $1.ptr->arr->index);
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
@@ -544,9 +545,8 @@ lvalue: IDENT_ {
               // calcul de la valeur de l'indice du tableau
               arglist *indicesLst = $3.al;
               dimProp *dimension = ptr->arr->dims;
-             // printf("YOOO\n");
-              int cpt = 1, curind, dimnum = 1;;
-              while (dimension != NULL && indicesLst != NULL) {
+              int cpt = 1, curind, dimnum = 1;
+              while (indicesLst != NULL && dimension != NULL) {
                   //printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
                   curind = indicesLst->sym->ival;
                   if (curind < dimension->min || curind > dimension->max) {
@@ -558,10 +558,11 @@ lvalue: IDENT_ {
                   indicesLst = indicesLst->next;
                   dimnum++;
               }
+              printf("dimnum %d et hello %d\n", dimnum, ptr->arr->ndims);
+              if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
+                ferr("Nb dimension ne correspond pas");
               ptr->arr->index = cpt;
-
-              //printf("TOTOLAND: %d\n", ptr->arr->index);
-              //printf("SIZE = %d\n", ptr->arr->size);
+              printf("index = %d\n", cpt);
                if (ptr->arr->index > ptr->arr->size) {
                   fprintf(stderr, "index out of range\n");
                   exit(EXIT_FAILURE);
@@ -864,7 +865,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-          yydebug = 1;
+          //yydebug = 1;
     #endif
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");

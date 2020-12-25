@@ -7,17 +7,16 @@ program Fun2
     end;
 
     function f2 (l : int) : int
+    var d : int;
     begin
-        return f1(l) + 2;
+        d := -10;
+        return f1(l) + 2 + d;
     end;
 
     begin
-        d := 3;
         write "f2(";
         write d;
         write ") = ";
-        write f2(d);
+        write f2(-3);
         write "\n";
     end
-
-
