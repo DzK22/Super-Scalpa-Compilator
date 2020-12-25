@@ -597,7 +597,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
 
     // show args string for debugging
     char argsDebug[LEN];
-    funArgsDebugString(fun, argsDebug, LEN);
+    funArgsDebugString(args, argsDebug, LEN);
 
     if (res) {
         snpt(snprintf(tbuf, LEN, "funcall %s := %s ( %s )", res->id, fun->id, argsDebug));
@@ -736,14 +736,16 @@ void funStackPushArgs (FILE *f, symbol *args) {
     }
 }
 
-void funArgsDebugString (symbol *fun, char *dstring, int maxlen) {
+void funArgsDebugString (symbol *args, char *dstring, int maxlen) {
     int bytes, len = 0;
-    arglist *al = ((fundata *) fun->fdata)->al;
 
-    while (al != NULL) {
-        snpt(snprintf(dstring + len, maxlen - len, "%s, ", al->sym->id));
+    while (args != NULL) {
+        bytes = snprintf(dstring + len, maxlen - len, "%s, ", args->id);
+        if (bytes < 0 || bytes >= maxlen - len)
+            ferr("mips.c funArgsDebugString snprintf");
+
         len += bytes;
-        al = al->next;
+        args = args->next;
     }
 
     if (len > 2)

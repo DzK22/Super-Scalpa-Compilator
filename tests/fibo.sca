@@ -2,10 +2,11 @@
 
 program fibo
     var d : int;
+
     function fib (n : int) : int
     begin
         if (n = 0) then return 0;
-        if (n = 1 or n = 2) then return 1;
+        if (n = 1) then return 1;
 
         (* n >= 2 *)
         return fib(n - 1) + fib(n - 2);
