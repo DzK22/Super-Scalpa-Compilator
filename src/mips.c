@@ -91,6 +91,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
 }
 
 void getData (FILE *f, symbol *s) {
+    char *arrvalues;
     while (s != NULL) {
         switch (s->type) {
             case S_INT:
@@ -107,8 +108,22 @@ void getData (FILE *f, symbol *s) {
                 break;
             case S_ARRAY:
                 if (s->arr->type == S_INT) {
-                    snpt(snprintf(tbuf, LEN, ".space %d", s->arr->size * 4));
-                    pdat(s->id, tbuf);
+                    //printf("TATATATAT: %s\n", s->id);
+                    lstInt *vals = s->arr->values;
+                    if (vals != NULL) {
+                        fprintf(f, "\t%s:\t.word ", s->id);
+                        printf("nb values = %d\n", s->arr->size);
+                        for (int i = 0; i < s->arr->size; i++, vals = vals->next) {
+                            if (i != s->arr->size - 1)
+                                fprintf(f, "%d, ", vals->ival);
+                            else
+                                fprintf(f, "%d\n", vals->ival);
+                        }
+                    }
+                    else {
+                        snpt(snprintf(tbuf, LEN, ".space %d", s->arr->size * 4));
+                        pdat(s->id, tbuf);
+                    }
                 }
                 break;
         }
