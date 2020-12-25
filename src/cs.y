@@ -400,6 +400,7 @@ par : IDENT_ DPOINT_ typename {
             switch ($3.type) {
                 case S_INT  : s = newVarInt(curtos(), $1, 0, curfun)      ; break ;
                 case S_BOOL : s = newVarBool(curtos(), $1, false, curfun) ; break ;
+                case S_ARRAY : break;
                 default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
             }
 
@@ -869,7 +870,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-          //yydebug = 1;
+          yydebug = 1;
     #endif
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");
