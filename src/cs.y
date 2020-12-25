@@ -475,37 +475,35 @@ instr: lvalue AFFEC_ expr {
                 quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
                 $$.quad = concat($2.quad, q);
             }
-        | IF_ expr THEN_ m instr m {
+        | IF_ expr THEN_ instr m {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gtrue  = $4.quad->res;
-                qif->gfalse = $6.quad->res;
-                qif->gnext  = $6.quad->res;
+                qif->gtrue  = NULL;
+                qif->gfalse = $5.quad->res;
+                qif->gnext  = $5.quad->res;
 
                 $$.quad = concat($2.quad, qif);
                 $$.quad = concat($$.quad, $4.quad);
                 $$.quad = concat($$.quad, $5.quad);
-                $$.quad = concat($$.quad, $6.quad);
             }
-        | IF_ expr THEN_ m instr ELSE_ m instr m {
+        | IF_ expr THEN_ instr ELSE_ m instr m {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gtrue  = $4.quad->res;
-                qif->gfalse = $7.quad->res;
-                qif->gnext  = $9.quad->res;
+                qif->gtrue  = NULL;
+                qif->gfalse = $6.quad->res;
+                qif->gnext  = $8.quad->res;
 
                 quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
 
                 $$.quad = concat($2.quad, qif);
                 $$.quad = concat($$.quad, $4.quad);
-                $$.quad = concat($$.quad, $5.quad);
                 $$.quad = concat($$.quad, go);
+                $$.quad = concat($$.quad, $6.quad);
                 $$.quad = concat($$.quad, $7.quad);
                 $$.quad = concat($$.quad, $8.quad);
-                $$.quad = concat($$.quad, $9.quad);
             }
-        | WHILE_ m expr DO_ m instr m {
+        | WHILE_ m expr DO_ instr m {
                 quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
-                qif->gtrue  = $5.quad->res;
-                qif->gfalse = $7.quad->res;
+                qif->gtrue  = NULL;
+                qif->gfalse = $6.quad->res;
                 qif->gnext  = $2.quad->res;
 
                 quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
@@ -513,9 +511,8 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = concat($2.quad, $3.quad);
                 $$.quad = concat($$.quad, qif);
                 $$.quad = concat($$.quad, $5.quad);
-                $$.quad = concat($$.quad, $6.quad);
                 $$.quad = concat($$.quad, go);
-                $$.quad = concat($$.quad, $7.quad);
+                $$.quad = concat($$.quad, $6.quad);
             }
       ;
 

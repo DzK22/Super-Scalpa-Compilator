@@ -222,7 +222,7 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_IF:
-                if (!argv1 || !gtrue || !gfalse || !gnext)
+                if (!argv1 || !gfalse)
                     ferr("mips.c getText Q_IF quad error");
 
                 snpt(snprintf(tbuf, LEN, "if %s is false then goto %s", argv1->id, gfalse->sval));
