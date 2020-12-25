@@ -9,6 +9,7 @@
     #include "../headers/quad.h"
     #include "../headers/mips.h"
     #include "../headers/arglist.h"
+    #include "../headers/opti.h"
     #define YYDEBUG 1
 
     int yyerror  (char *s);
@@ -885,9 +886,13 @@ int main (int argc, char **argv) {
     FILE *output = fopen(out, "w");
     if (yydebug)
         qPrint(all_code);
+
     getMips(output, stable, all_code);
+    optiLoop(all_code, stable);
+
     if (tos)
         stablePrint(stable);
+
     freeLex();
     qFree(all_code);
     sFree(stable);
