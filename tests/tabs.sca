@@ -5,30 +5,8 @@ program tabz
         tab[1,1] := 12;
         tab[1,2] := 99;
         tab[1,6] := 101;
-
-        write tab[1,1];
-        write "\n";
-
-        write tab[1,2];
-        write "\n";
-
-        write tab[1,6];
-        write "\n";
-
         a := tab[1,1];
         b := tab[1,2];
-        c := tab[1,1];
-        d := tab[1,6];
-        (* a := tab[1,1] + tab[2,2] NE FONCTIONNE PAS WARNING!!!!!*)
-        s := c + d;
-        write a;
-        write "\n";
-        write b;
-        write "\n";
-        write c;
-        write "\n";
-        write d;
-        write "\n";
-        write s;
+        write a + b;
         write "\n";
      end

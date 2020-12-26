@@ -795,8 +795,12 @@ expr :  expr PLUS_ expr {
         if (ptr->arr->index > ptr->arr->size)
             ferr("index out of range 1");
 
-        $$.ptr  = ptr;
-        $$.quad = NULL ;
+        symbol *arrVal = newTmpInt(curtos(), 0);
+        symbol *tmp    = newTmpInt(curtos(), ptr->arr->index);
+
+        quad *q = qGen(Q_AFFEC, arrVal, ptr, tmp);
+        $$.ptr  = arrVal;
+        $$.quad = q;
          }
       | IDENT_ {
             symbol *ptr = search(stable, curfun, $1);
