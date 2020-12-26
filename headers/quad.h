@@ -13,8 +13,6 @@ typedef enum {
   Q_END, Q_WRITE, Q_READ, Q_AFFEC, Q_LABEL, Q_GOTO, Q_IF, Q_IFELSE, Q_MAIN // other
 } qop;
 
-typedef struct gotoLst gotoLst;
-
 typedef struct quad {
     qop          op;
     int          num;

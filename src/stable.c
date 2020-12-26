@@ -1,7 +1,7 @@
 #include "../headers/stable.h"
 #include "../headers/arglist.h"
 
-symbol *sAlloc () {
+symbol *sAlloc (void) {
     symbol *ns = malloc(sizeof(struct symbol));
     if (ns == NULL)
         ferr("stable.c sAlloc malloc");

@@ -157,7 +157,7 @@ char * opstr (qop op) {
     return str;
 }
 
-char * nextTmplab () {
+char * nextTmplab (void) {
     static int nlabel = 0;
     char tmplab[LEN];
     sprintf(tmplab, "tmplab_%d", nlabel ++);
@@ -811,7 +811,7 @@ void funArgsDebugString (symbol *args, char *dstring, int maxlen) {
 
 // curfun functions (only for function calls inside a function)
 
-int curfunVarSize () {
+int curfunVarSize (void) {
     if (curfun == NULL)
         ferr("mips.c curfunVarSize - curfun is NULL");
 

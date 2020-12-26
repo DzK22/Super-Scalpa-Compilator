@@ -15,7 +15,7 @@ void getMips (FILE *, symbol *, quad *);
 void getData (FILE *f, symbol *s);
 void getText (FILE *f, quad *s);
 void ferr    (char *s);
-char * nextTmpLabel ();
+char * nextTmpLabel (void);
 char * opstr (qop);
 
 // common
@@ -38,7 +38,7 @@ void funStackLoadArgs    (FILE *f, symbol *fun, int offset);
 void funStackPushArgs    (FILE *f, symbol *args);
 void funArgsDebugString  (symbol *fun, char *dstring, int maxlen);
 
-int  curfunVarSize       ();
+int  curfunVarSize       (void);
 void curfunStackPushVars (FILE *f);
 void curfunStackLoadVars (FILE *f);
 symbol * curfunNextUsefullLocalVar (symbol *tos);

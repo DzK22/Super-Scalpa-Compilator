@@ -45,7 +45,7 @@ typedef struct symbol {
 
 void   ferr         (char *s);
 void   sFree        (symbol *);
-symbol *sAlloc      ();
+symbol *sAlloc      (void);
 symbol *sAdd        (symbol **);
 symbol *searchTable (symbol *, char *, symbol *);
 symbol *search      (symbol *, symbol *, char *);

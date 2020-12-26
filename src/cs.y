@@ -34,7 +34,7 @@
     }
 
 
-    symbol ** curtos () {
+    symbol ** curtos (void) {
         if (curfun == NULL)
             return &stable;
         return &((fundata *) curfun->fdata)->tos;
