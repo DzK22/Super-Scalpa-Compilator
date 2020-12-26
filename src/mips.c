@@ -37,14 +37,40 @@
     if (res < 0 || res >= LEN) \
         ferr("mips.c snprintf");
 
-static char tbuf[LEN];
-static symbol *curfun    = NULL;
-static quad *curquad     = NULL;
+#define pload(reg, sym) \
+    if (sym->ref) { \
+        pins3("lw", "$t9", sym->id); \
+        pins3("lw", reg, "0($t9)"); \
+    } else \
+        pins3("lw", reg, sym->id);
 
+#define pstore(reg, sym) \
+    if (sym->ref) { \
+        pins3("lw", "$t9", sym->id); \
+        pins3("sw", reg, "0($t9)"); \
+    } else \
+        pins3("sw", reg, sym->id);
+
+static char tbuf[LEN], tbuf2[LEN], tbuf3[LEN], tbuf4[LEN];
+static symbol *curfun = NULL;
+static quad *curquad  = NULL;
 /**
  * curfun is used to know if a funcall is done inside a function or not
  * If a funcall is done inside a function, save all usefull function local vars to the stack and restore them after the call
  */
+
+// get debug sym ID => if sym is not ref, put it ID in buf, otherwise put "*ID" in buf
+static int dsymidcnt = 0; // alternate between tbuf2, tbuf3 and tbuf4 for each call: this make possible to use the result of this fonction in max 3 args of a function :)
+char *dsymid(symbol *sym) {
+    char *buf;
+    if (dsymidcnt % 3 == 0) buf = tbuf2;
+    else if (dsymidcnt % 3 == 1) buf = tbuf3;
+    else buf = tbuf4;
+
+    dsymidcnt ++;
+    snpt(snprintf(buf, LEN, "%s%s", sym->ref ? "*" : "", sym->id));
+    return buf;
+}
 
 void ferr (char *s) {
     fprintf(stderr, "Error: %s\n", s);
@@ -233,11 +259,11 @@ void getText (FILE *f, quad *q) {
                     pins3("sw", "$t5", res->id);
                 }
                 else {
-                    snpt(snprintf(tbuf, LEN, "%s := %s", res->id, argv1->id));
+                    snpt(snprintf(tbuf, LEN, "%s := %s", dsymid(res), dsymid(argv1)));
                     pcom(tbuf);
 
-                    pins3("lw", "$t0", argv1->id);
-                    pins3("sw", "$t0", res->id);
+                    pload("$t0", argv1);
+                    pstore("$t0", res);
                 }
                 break;
 
@@ -262,10 +288,10 @@ void getText (FILE *f, quad *q) {
                 if (!argv1 || !gfalse)
                     ferr("mips.c getText Q_IF quad error");
 
-                snpt(snprintf(tbuf, LEN, "if %s is false then goto %s", argv1->id, gfalse->sval));
+                snpt(snprintf(tbuf, LEN, "if %s is false then goto %s", dsymid(argv1), gfalse->sval));
                 pcom(tbuf);
 
-                pins3("lw", "$t0", argv1->id);
+                pload("$t0", argv1);
                 pins4("beq", "$t0", "$zero", gfalse->sval);
                 break;
 
@@ -347,7 +373,7 @@ void qRead (FILE *f, symbol *res) {
 
     switch (res->type) {
         case S_INT:
-            snpt(snprintf(tbuf, LEN, "read integer %s", res->id));
+            snpt(snprintf(tbuf, LEN, "read integer %s", dsymid(res)));
             pcom(tbuf);
 
             pins3("li", "$v0", "4");
@@ -355,7 +381,7 @@ void qRead (FILE *f, symbol *res) {
             pins1("syscall");
             pins3("li", "$v0", "5");
             pins1("syscall");
-            pins3("sw", "$v0", res->id);
+            pstore("$v0", res);
             break;
 
         case S_STRING:
@@ -377,7 +403,7 @@ void qRead (FILE *f, symbol *res) {
             label  = nextTmplab();
             label2 = nextTmplab();
 
-            snpt(snprintf(tbuf, LEN, "read bool %s", res->id));
+            snpt(snprintf(tbuf, LEN, "read bool %s", dsymid(res)));
             pcom(tbuf);
 
             pins3("li", "$v0", "4");
@@ -394,7 +420,7 @@ void qRead (FILE *f, symbol *res) {
             pins3("li", "$t0", "0");
 
             plab(label2);
-            pins3("sw", "$t0", res->id);
+            pstore("$t0", res);
 
             free(label);
             free(label2);
@@ -411,11 +437,11 @@ void qWrite (FILE *f, symbol *argv1) {
 
     switch (argv1->type) {
         case S_INT:
-            snpt(snprintf(tbuf, LEN, "print integer %s", argv1->id));
+            snpt(snprintf(tbuf, LEN, "print integer %s", dsymid(argv1)));
             pcom(tbuf);
 
             pins3("li", "$v0", "1");
-            pins3("lw", "$a0", argv1->id);
+            pload("$a0", argv1);
             break;
 
         case S_STRING:
@@ -432,10 +458,10 @@ void qWrite (FILE *f, symbol *argv1) {
             label  = nextTmplab();
             label2 = nextTmplab();
 
-            snpt(snprintf(tbuf, LEN, "print bool %s", argv1->id));
+            snpt(snprintf(tbuf, LEN, "print bool %s", dsymid(argv1)));
             pcom(tbuf);
 
-            pins3("lw", "$t0", argv1->id);
+            pload("$t0", argv1);
             pins4("beq", "$t0", "$zero", label);
             pins3("la", "$a0", "_true");
             pins2("j", label2);
@@ -467,11 +493,11 @@ void qWrite (FILE *f, symbol *argv1) {
 }
 
 void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
-    snpt(snprintf(tbuf, LEN, "%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
+    snpt(snprintf(tbuf, LEN, "%s := %s %s %s", dsymid(res), dsymid(argv1), opstr(op), dsymid(argv2)));
     pcom(tbuf);
 
-    pins3("lw", "$t0", argv1->id);
-    pins3("lw", "$t1", argv2->id);
+    pload("$t0", argv1);
+    pload("$t1", argv2);
 
     char *label, *label2;
     switch (op) {
@@ -484,7 +510,7 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
            label  = nextTmplab();
            label2 = nextTmplab();
 
-           pins3("lw", "$t2", argv1->id);
+           pload("$t2", argv1);
            pins3("li", "$t3", "1");
 
            // warning: seulement les puissances > 0 fonctionnent avec ce code
@@ -504,7 +530,7 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
             break;
     }
 
-    pins3("sw", "$t2", res->id);
+    pstore("$t2", res);
 }
 
 void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
@@ -512,11 +538,11 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     label  = nextTmplab();
     label2 = nextTmplab();
 
-    snpt(snprintf(tbuf, LEN, "%s := %s %s %s", res->id, argv1->id, opstr(op), argv2->id));
+    snpt(snprintf(tbuf, LEN, "%s := %s %s %s", dsymid(res), dsymid(argv1), opstr(op), dsymid(argv2)));
     pcom(tbuf);
 
-    pins3("lw", "$t0", argv1->id);
-    pins3("lw", "$t1", argv2->id);
+    pload("$t0", argv1);
+    pload("$t1", argv2);
 
     switch (op) {
         case Q_EQUAL:
@@ -560,7 +586,7 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     pins3("li", "$t3", "0");
 
     plab(label2);
-    pins3("sw", "$t3", res->id);
+    pstore("$t3", res);
 
     free(label);
     free(label2);
@@ -571,10 +597,10 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
     label  = nextTmplab();
     label2 = nextTmplab();
 
-    snpt(snprintf(tbuf, LEN, "%s := NOT %s", res->id, argv1->id));
+    snpt(snprintf(tbuf, LEN, "%s := NOT %s", dsymid(res), dsymid(argv1)));
     pcom(tbuf);
 
-    pins3("lw", "$t0", argv1->id);
+    pload("$t0", argv1);
     pins4("bne", "$t0", "$zero", label);
     pins3("li", "$t3", "1");
     pins2("j", label2);
@@ -583,7 +609,7 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
     pins3("li", "$t3", "0");
 
     plab(label2);
-    pins3("sw", "$t3", res->id);
+    pstore("$t3", res);
 
     free(label);
     free(label2);
@@ -670,7 +696,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     pins4("sub", "$sp", "$sp", tbuf);
 
     // push args to stack
-    funStackPushArgs(f, args);
+    funStackPushArgs(f, fun, args);
 
     /* Stack now (no curfun)    Stack now (curfun != NULL)
        0 -> arg 1               0 -> arg 1
@@ -683,10 +709,10 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
 
     // show funcall args string for debugging
     char argsDebug[LEN];
-    funArgsDebugString(args, argsDebug, LEN);
+    funArgsDebugString(fun, args, argsDebug, LEN);
 
     if (res) {
-        snpt(snprintf(tbuf, LEN, "funcall %s := %s ( %s )", res->id, fun->id, argsDebug));
+        snpt(snprintf(tbuf, LEN, "funcall %s := %s ( %s )", dsymid(res), fun->id, argsDebug));
     } else {
         snpt(snprintf(tbuf, LEN, "funcall %s ( %s )", fun->id, argsDebug));
     }
@@ -752,10 +778,14 @@ int funArgsSize (symbol *fun) {
 int funSymTypeSize (symbol *sym) {
     int bytes;
 
-    switch (sym->type) {
-        case S_INT    : bytes = sizeof(int) ; break ;
-        case S_BOOL   : bytes = sizeof(int) ; break ;
-        default: ferr("mips.c funSymTypeSize arg wrong type");
+    if (sym->ref)
+        bytes = 4;
+    else {
+        switch (sym->type) {
+            case S_INT    : bytes = 4 ; break ;
+            case S_BOOL   : bytes = 4 ; break ;
+            default: ferr("mips.c funSymTypeSize arg wrong type");
+        }
     }
 
     return bytes;
@@ -778,32 +808,55 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
         al      = al->next;
     }
 }
-
-void funStackPushArgs (FILE *f, symbol *args) {
-    int offset = 0, bytes;
+void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
+    int offset = 0, bytes, res;
+    arglist *al = ((fundata *) fun->fdata)->al;
 
     while (args != NULL) {
-        pins3("lw", "$t0", args->id);
+        if (al == NULL)
+            ferr("mips.c funStackPushArgs args len > fun param len");
+
+        if (args->type != al->sym->type)
+            ferr("mips.c funStackPushArgs arg type != fun param type");
+
+        if (al->sym->ref) {
+            pins3("la", "$t0", args->id);
+        } else {
+            pins3("lw", "$t0", args->id);
+        }
+
         snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
         pins3("sw", "$t0", tbuf);
 
         bytes   = funSymTypeSize(args);
         offset += bytes;
         args    = args->next;
+        al      = al->next;
     }
+
+    if (al != NULL)
+        ferr("mips.c funStackPushArgs args len < fun param len");
 }
 
-void funArgsDebugString (symbol *args, char *dstring, int maxlen) {
+void funArgsDebugString (symbol *fun, symbol *args, char *dstring, int maxlen) {
     int bytes, len = 0;
+    arglist *al = ((fundata *) fun->fdata)->al;
 
     while (args != NULL) {
-        bytes = snprintf(dstring + len, maxlen - len, "%s, ", args->id);
+        if (al == NULL)
+            ferr("mips.c funArgsDebugString args len > fun param len");
+
+        bytes = snprintf(dstring + len, maxlen - len, "%s%s, ", al->sym->ref ? "&" : "", args->id);
         if (bytes < 0 || bytes >= maxlen - len)
             ferr("mips.c funArgsDebugString snprintf");
 
         len += bytes;
         args = args->next;
+        al   = al->next;
     }
+
+    if (al != NULL)
+        ferr("mips.c funArgsDebugString args len < fun param len");
 
     if (len > 2)
         dstring[len - 2] = '\0'; // erase the last ", "

@@ -178,14 +178,14 @@
 
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         symbol *ptr = newProg(&stable, $2);
-        progName = strdup($2);
-        $$.ltrue = NULL;
-        $$.lfalse = NULL;
-        $$.quad = $5.quad;
-        $$.ptr = ptr;
-        quad *q  = qGen(Q_MAIN, NULL, NULL, NULL);
-        all_code = concat($4.quad, q);
-        all_code = concat(all_code, $5.quad);
+        progName    = strdup($2);
+        $$.ltrue    = NULL;
+        $$.lfalse   = NULL;
+        $$.quad     = $5.quad;
+        $$.ptr      = ptr;
+        quad *q     = qGen(Q_MAIN, NULL, NULL, NULL);
+        all_code    = concat($4.quad, q);
+        all_code    = concat(all_code, $5.quad);
     }
     ;
 
@@ -216,16 +216,16 @@ varsdecl: VAR_ identlist DPOINT_ typename {
               while (al != NULL) {
                   switch ($4.type) {
                       case S_BOOL:
-                          newVarBool(curtos(), al->id, false, curfun);
+                          newVarBool(curtos(), al->id, false, curfun, false);
                           break;
                       case S_INT:
-                          newVarInt(curtos(), al->id, 0, curfun);
+                          newVarInt(curtos(), al->id, 0, curfun, false);
                           break;
                       case S_STRING:
                           newVarStr(curtos(), al->id, "\"\"", curfun);
                           break;
                       case S_ARRAY:
-                      // CREER une nouvelle variable de table
+                          // CREER une nouvelle variable de table
                           newVarArray(curtos(), al->id, $4.sarray);
                           break;
                     default:
@@ -404,8 +404,8 @@ parlist : %empty {
 par : IDENT_ DPOINT_ typename {
             symbol *s;
             switch ($3.type) {
-                case S_INT  : s = newVarInt(curtos(), $1, 0, curfun)      ; break ;
-                case S_BOOL : s = newVarBool(curtos(), $1, false, curfun) ; break ;
+                case S_INT  : s = newVarInt(curtos(), $1, 0, curfun, false)      ; break ;
+                case S_BOOL : s = newVarBool(curtos(), $1, false, curfun, false) ; break ;
                 case S_ARRAY : break;
                 default: ferr("cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
             }
@@ -414,7 +414,15 @@ par : IDENT_ DPOINT_ typename {
         }
 
     | REF_ IDENT_ DPOINT_ typename {
+            symbol *s;
+            switch ($4.type) {
+                case S_INT  : s = newVarInt(curtos(), $2, 0, curfun, true)      ; break ;
+                case S_BOOL : s = newVarBool(curtos(), $2, false, curfun, true) ; break ;
+                case S_ARRAY : break;
+                default: ferr("cs.y par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
+            }
 
+            $$.al = arglistNew(NULL, s);
         }
     ;
 

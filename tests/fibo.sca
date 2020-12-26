@@ -1,5 +1,3 @@
-(* ça marche pas putaing *)
-
 program fibo
     var d : int;
 

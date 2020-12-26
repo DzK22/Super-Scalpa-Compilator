@@ -35,8 +35,8 @@ void funreturn (FILE *f, symbol *fun, symbol *ret);
 int  funArgsSize         (symbol *fun);
 int  funSymTypeSize      (symbol *s);
 void funStackLoadArgs    (FILE *f, symbol *fun, int offset);
-void funStackPushArgs    (FILE *f, symbol *args);
-void funArgsDebugString  (symbol *fun, char *dstring, int maxlen);
+void funStackPushArgs    (FILE *f, symbol *fun, symbol *args);
+void funArgsDebugString  (symbol *fun, symbol *args, char *dstring, int maxlen);
 
 int  curfunVarSize       (void);
 void curfunStackPushVars (FILE *f);

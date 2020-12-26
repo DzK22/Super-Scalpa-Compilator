@@ -1,0 +1,12 @@
+program Funref
+    var a : int;
+
+    function test (ref t : int) : unit
+    begin
+        t := t + 2;
+    end;
+
+    begin
+        test(a);
+        write a; (* a doit valoir 2 *)
+    end

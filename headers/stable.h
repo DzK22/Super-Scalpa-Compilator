@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 #define LEN 128
 
 typedef enum stype {
@@ -19,27 +20,28 @@ typedef struct arr_range {
 } dimProp;
 
 typedef struct s_array {
-    int ndims;
-    int size;
-    dimProp *dims;           //pointeur sur la première dimension
-    int *values;  //Liste des valeurs
-    stype type;
-    int index;
+    int     ndims;
+    int     size;
+    dimProp *dims;    // pointeur sur la première dimension
+    int     *values;  // Liste des valeurs
+    stype   type;
+    int     index;
 } s_array;
 
 typedef struct symbol {
     char   *id;
     bool   tmp; // is tmp var ? (true = cannot be modified by user)
     stype  type;
+    bool   ref;
     struct symbol *next;
 
     union {
-        int  ival;
-        char *sval;
-        bool bval;
-        void *fdata; // function data ( = fundata)
-        s_array *arr;
-        // probleme = on peut pas declarer arglist fdata sinon ca cause interblocage du pauvre de déclarations entre arglist et symbol des fichiers stable.h et arglist.h
+        uint32_t ival;   // integer
+        uint8_t  *sval;  // string
+        uint32_t bval;   // boolean
+
+        void     *fdata; // function data ( = struct fundata)
+        s_array  *arr;   // array
     };
 } symbol;
 
@@ -50,14 +52,14 @@ symbol *sAdd        (symbol **);
 symbol *searchTable (symbol *, char *, symbol *);
 symbol *search      (symbol *, symbol *, char *);
 
-symbol *newVar      (symbol **, stype, char *, void *, symbol *);
+symbol *newVar      (symbol **, stype, char *, void *, symbol *, bool);
 symbol *newTmpInt   (symbol **, int);
 symbol *newTmpStr   (symbol **, char *);
 symbol *newTmpBool  (symbol **, bool);
 symbol *newTmpLabel (symbol **);
-symbol *newVarInt   (symbol **, char *, int, symbol *);
+symbol *newVarInt   (symbol **, char *, int, symbol *, bool);
 symbol *newVarStr   (symbol **, char *, char *, symbol *);
-symbol *newVarBool  (symbol **, char *, bool, symbol *);
+symbol *newVarBool  (symbol **, char *, bool, symbol *, bool);
 symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
 symbol *newVarArray (symbol **, char *, s_array *);

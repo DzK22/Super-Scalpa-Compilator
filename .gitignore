@@ -2,3 +2,4 @@ scalpa
 tmp/*
 tags
 vgcore.*
+*.s
