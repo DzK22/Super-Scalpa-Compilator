@@ -572,7 +572,6 @@ lvalue: IDENT_ {
               if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
                 ferr("Nb dimension ne correspond pas");
               ptr->arr->index = cpt;
-              printf("index = %d\n", cpt);
                if (ptr->arr->index > ptr->arr->size) {
                   fprintf(stderr, "index out of range\n");
                   exit(EXIT_FAILURE);
@@ -774,17 +773,17 @@ expr :  expr PLUS_ expr {
                 fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
                 exit(EXIT_FAILURE);
             }
-            printf("dimnum = %d\n", dimnum);
+            //printf("dimnum = %d\n", dimnum);
             if (dimnum == dimension->dim - 1) {
-                printf("%d - %d\n", curind, dimension->min);
+                //printf("%d - %d\n", curind, dimension->min);
                 cpt *= cpt;
                 cpt += curind - dimension->min;
             }
             else {
-                int tata = abs(dimension->max) - abs(dimension->min);
+                int tata = abs(dimension->max) - abs(dimension->min) + 1;
                 int toto = curind - dimension->min;
                 int resu = toto * tata;
-                fprintf(stdout, "%d - %d\n", abs(dimension->max), abs(dimension->min));
+                //fprintf(stdout, "%d - %d\n", abs(dimension->max), abs(dimension->min));
                 cpt *= cpt;
                 cpt += resu;
             }
@@ -797,7 +796,7 @@ expr :  expr PLUS_ expr {
         if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
           ferr("Nb dimension ne correspond pas");
         ptr->arr->index = cpt;
-        printf("indexuu = %d\n", ptr->arr->index);
+         printf("TOTOLANDDOOO %d\n", ptr->arr->index);
          if (ptr->arr->index > ptr->arr->size) {
             fprintf(stderr, "index out of range\n");
             exit(EXIT_FAILURE);

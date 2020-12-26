@@ -110,6 +110,9 @@ void qPrint (quad *q) {
             case Q_AFFEC:
                 fprintf(stdout, "AFFEC\t\t");
                 break;
+            default:
+                //TO AVOID WARNINGS AT COMPILATION MAYBE TODO ?
+                break;
         }
 
         if (cur->argv1 == NULL)

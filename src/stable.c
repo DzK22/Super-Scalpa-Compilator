@@ -251,7 +251,13 @@ void stablePrint (symbol *tos) {
                     case S_UNIT:
                         fprintf(stdout, "UNIT\n");
                         break;
+                    default:
+                        //Others todo
+                        break;
                 }
+                break;
+            default:
+                //OTHERS TODO
                 break;
         }
         // fprintf(stdout, "\n");

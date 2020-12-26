@@ -92,7 +92,6 @@ void getMips (FILE *f, symbol *s, quad *q) {
 }
 
 void getData (FILE *f, symbol *s) {
-    char *arrvalues;
     int i;
     while (s != NULL) {
         switch (s->type) {
@@ -123,6 +122,9 @@ void getData (FILE *f, symbol *s) {
                         printf("I = %d\n", i);
                     }
                 }
+                break;
+            default:
+                //TO AVOID WARNINGS
                 break;
         }
 
@@ -178,7 +180,8 @@ void getText (FILE *f, quad *q) {
         gtrue   = q->gtrue;
         gfalse  = q->gfalse;
         gnext   = q->gnext;
-
+        (void)gtrue;
+        (void)gnext;
         switch (q->op) {
             case Q_PLUS:
             case Q_MINUS:
@@ -221,7 +224,7 @@ void getText (FILE *f, quad *q) {
                 }
                 else if (argv1->type == S_ARRAY) {
                     snpt(snprintf(tbuf, LEN, "%d", argv1->arr->index - 1));
-                    //printf("HAHAHA %d\n", argv1->arr->index);
+                    printf("HAHAHA %d\n", argv1->arr->index);
                     pins3("li", "$t2", tbuf);
                     pins3("la", "$t3", argv1->id);
                     pins4("mul", "$t4", "$t2", "4");
@@ -396,6 +399,10 @@ void qRead (FILE *f, symbol *res) {
             free(label);
             free(label2);
             break;
+
+        default:
+            //TO AVOID WARNINGS
+            break;
     }
 }
 
@@ -450,6 +457,10 @@ void qWrite (FILE *f, symbol *argv1) {
             pins3("lw", "$a0", "($t1)");
             pins3("li", "$v0", "1");
             break;
+
+        default:
+            //TO AVOID WARNINGS
+            break;
     }
 
     pins1("syscall");
@@ -487,6 +498,10 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
            free(label);
            free(label2);
            break;
+
+        default:
+            //TO AVOID WARNING
+            break;
     }
 
     pins3("sw", "$t2", res->id);
@@ -750,7 +765,7 @@ int funSymTypeSize (symbol *sym) {
  * @param offset Starting offset (= after saved ra)
  */
 void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
-    int bytes, res;
+    int bytes;
     arglist *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
@@ -765,7 +780,7 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
 }
 
 void funStackPushArgs (FILE *f, symbol *args) {
-    int offset = 0, bytes, res;
+    int offset = 0, bytes;
 
     while (args != NULL) {
         pins3("lw", "$t0", args->id);
@@ -816,7 +831,7 @@ void curfunStackPushVars (FILE *f) {
     if (curfun == NULL)
         ferr("mips.c curfunStackPushVars - curfun is NULL");
 
-    int offset = 0, bytes, res;
+    int offset = 0, bytes;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
@@ -834,7 +849,7 @@ void curfunStackLoadVars (FILE *f) {
     if (curfun == NULL)
         ferr("mips.c curfunStackLoadVars - curfun is NULL");
 
-    int offset = 0, bytes, res;
+    int offset = 0, bytes;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {

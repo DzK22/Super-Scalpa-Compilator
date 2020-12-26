@@ -1,16 +1,14 @@
 program tabz
   var a, c, t : int;
-  var tab : array[-4..4,1..3] of int ;
+  var tab : array[1..3,1..4] of int ;
     begin
-        (*a := tab[-4,2];
-        write a;*)
-        tab[-4,1] := 1000;
-        write tab[-4,1];
+        a := tab[1,1];
+        write a;
         write "\n";
-    (*  c := tab[2,2];
+        c := tab[2,2];
         write c;
         write "\n";
         t := tab[3,3];
         write t;
-        write "\n";*)
+        write "\n";
      end

@@ -3,6 +3,8 @@ SRC=src/
 HEADERS=headers/
 TMP=tmp/
 MIPS=mips/
+CC= gcc -g
+CFLAGS= -Wall -Werror -Wextra
 
 
 all:
@@ -12,11 +14,11 @@ all:
 	mv $(NAME).tab.h $(TMP)
 
 	flex -o $(TMP)$(NAME).yy.c $(SRC)$(NAME).lex
-	gcc -c $(SRC)stable.c
-	gcc -c $(SRC)quad.c
-	gcc -c $(SRC)mips.c
-	gcc -c $(SRC)arglist.c
-	gcc -c $(SRC)opti.c
+	$(CC) -c $(SRC)stable.c $(CFLAGS)
+	$(CC) -c $(SRC)quad.c $(CFLAGS)
+	$(CC) -c $(SRC)mips.c $(CFLAGS)
+	$(CC) -c $(SRC)arglist.c $(CFLAGS)
+	$(CC) -c $(SRC)opti.c $(CFLAGS)
 
 	mv stable.o $(TMP)
 	mv quad.o $(TMP)
@@ -24,7 +26,7 @@ all:
 	mv arglist.o $(TMP)
 	mv opti.o $(TMP)
 
-	gcc -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)arglist.o $(TMP)mips.o $(TMP)opti.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
+	$(CC) -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)arglist.o $(TMP)mips.o $(TMP)opti.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 
 clean:
 	rm -rf $(TMP) scalpa $(MIPS) *.s tmp_res
