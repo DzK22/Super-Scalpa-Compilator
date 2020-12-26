@@ -27,15 +27,6 @@
     // current parsing function symbol or NULL
     static symbol *curfun = NULL;
 
-    void printRange (dimProp *list) {
-        dimProp *cur = list;
-        while (cur != NULL) {
-                fprintf(stdout, "min:%d[]max:%d[]ndim:%d\n", cur->min, cur->max, cur->dim);
-            cur = cur->next;
-        }
-    }
-
-
     symbol ** curtos (void) {
         if (curfun == NULL)
             return &stable;
@@ -223,8 +214,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                           newVarInt(curtos(), al->id, 0, curfun, false);
                           break;
                       case S_ARRAY:
-                          // CREER une nouvelle variable de table
-                          newVarArray(curtos(), al->id, $4.sarray);
+                          newVarArray(curtos(), al->id, $4.sarray, curfun, false);
                           break;
                     default:
                         ferr(linecpt,"cs.y varsdecl identlist An arg has wrong type");
@@ -264,7 +254,6 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                 if (arr == NULL)
                     ferr(linecpt,"cs.y arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - malloc");
 
-                 // printRange(rg);
                  arr->dims  = $3;
                  arr->ndims = $3->dim;
                  arr->type  = $6;
@@ -280,7 +269,6 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                  }
 
                  arr->size = size;
-
                 if (arr->type != S_INT && arr->type != S_BOOL)
                     ferr(linecpt, "cs.y arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - wrong array type");
 
@@ -303,10 +291,6 @@ rangelist : CTE_ TWO_POINTS_ CTE_ {
                 $$->min  = $1.ival;
                 $$->max  = $3.ival;
                 $$->next = NULL;
-
-                // DEBUG a virer
-                // TODO
-                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$->min, $$->max, $$->dim);
             }
 
         | CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist {
@@ -324,10 +308,6 @@ rangelist : CTE_ TWO_POINTS_ CTE_ {
             $$->min  = $1.ival;
             $$->max  = $3.ival;
             $$->next = $5;
-
-            // DEBUG a virer
-            // TODO
-            fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$->min, $$->max, $$->dim);
         }
         ;
 
@@ -373,9 +353,9 @@ parlist : %empty {
 par : IDENT_ DPOINT_ typename {
             symbol *s;
             switch ($3.type) {
-                case S_INT  : s = newVarInt(curtos(), $1, 0, curfun, false)      ; break ;
-                case S_BOOL : s = newVarBool(curtos(), $1, false, curfun, false) ; break ;
-                case S_ARRAY : break;
+                case S_INT   : s = newVarInt(curtos(), $1, 0, curfun, false)           ; break ;
+                case S_BOOL  : s = newVarBool(curtos(), $1, false, curfun, false)      ; break ;
+                case S_ARRAY : s = newVarArray(curtos(), $1, $3.sarray, curfun, false) ; break ;
                 default: ferr(linecpt,"cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
             }
 
@@ -385,9 +365,9 @@ par : IDENT_ DPOINT_ typename {
     | REF_ IDENT_ DPOINT_ typename {
             symbol *s;
             switch ($4.type) {
-                case S_INT  : s = newVarInt(curtos(), $2, 0, curfun, true)      ; break ;
-                case S_BOOL : s = newVarBool(curtos(), $2, false, curfun, true) ; break ;
-                case S_ARRAY : break;
+                case S_INT   : s = newVarInt(curtos(), $2, 0, curfun, true)              ; break ;
+                case S_BOOL  : s = newVarBool(curtos(), $2, false, curfun, true)         ; break ;
+                case S_ARRAY : s = newVarArray(curtos(), $2, $4.sarray, curfun, true)    ; break ;
                 default: ferr(linecpt,"cs.y par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
             }
 
@@ -397,22 +377,13 @@ par : IDENT_ DPOINT_ typename {
 
 instr: lvalue AFFEC_ expr {
                 if ($1.ptr->type == S_ARRAY) {
-                    if ($3.ptr->type != $1.ptr->arr->type) {
-                        printf("type lvalue %d \n ", $1.ptr->arr->type) ;
-                        printf("type expr %d \n ", $3.ptr->type) ;
+                    if ($3.ptr->type != $1.ptr->arr->type)
                         ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue array type != expr type");
-                    }
                 } else if ($3.ptr->type == S_ARRAY) {
-                    if ($1.ptr->type != $3.ptr->arr->type) {
-                        printf("type lvalue %d \n ", $1.ptr->type) ;
-                        printf("type expr %d \n ", $3.ptr->type) ;
+                    if ($1.ptr->type != $3.ptr->arr->type)
                         ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue type != expr array type");
-                    }
-                } else if ($1.ptr->type != $3.ptr->type) {
-                    printf("type lvalue %d \n ", $1.ptr->type) ;
-                    printf("type expr %d \n ", $3.ptr->type) ;
+                } else if ($1.ptr->type != $3.ptr->type)
                     ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue type != expr type");
-                }
 
                 symbol *s = NULL;
                 if ($1.ptr->type == S_ARRAY)
@@ -541,6 +512,9 @@ lvalue: IDENT_ {
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
                 symbol *ptr = search(stable, curfun, $1);
                 testID(ptr, $1);
+                if (ptr->type != S_ARRAY)
+                    ferr(__LINE__, "lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
+
                 // calcul de la valeur de l'indice du tableau
                 arrayComputeIndex($3.al, ptr);
 
@@ -722,6 +696,10 @@ expr :  expr PLUS_ expr {
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
           symbol *ptr = search(stable, curfun, $1);
           testID(ptr, $1);
+
+          if (ptr->type != S_ARRAY)
+              ferr(__LINE__, "expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
+
           arrayComputeIndex($3.al, ptr);
 
           symbol *arrVal;
@@ -823,11 +801,9 @@ int main (int argc, char **argv) {
             case 'o':
                 o = true;
                 res = snprintf(filename, LEN, "%s", optarg);
-                printf("tata : %s\n", filename);
-                if (res < 0 || res >= LEN) {
-                    fprintf(stderr, "snprintf error\n");
-                    return EXIT_FAILURE;
-                }
+                if (res < 0 || res >= LEN)
+                    ferr(__LINE__, "cs.y main snprintf");
+
                 opt += 2;
                 break;
             default:
@@ -842,22 +818,18 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-          //yydebug = 1;
+         // yydebug = 1;
     #endif
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");
-    if (yyin == NULL) {
-        fprintf(stderr, "Error fopen\n");
-        return EXIT_FAILURE;
-    }
+    if (yyin == NULL)
+        ferr(__LINE__, "cs.y main - error fopen");
     yyparse();
     char out[LEN];
 
     res = snprintf(out, LEN, "%s.s", o ? filename : (*progName ? progName : "out"));
-    if (res < 0 || res >= LEN) {
-        fprintf(stderr, "snprintf error\n");
-        return EXIT_FAILURE;
-    }
+    if (res < 0 || res >= LEN)
+        ferr(__LINE__, "cs.y main - snprintf");
 
     FILE *output = fopen(out, "w");
     if (yydebug)

@@ -82,7 +82,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
             res = sprintf(tid, "prog_%s", id);
         else if (type == S_FUNCTION)
             res = sprintf(tid, "fun_%s", id);
-        else { // int, bool, string
+        else { // int, bool, string, array
             if (curfun == NULL)
                 res = sprintf(tid, "var_%s", id);
             else
@@ -101,33 +101,33 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
     nt->tmp  = isTmp;
     nt->ref  = ref;
 
-    if (!ref) {
-        switch (type) {
-            case S_INT:
+    switch (type) {
+        case S_INT:
+            if (!ref)
                 nt->ival = *((int *) data);
-                break;
-            case S_BOOL:
+            break;
+        case S_BOOL:
+            if (!ref)
                 nt->bval = *((bool *) data);
-                break;
-            case S_STRING:
-                if ((nt->sval = strdup((char *) data)) == NULL)
-                    ferr(__LINE__ ,"stable.c newVar strdup data");
-                break;
-            case S_LABEL:
-                if ((nt->sval = strdup(tid)) == NULL)
-                    ferr(__LINE__ ,"stable.c newVar strdup data");
-                break;
-            case S_FUNCTION:
-                nt->fdata = data;
-                break;
-            case S_ARRAY:
-                nt->arr = (s_array *) data;
-                break;
-            case S_PROG:
-                break;
-            default:
-                ferr(__LINE__ ,"stable.c newVar unknow type");
-        }
+            break;
+        case S_STRING:
+            if ((nt->sval = strdup((char *) data)) == NULL)
+                ferr(__LINE__ ,"stable.c newVar strdup data");
+            break;
+        case S_LABEL:
+            if ((nt->sval = strdup(tid)) == NULL)
+                ferr(__LINE__ ,"stable.c newVar strdup data");
+            break;
+        case S_FUNCTION:
+            nt->fdata = data;
+            break;
+        case S_ARRAY:
+            nt->arr = (s_array *) data;
+            break;
+        case S_PROG:
+            break;
+        default:
+            ferr(__LINE__ ,"stable.c newVar unknow type");
     }
 
      return nt;
@@ -173,12 +173,12 @@ symbol *newVarFun (symbol **tos, char *id) {
     return newVar(tos, S_FUNCTION, id, fdata, NULL, false);
 }
 
-symbol *newProg (symbol **tos, char *id) {
-    return newVar(tos, S_PROG, id, NULL, NULL, false);
+symbol *newVarArray (symbol **tos, char *id, s_array *arr, symbol *curfun, bool ref) {
+    return newVar(tos, S_ARRAY, id, arr, curfun, ref);
 }
 
-symbol *newVarArray (symbol **tos, char *id, s_array *arr) {
-    return newVar(tos, S_ARRAY, id, arr, NULL, false);
+symbol *newProg (symbol **tos, char *id) {
+    return newVar(tos, S_PROG, id, NULL, NULL, false);
 }
 
 symbol *searchTable (symbol *tos, char *id, symbol *curfun) {

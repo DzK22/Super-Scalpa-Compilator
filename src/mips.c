@@ -118,33 +118,37 @@ void getMips (FILE *f, symbol *s, quad *q) {
 void getData (FILE *f, symbol *s) {
     int i;
     while (s != NULL) {
-        switch (s->type) {
-            case S_INT:
-                snpt(snprintf(tbuf, LEN, ".word %d", s->ival));
-                pdat(s->id, tbuf);
-                break;
-            case S_BOOL:
-                snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));
-                pdat(s->id, tbuf);
-                break;
-            case S_STRING:
-                snpt(snprintf(tbuf, LEN, ".asciiz %s", s->sval));
-                pdat(s->id, tbuf);
-                break;
-            case S_ARRAY:
-                fprintf(f, "\t%s:\t.%s ", s->id, s->arr->type == S_INT ? "word" : "byte");
+        if (s->ref) {
+            pdat(s->id, ".word 0");
+        } else {
+            switch (s->type) {
+                case S_INT:
+                    snpt(snprintf(tbuf, LEN, ".word %d", s->ival));
+                    pdat(s->id, tbuf);
+                    break;
+                case S_BOOL:
+                    snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));
+                    pdat(s->id, tbuf);
+                    break;
+                case S_STRING:
+                    snpt(snprintf(tbuf, LEN, ".asciiz %s", s->sval));
+                    pdat(s->id, tbuf);
+                    break;
+                case S_ARRAY:
+                    fprintf(f, "\t%s:\t.%s ", s->id, s->arr->type == S_INT ? "word" : "byte");
 
-                for (i = 0; i < s->arr->size; i++) {
-                    if (i != s->arr->size - 1)
+                    for (i = 0; i < s->arr->size; i++) {
+                        if (i != s->arr->size - 1)
                         fprintf(f, "0, ");
-                    else
+                        else
                         fprintf(f, "0\n");
-                }
+                    }
 
-                break;
-            default:
-                //TO AVOID WARNINGS
-                break;
+                    break;
+                default:
+                    //TO AVOID WARNINGS
+                    break;
+            }
         }
 
         s = s->next;
@@ -341,11 +345,16 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
     if (res->type == S_ARRAY) {
         snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
         pins3("li", "$t2", tbuf);
-        pins3("la", "$t3", res->id);
+
+        if (res->ref) {
+            pins3("lw", "$t3", res->id);
+        } else {
+            pins3("la", "$t3", res->id);
+        }
 
         if (res->arr->type == S_INT) {
             pins4("mul", "$t4", "$t2", "4");
-            pins4("add", "$t1", "$t4", "$t3");
+            pins4("add", "$t1", "$t4", "$t3" );
         } else
             pins4("add", "$t1", "$t2", "$t3");
 
@@ -355,7 +364,12 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
     } else if (argv1->type == S_ARRAY) {
         snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
         pins3("li", "$t2", tbuf);
-        pins3("la", "$t3", argv1->id);
+
+        if (argv1->ref) {
+            pins3("lw", "$t3", argv1->id);
+        } else {
+            pins3("la", "$t3", argv1->id);
+        }
 
         if (argv1->arr->type == S_INT) {
             pins4("mul", "$t4", "$t2", "4");
@@ -770,6 +784,7 @@ int funSymTypeSize (symbol *sym) {
         switch (sym->type) {
             case S_INT    : bytes = 4 ; break ;
             case S_BOOL   : bytes = 1 ; break ;
+            case S_ARRAY  : bytes = 4;   break ;
             default       : ferr(__LINE__, "mips.c funSymTypeSize arg wrong type");
 
         }
@@ -797,15 +812,22 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
 }
 
 void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
-    int offset = 0, bytes;
+    int offset  = 0, bytes;
     arglist *al = ((fundata *) fun->fdata)->al;
 
     while (args != NULL) {
         if (al == NULL)
-            ferr(__LINE__ ,"mips.c funStackPushArgs args len > fun param len");
+            ferr(__LINE__ , "mips.c funStackPushArgs args len > fun param len");
 
         if (args->type != al->sym->type)
-            ferr(__LINE__ ,"mips.c funStackPushArgs arg type != fun param type");
+            ferr(__LINE__ , "mips.c funStackPushArgs arg type != fun param type");
+
+        if (args->type == S_ARRAY) {
+            if (args->arr->type != al->sym->arr->type)
+                ferr(__LINE__, "mips.c funStackPushArgs type array but array elems type differ");
+            if (args->arr->size != al->sym->arr->size)
+                ferr(__LINE__, "mips.c funStackPushArgs type array but array size differ");
+        }
 
         if (al->sym->ref) {
             pins3("la", "$t0", args->id);

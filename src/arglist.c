@@ -59,6 +59,7 @@ symbol *arglistToSymlist (arglist *al) {
 		switch (cur->type) {
 			case S_INT  : cur->ival = al->sym->ival; break;
 			case S_BOOL : cur->bval = al->sym->bval; break;
+			case S_ARRAY : cur->arr = al->sym->arr;  break;
 			default: ferr(__LINE__ ,"arglist.c arglistToSymlist wrong type");
 		}
 

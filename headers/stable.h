@@ -61,7 +61,7 @@ symbol *newVarStr   (symbol **, char *, char *, symbol *);
 symbol *newVarBool  (symbol **, char *, bool, symbol *, bool);
 symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
-symbol *newVarArray (symbol **, char *, s_array *);
+symbol *newVarArray (symbol **, char *, s_array *, symbol *, bool);
 
 void   stablePrint  (symbol *);
 
