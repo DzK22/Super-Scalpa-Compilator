@@ -8,6 +8,6 @@ program Funref
 
     begin
         test(a);
-        write a; (* a doit valoir 2 *)
+        write a;
         write "\n";
     end

@@ -89,8 +89,6 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
 
 {U}{N}{I}{T}                    { return UNIT_;                     }
 
-{S}{T}{R}{I}{N}{G}              { return STRING_;                   }
-
 {A}{R}{R}{A}{Y}                 { return ARRAY_;                    }
 
 {O}{F}                          { return OF_;                       }

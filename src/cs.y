@@ -205,12 +205,10 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                  case S_BOOL:
                     fprintf(stdout, "boolean\n");
                     break;
-                 case S_STRING:
-                    fprintf(stdout, "string\n");
-                    break;
                  case S_ARRAY:
                     fprintf(stdout, "array\n");
                     break;
+                default: ferr("cs.y varsdecl : VAR_ identlist DPOINT_ typename - wrong typename");
 
              }
              arglist *al = $2.al;
@@ -222,9 +220,6 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                           break;
                       case S_INT:
                           newVarInt(curtos(), al->id, 0, curfun, false);
-                          break;
-                      case S_STRING:
-                          newVarStr(curtos(), al->id, "\"\"", curfun);
                           break;
                       case S_ARRAY:
                           // CREER une nouvelle variable de table
@@ -260,7 +255,6 @@ typename : atomictype {
 atomictype : UNIT_   { $$ = S_UNIT;    }
            | BOOL_   { $$ = S_BOOL;    }
            | INT_    { $$ = S_INT;     }
-           | STRING_ { $$ = S_STRING;  }
            ;
 
 
@@ -488,10 +482,16 @@ instr: lvalue AFFEC_ expr {
             }
         | BEGIN_ END_ {}
         | READ_ expr {
+                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL)
+                    ferr("cs.y instr : READ_ expr - type cannot be read");
+
                 quad *q = qGen(Q_READ, $2.ptr, NULL, NULL);
                 $$.quad = concat($2.quad, q);
             }
         | WRITE_ expr {
+                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING)
+                    ferr("cs.y instr : WRITE_ expr - type cannot be write");
+
                 quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
                 $$.quad = concat($2.quad, q);
             }

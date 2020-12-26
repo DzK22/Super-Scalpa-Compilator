@@ -60,7 +60,7 @@ static quad *curquad  = NULL;
  */
 
 // get debug sym ID => if sym is not ref, put it ID in buf, otherwise put "*ID" in buf
-static int dsymidcnt = 0; // alternate between tbuf2, tbuf3 and tbuf4 for each call: this make possible to use the result of this fonction in max 3 args of a function :)
+static int dsymidcnt = 0; // alternate between tbuf2, tbuf3 and tbuf4 for each call: this make possible to use the result of this fonction in max 3 args of a function call :)
 char *dsymid(symbol *sym) {
     char *buf;
     if (dsymidcnt % 3 == 0) buf = tbuf2;
@@ -83,10 +83,6 @@ void getMips (FILE *f, symbol *s, quad *q) {
     pdat("_true", ".asciiz \"true\"");
     pdat("_false", ".asciiz \"false\"");
     pdat("_read_int", ".asciiz \"Enter int: \"");
-    pdat("_read_string", ".asciiz \"Enter string: \"");
-    pdir(".align 2");
-    snpt(snprintf(tbuf, LEN, ".space %d", MIPS_BUFFER_SPACE));
-    pdat("_buffer", tbuf);
 
     // tos global
     pdir("");
@@ -382,21 +378,6 @@ void qRead (FILE *f, symbol *res) {
             pins3("li", "$v0", "5");
             pins1("syscall");
             pstore("$v0", res);
-            break;
-
-        case S_STRING:
-            snpt(snprintf(tbuf, LEN, "read string %s", res->id));
-            pcom(tbuf);
-
-            pins3("li", "$v0", "4");
-            pins3("la", "$a0", "_read_string");
-            pins1("syscall");
-            pins3("li", "$v0", "8");
-            pins3("la", "$a0", "_buffer");
-            snpt(snprintf(tbuf, LEN, "%d", MIPS_BUFFER_SPACE));
-            pins3("li", "$a1", tbuf);
-            pins3("move", "$s0", "$a0");
-            pins1("syscall");
             break;
 
         case S_BOOL:
