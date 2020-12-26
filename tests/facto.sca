@@ -9,11 +9,24 @@ program facto
     end;
 
     begin
-        read d;
+        d := 0 ;
+        write "fact(";
+        write d;
+        write ") = ";
+        write fact(d);
+        write "\n";
+
+        d := 4 ;
+        write "fact(";
+        write d;
+        write ") = ";
+        write fact(d);
+        write "\n";
+
+        d := 9 ;
         write "fact(";
         write d;
         write ") = ";
         write fact(d);
         write "\n";
     end
-

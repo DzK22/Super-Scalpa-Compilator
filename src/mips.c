@@ -221,7 +221,7 @@ void getText (FILE *f, quad *q) {
                 if (!argv1)
                     ferr("mips.c getText Q_WRITE quad error");
 
-                qWrite(f, argv1);
+                qWrite(f, argv1, argv2);
                 break;
 
             case Q_READ:
@@ -232,7 +232,7 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_AFFEC:
-                if (!res || !argv1 || !argv2) // argv2 = symbol qui stocke index du tab dans ival
+                if (!res || !argv1) // argv2 = symbol qui stocke index du tab dans ival
                     ferr("mips.c getText Q_AFFEC quad error");
                 // ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
                 if (res->type == S_ARRAY) {
@@ -414,7 +414,7 @@ void qRead (FILE *f, symbol *res) {
     }
 }
 
-void qWrite (FILE *f, symbol *argv1) {
+void qWrite (FILE *f, symbol *argv1, symbol *argv2) {
     char *label, *label2;
 
     switch (argv1->type) {
@@ -456,7 +456,8 @@ void qWrite (FILE *f, symbol *argv1) {
             break;
 
         case S_ARRAY:
-            snpt(snprintf(tbuf, LEN, "%d", argv1->arr->index - 1));
+            printf("TOTOTOLANDOOOU %d\n", argv2->ival);
+            snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
             //printf("HAHAHA %d\n", argv1->arr->index);
             pins3("li", "$t2", tbuf);
             pins3("la", "$t3", argv1->id);

@@ -7,7 +7,16 @@ program Funref
     end;
 
     begin
+
+        a := -2 ;
+
         test(a);
         write a;
         write "\n";
+
+        test(a);
+        write a;
+        write "\n";
+
+
     end

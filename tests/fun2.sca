@@ -17,6 +17,14 @@ program Fun2
         write "f2(";
         write d;
         write ") = ";
-        write f2(-3);
+        write f2(d);
+        write "\n";
+
+        d := -3;
+
+        write "f2(";
+        write d;
+        write ") = ";
+        write f2(d);
         write "\n";
     end

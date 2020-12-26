@@ -427,11 +427,11 @@ instr: lvalue AFFEC_ expr {
                     printf("type expr %d \n ", $3.ptr->type) ;
                     ferr("cs.y instr: lvalue AFFEC_ expr - lvalue type != expr type");
                 }
-    
-                symbol *s;
+
+                symbol *s = NULL;
                 if ($1.ptr->type == S_ARRAY)
                     s = newTmpInt(curtos(), $1.ptr->arr->index);
-                else
+                else if ($3.ptr->type == S_ARRAY)
                     s = newTmpInt(curtos(), $3.ptr->arr->index);
 
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, s);
@@ -477,7 +477,11 @@ instr: lvalue AFFEC_ expr {
                 if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING && $2.ptr->type != S_ARRAY)
                     ferr("cs.y instr : WRITE_ expr - type cannot be write");
 
-                quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
+                symbol *s = NULL;
+                if ($2.ptr->type == S_ARRAY)
+                    s = newTmpInt(curtos(), $2.ptr->arr->index);
+
+                quad *q = qGen(Q_WRITE, NULL, $2.ptr, s);
                 $$.quad = concat($2.quad, q);
             }
         | IF_ expr THEN_ instr m %prec IFX {
@@ -791,8 +795,12 @@ expr :  expr PLUS_ expr {
         if (ptr->arr->index > ptr->arr->size)
             ferr("index out of range 1");
 
-        $$.ptr  = ptr;
-        $$.quad = NULL ;
+        symbol *arrVal = newTmpInt(curtos(), 0);
+        symbol *tmp    = newTmpInt(curtos(), ptr->arr->index);
+
+        quad *q = qGen(Q_AFFEC, arrVal, ptr, tmp);
+        $$.ptr  = arrVal;
+        $$.quad = q;
          }
       | IDENT_ {
             symbol *ptr = search(stable, curfun, $1);

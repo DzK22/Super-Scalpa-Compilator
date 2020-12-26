@@ -10,8 +10,22 @@ program fibo
         return fib(n - 1) + fib(n - 2);
     end;
 
-    begin
-        d := 5 ;
+        begin
+        d := 1 ;
+        write "fib(";
+        write d;
+        write ") = ";
+        write fib(d);
+        write "\n";
+
+        d := 7 ;
+        write "fib(";
+        write d;
+        write ") = ";
+        write fib(d);
+        write "\n";
+
+        d := 10 ;
         write "fib(";
         write d;
         write ") = ";
