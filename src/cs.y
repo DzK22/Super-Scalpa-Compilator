@@ -427,19 +427,17 @@ instr: lvalue AFFEC_ expr {
                     printf("type expr %d \n ", $3.ptr->type) ;
                     ferr("cs.y instr: lvalue AFFEC_ expr - lvalue type != expr type");
                 }
+    
+                symbol *s;
+                if ($1.ptr->type == S_ARRAY)
+                    s = newTmpInt(curtos(), $1.ptr->arr->index);
+                else
+                    s = newTmpInt(curtos(), $3.ptr->arr->index);
 
-                //if ($1.ptr->type == S_ARRAY)
-                //    printf("TATALAND = %d\n", $1.ptr->arr->index);
-                //if ($1.ptr->type == S_ARRAY) {
-                //    $1.ptr->arr->values[$1.ptr->arr->index] = $3.ptr->ival;
-                //    printf("TOTO %d\n", $3.ptr->ival);
-                //}
-
-                quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
+                quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, s);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
-
             }
         | RETURN_ expr {
                 if (curfun == NULL)
@@ -476,7 +474,7 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = concat($2.quad, q);
             }
         | WRITE_ expr {
-                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING)
+                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING && $2.ptr->type != S_ARRAY)
                     ferr("cs.y instr : WRITE_ expr - type cannot be write");
 
                 quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);

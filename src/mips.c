@@ -232,11 +232,12 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_AFFEC:
-                if (!res || !argv1)
+                if (!res || !argv1 || !argv2) // argv2 = symbol qui stocke index du tab dans ival
                     ferr("mips.c getText Q_AFFEC quad error");
                 // ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
                 if (res->type == S_ARRAY) {
-                    snpt(snprintf(tbuf, LEN, "%d", res->arr->index - 1));
+                    printf("TUTUTUTUUTUTUTUUTU %d\n", argv2->ival);
+                    snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
                     pins3("li", "$t2", tbuf);
                     pins3("la", "$t3", res->id);
                     pins4("mul", "$t4", "$t2", "4");
@@ -245,8 +246,8 @@ void getText (FILE *f, quad *q) {
                     pins3("sw", "$t5", "($t1)");
                 }
                 else if (argv1->type == S_ARRAY) {
-                    snpt(snprintf(tbuf, LEN, "%d", argv1->arr->index - 1));
-                    printf("HAHAHA %d\n", argv1->arr->index);
+                    snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
+                    printf("HAHAHA %d\n", argv2->ival);
                     pins3("li", "$t2", tbuf);
                     pins3("la", "$t3", argv1->id);
                     pins4("mul", "$t4", "$t2", "4");
