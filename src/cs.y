@@ -410,14 +410,18 @@ par : IDENT_ DPOINT_ typename {
     ;
 
 instr: lvalue AFFEC_ expr {
-                if ($1.ptr->type == S_ARRAY && $3.ptr->type != $1.ptr->arr->type) {
-                    printf("type lvalue %d \n ", $1.ptr->arr->type) ;
-                    printf("type expr %d \n ", $3.ptr->type) ;
-                    ferr("cs.y instr: lvalue AFFEC_ expr - lvalue array type != expr type");
-                } else if ($3.ptr->type == S_ARRAY && $1.ptr->type != $3.ptr->arr->type) {
-                    printf("type lvalue %d \n ", $1.ptr->type) ;
-                    printf("type expr %d \n ", $3.ptr->type) ;
-                    ferr("cs.y instr: lvalue AFFEC_ expr - lvalue type != expr array type");
+                if ($1.ptr->type == S_ARRAY) {
+                    if ($3.ptr->type != $1.ptr->arr->type) {
+                        printf("type lvalue %d \n ", $1.ptr->arr->type) ;
+                        printf("type expr %d \n ", $3.ptr->type) ;
+                        ferr("cs.y instr: lvalue AFFEC_ expr - lvalue array type != expr type");
+                    }
+                } else if ($3.ptr->type == S_ARRAY) {
+                    if ($1.ptr->type != $3.ptr->arr->type) {
+                        printf("type lvalue %d \n ", $1.ptr->type) ;
+                        printf("type expr %d \n ", $3.ptr->type) ;
+                        ferr("cs.y instr: lvalue AFFEC_ expr - lvalue type != expr array type");
+                    }
                 } else if ($1.ptr->type != $3.ptr->type) {
                     printf("type lvalue %d \n ", $1.ptr->type) ;
                     printf("type expr %d \n ", $3.ptr->type) ;
