@@ -2,7 +2,7 @@ program tabz
   var a : int;
   var tab : array[-4..-1,-4..4] of int ;
     begin
-         a := tab[-1,4];
+         a := tab[-3,-4];
         write a;
         write "\n";
      end

@@ -171,6 +171,8 @@
 %right  NEG_ NOT_
 %right  AFFEC_
 %right  EXP_
+%nonassoc IFX
+%nonassoc ELSE_
 
 %start  program
 
@@ -493,7 +495,7 @@ instr: lvalue AFFEC_ expr {
                 quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
                 $$.quad = concat($2.quad, q);
             }
-        | IF_ expr THEN_ instr m {
+        | IF_ expr THEN_ instr m %prec IFX {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
                 qif->gtrue  = NULL;
                 qif->gfalse = $5.quad->res;
@@ -785,14 +787,16 @@ expr :  expr PLUS_ expr {
          //     (Dim2 * (i – 1) + (j – 1) )
             if (dimnum - 1 == dimension->dim) {
                 j = curind - 1 ;
-                j += abs( dimension->min)+1   ;
+                if (j < 0)
+                    j += abs( dimension->min)+1   ;
                  lastDim = dimension->max - dimension->min + 1;
                  printf("********************* lastdim taille c %d ave j %d \n",lastDim,j) ;
                  cpt += i * lastDim + j ;
              }
             else {
                  i = curind - 1;
-                 i += abs( dimension->min)+1   ;
+                 if (i < 0)
+                    i += abs( dimension->min)+1   ;
                  printf(" ******************** i %d \n",i) ;
 
             }
@@ -810,17 +814,6 @@ expr :  expr PLUS_ expr {
         }
         $$.ptr = ptr;
         $$.quad = NULL;
-        // mettre le type de retour
-        /*$$.ptr->type = ptr->arr->type ;
-        $$.quad = NULL ;
-
-        // calcul de l'indice dans le tableau
-        int index = 0 ;
-        arglist *toto = $3.al;
-             while (toto != NULL) {
-            fprintf(stdout, "liste indices de expr = ident[i, .. ,n]  %d\n", toto->sym->ival);
-             toto = toto->next;
-        }*/
 
              }
       | IDENT_ {
