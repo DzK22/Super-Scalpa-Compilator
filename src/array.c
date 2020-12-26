@@ -3,7 +3,7 @@
 // obtain a reverse list of arglist* or dimProp*
 rlist *rlistNew (arglist *al, dimProp *dp) {
 	if (al && dp)
-		ferr("array.c rlistNew - only one of al or dp should be set");
+		ferr(__LINE__ ,"array.c rlistNew - only one of al or dp should be set");
 
 	rlist *rl = NULL, *last = NULL;
 
@@ -56,7 +56,7 @@ void arrayComputeIndex (arglist *indices, symbol *sarr) {
 		max = rldp->dp->max;
 
 		if (ind < min || ind > max)
-			ferr("array.c arrayComputeIndex - ind out of bound");
+			ferr(__LINE__ ,"array.c arrayComputeIndex - ind out of bound");
 
 		index  += (ind - min) * factor;
 		factor *= max - min + 1;
@@ -68,5 +68,5 @@ void arrayComputeIndex (arglist *indices, symbol *sarr) {
 
 	sarr->arr->index = index;
 	if (index > sarr->arr->size)
-		ferr("array.c arrayComputeIndex - ind > arr size");
+		ferr(__LINE__ ,"array.c arrayComputeIndex - ind > arr size");
 }

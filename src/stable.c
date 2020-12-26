@@ -4,7 +4,7 @@
 symbol *sAlloc (void) {
     symbol *ns = malloc(sizeof(struct symbol));
     if (ns == NULL)
-        ferr("stable.c sAlloc malloc");
+        ferr(__LINE__ ,"stable.c sAlloc malloc");
 
     ns->id   = NULL;
     ns->tmp  = false;
@@ -76,7 +76,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
 
     } else {
         if (searchTable(*tos, id, curfun) != NULL)
-            ferr("stable.c newVar var ID already exists");
+            ferr(__LINE__ ,"stable.c newVar var ID already exists");
 
         if (type == S_PROG)
             res = sprintf(tid, "prog_%s", id);
@@ -91,11 +91,11 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
     }
 
     if (res < 0 || res >= LEN)
-        ferr("stable.c newVar tid snprintf");
+        ferr(__LINE__ ,"stable.c newVar tid snprintf");
 
     symbol *nt = sAdd(tos);
     if ((nt->id = strdup(tid)) == NULL)
-        ferr("stable.c newVar strdup data ID");
+        ferr(__LINE__ ,"stable.c newVar strdup data ID");
 
     nt->type = type;
     nt->tmp  = isTmp;
@@ -111,11 +111,11 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
                 break;
             case S_STRING:
                 if ((nt->sval = strdup((char *) data)) == NULL)
-                    ferr("stable.c newVar strdup data");
+                    ferr(__LINE__ ,"stable.c newVar strdup data");
                 break;
             case S_LABEL:
                 if ((nt->sval = strdup(tid)) == NULL)
-                    ferr("stable.c newVar strdup data");
+                    ferr(__LINE__ ,"stable.c newVar strdup data");
                 break;
             case S_FUNCTION:
                 nt->fdata = data;
@@ -126,7 +126,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
             case S_PROG:
                 break;
             default:
-                ferr("stable.c newVar unknow type");
+                ferr(__LINE__ ,"stable.c newVar unknow type");
         }
     }
 
@@ -191,11 +191,11 @@ symbol *searchTable (symbol *tos, char *id, symbol *curfun) {
         res = snprintf(var, LEN, "funvar_%s_%s", curfun->id, id);
 
     if (res < 0 || res >= LEN)
-        ferr("stable.c searchTable snprintf");
+        ferr(__LINE__ ,"stable.c searchTable snprintf");
 
     res = snprintf(fun, LEN, "fun_%s", id);
     if (res < 0 || res >= LEN)
-        ferr("stable.c searchTable snprintf");
+        ferr(__LINE__ ,"stable.c searchTable snprintf");
 
     while (tos != NULL) {
         if (((strcmp(tos->id, var)) == 0) || (strcmp(tos->id, fun) == 0))
