@@ -280,23 +280,8 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
 
                  arr->size = size;
 
-                 // ONLY FOR TESTS
-                 time_t t;
-                 int i;
-                 srand((unsigned)time(&t));
-
-                 switch (arr->type) {
-                     case S_INT:
-                        arr->values = malloc(sizeof(int) * arr->size);
-                        if (arr->values == NULL)
-                            ferr("malloc error");
-                        for (i = 0; i < arr->size; i++) {
-                            arr->values[i] = rand() % arr->size;
-                        }
-                        break;
-                     case S_BOOL:
-                        break;
-                 }
+                if (arr->type != S_INT && arr->type != S_BOOL)
+                    ferr("cs.y arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - wrong array type");
 
                  $$ = arr;
             }
@@ -737,8 +722,14 @@ expr :  expr PLUS_ expr {
           testID(ptr, $1);
           arrayComputeIndex($3.al, ptr);
 
-          symbol *arrVal = newTmpInt(curtos(), 0);
-          symbol *tmp    = newTmpInt(curtos(), ptr->arr->index);
+          symbol *arrVal;
+          switch (ptr->arr->type) {
+              case S_INT  : arrVal = newTmpInt(curtos(), 0)      ; break;
+              case S_BOOL : arrVal = newTmpBool(curtos(), false) ; break;
+              default: ferr("cs.y expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - array wrong type");
+          }
+
+          symbol *tmp = newTmpInt(curtos(), ptr->arr->index);
 
           quad *q = qGen(Q_AFFEC, arrVal, ptr, tmp);
           $$.ptr  = arrVal;

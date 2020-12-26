@@ -23,7 +23,6 @@ typedef struct s_array {
     int     ndims;
     int     size;
     dimProp *dims;    // pointeur sur la première dimension
-    int     *values;  // Liste des valeurs
     stype   type;
     int     index;
 } s_array;
@@ -36,12 +35,12 @@ typedef struct symbol {
     struct symbol *next;
 
     union {
-        uint32_t ival;   // integer
-        char     *sval;  // string
-        uint32_t bval;   // boolean
+        int32_t ival;   // integer
+        int8_t  bval;   // boolean
+        char    *sval;  // string
 
-        void     *fdata; // function data ( = struct fundata)
-        s_array  *arr;   // array
+        void    *fdata; // function data ( = struct fundata)
+        s_array *arr;   // array
     };
 } symbol;
 

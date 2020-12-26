@@ -38,18 +38,20 @@
         ferr("mips.c snprintf");
 
 #define pload(reg, sym) \
+    snpt(snprintf(tbuf, LEN, "%s", sym->type == S_BOOL ? "lb" : "lw")); \
     if (sym->ref) { \
-        pins3("lw", "$t9", sym->id); \
-        pins3("lw", reg, "0($t9)"); \
+        pins3(tbuf, "$t9", sym->id); \
+        pins3(tbuf, reg, "0($t9)"); \
     } else \
-        pins3("lw", reg, sym->id);
+        pins3(tbuf, reg, sym->id);
 
 #define pstore(reg, sym) \
+    snpt(snprintf(tbuf, LEN, "%s", sym->type == S_BOOL ? "sb" : "sw")); \
     if (sym->ref) { \
-        pins3("lw", "$t9", sym->id); \
-        pins3("sw", reg, "0($t9)"); \
+        pins3(tbuf, "$t9", sym->id); \
+        pins3(tbuf, reg, "0($t9)"); \
     } else \
-        pins3("sw", reg, sym->id);
+        pins3(tbuf, reg, sym->id);
 
 static char tbuf[LEN], tbuf2[LEN], tbuf3[LEN], tbuf4[LEN];
 static symbol *curfun = NULL;
@@ -122,7 +124,7 @@ void getData (FILE *f, symbol *s) {
                 pdat(s->id, tbuf);
                 break;
             case S_BOOL:
-                snpt(snprintf(tbuf, LEN, ".word %d", s->bval));
+                snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));
                 pdat(s->id, tbuf);
                 break;
             case S_STRING:
@@ -130,20 +132,15 @@ void getData (FILE *f, symbol *s) {
                 pdat(s->id, tbuf);
                 break;
             case S_ARRAY:
-                if (s->arr->type == S_INT) {
-                    int *vals = s->arr->values;
-                    if (vals != NULL) {
-                        fprintf(f, "\t%s:\t.word ", s->id);
-                        printf("nb values = %d\n", s->arr->size);
-                        for (i = 0; i < s->arr->size; i++) {
-                            if (i != s->arr->size - 1)
-                                fprintf(f, "%d, ", vals[i]);
-                            else
-                                fprintf(f, "%d\n", vals[i]);
-                        }
-                        printf("I = %d\n", i);
-                    }
+                fprintf(f, "\t%s:\t.%s ", s->id, s->arr->type == S_INT ? "word" : "byte");
+
+                for (i = 0; i < s->arr->size; i++) {
+                    if (i != s->arr->size - 1)
+                        fprintf(f, "0, ");
+                    else
+                        fprintf(f, "0\n");
                 }
+
                 break;
             default:
                 //TO AVOID WARNINGS
@@ -345,18 +342,30 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
         snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
         pins3("li", "$t2", tbuf);
         pins3("la", "$t3", res->id);
-        pins4("mul", "$t4", "$t2", "4");
-        pins4("add", "$t1", "$t4", "$t3");
-        pins3("lw", "$t5", argv1->id);
-        pins3("sw", "$t5", "($t1)");
+
+        if (res->arr->type == S_INT) {
+            pins4("mul", "$t4", "$t2", "4");
+            pins4("add", "$t1", "$t4", "$t3");
+        } else
+            pins4("add", "$t1", "$t2", "$t3");
+
+        pload("$t5", argv1);
+        pins3(argv1->type == S_BOOL ? "sb" : "sw", "$t5", "($t1)");
+
     } else if (argv1->type == S_ARRAY) {
         snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
         pins3("li", "$t2", tbuf);
         pins3("la", "$t3", argv1->id);
-        pins4("mul", "$t4", "$t2", "4");
-        pins4("add", "$t1", "$t4", "$t3");
-        pins3("lw", "$t5", "($t1)");
-        pins3("sw", "$t5", res->id);
+
+        if (argv1->arr->type == S_INT) {
+            pins4("mul", "$t4", "$t2", "4");
+            pins4("add", "$t1", "$t4", "$t3");
+        } else
+            pins4("add", "$t1", "$t2", "$t3");
+
+        pins3(res->type == S_BOOL ? "lb" : "lw", "$t5", "($t1)");
+        pstore("$t5", res);
+
     } else {
         snpt(snprintf(tbuf, LEN, "%s := %s", dsymid(res), dsymid(argv1)));
         pcom(tbuf);
@@ -406,8 +415,13 @@ void qRead (FILE *f, symbol *res, symbol *argv1) {
             snpt(snprintf(tbuf, LEN, "%d", argv1->ival - 1));
             pins3("li", "$t2", tbuf);
             pins3("la", "$t3", res->id);
-            pins4("mul", "$t4", "$t2", "4");
-            pins4("add", "$t1", "$t4", "$t3");
+
+            if (res->arr->type == S_INT) {
+                pins4("mul", "$t4", "$t2", "4");
+                pins4("add", "$t1", "$t4", "$t3");
+            } else
+                pins4("add", "$t1", "$t2", "$t3");
+
             pins3("sw", "$v0", "($t1)");
             break;
 
@@ -755,7 +769,7 @@ int funSymTypeSize (symbol *sym) {
     else {
         switch (sym->type) {
             case S_INT    : bytes = 4 ; break ;
-            case S_BOOL   : bytes = 4 ; break ;
+            case S_BOOL   : bytes = 1 ; break ;
             default: ferr("mips.c funSymTypeSize arg wrong type");
         }
     }
