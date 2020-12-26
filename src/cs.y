@@ -754,54 +754,43 @@ expr :  expr PLUS_ expr {
                 funcallExpression(&($$.quad), &($$.ptr), $1, NULL, NULL);
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
-            symbol *ptr = search(stable, curfun, $1);
-            testID(ptr, $1);
+        symbol *ptr = search(stable, curfun, $1);
+        testID(ptr, $1);
 
-            // calcul de la valeur de l'indice du tableau
-            arglist *indicesLst = $3.al;
-            dimProp *dimension = ptr->arr->dims;
-            int cpt = 1, curind, dimnum = 1, indPos = 0;
+        // calcul de la valeur de l'indice du tableau
+        arglist *indicesLst = $3.al;
+        dimProp *dimension = ptr->arr->dims;
 
-            while (indicesLst != NULL && dimension != NULL) {
-                // printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
-                curind = indicesLst->sym->ival;
+        rlist *rlal = rlistNew(indicesLst, NULL);
+        rlist *rldp = rlistNew(NULL, dimension);
 
-                if (curind < dimension->min || curind > dimension->max) {
-                    fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
-                    exit(EXIT_FAILURE);
-                }
+        int ind, min, max, cnt = 1, factor = 1, index = 1;
 
-                indPos = (indicesLst->sym->ival - dimension->min) + 1;
-                cpt *= indPos + (dimension->max - dimension->min) ;
+        while (rlal && rldp) {
+            ind = rlal->al->sym->ival;
+            min = rldp->dp->min;
+            max = rldp->dp->max;
 
-                dimension  = dimension->next;
-                indicesLst = indicesLst->next;
-                dimnum ++;
+            if (ind < min || ind > max) {
+                fprintf(stderr, "Indice %d out of bound on dim n°%d\n", ind, cnt);
+                exit(EXIT_FAILURE);
             }
 
-            if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
-                ferr("Nb dimension ne correspond pas");
+            index  += (ind - min) * factor;
+            factor *= max - min + 1;
+            cnt ++;
 
-            ptr->arr->index = cpt;
-            printf(" ||||||||||||ar ind = %d\n", ptr->arr->index);
-            if (ptr->arr->index > ptr->arr->size)
-                ferr("index out of range 2");
+            rlal = rlal->next;
+            rldp = rldp->next;
+        }
 
-            $$.ptr  = ptr;
-            $$.quad = NULL ;
+        ptr->arr->index = index;
+        printf(" |||||||||||| ar ind = %d\n", ptr->arr->index);
+        if (ptr->arr->index > ptr->arr->size)
+            ferr("index out of range 1");
 
-            // mettre le type de retour
-            /*$$.ptr->type = ptr->arr->type ;
-            $$.quad = NULL ;
-
-            // calcul de l'indice dans le tableau
-            int index = 0 ;
-            arglist *toto = $3.al;
-                 while (toto != NULL) {
-                fprintf(stdout, "liste indices de expr = ident[i, .. ,n]  %d\n", toto->sym->ival);
-                 toto = toto->next;
-            }*/
-
+        $$.ptr  = ptr;
+        $$.quad = NULL ;
          }
       | IDENT_ {
             symbol *ptr = search(stable, curfun, $1);
