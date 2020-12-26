@@ -221,47 +221,22 @@ void getText (FILE *f, quad *q) {
                 if (!argv1)
                     ferr("mips.c getText Q_WRITE quad error");
 
-                qWrite(f, argv1, argv2);
+                qWrite(f, argv1);
                 break;
 
             case Q_READ:
                 if (!res)
                     ferr("mips.c getText Q_READ quad error");
+                // argv1 can be != NULL = index of array if type == S_ARRAY
 
-                qRead(f, res);
+                qRead(f, res, argv1);
                 break;
 
             case Q_AFFEC:
                 if (!res || !argv1) // argv2 = symbol qui stocke index du tab dans ival
                     ferr("mips.c getText Q_AFFEC quad error");
-                // ICI il faudra tester si res->type = S_ARRAY (si tab[i] := x) ou argv->type = S_ARRAY (si x := tab[i])
-                if (res->type == S_ARRAY) {
-                    printf("TUTUTUTUUTUTUTUUTU %d\n", argv2->ival);
-                    snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
-                    pins3("li", "$t2", tbuf);
-                    pins3("la", "$t3", res->id);
-                    pins4("mul", "$t4", "$t2", "4");
-                    pins4("add", "$t1", "$t4", "$t3");
-                    pins3("lw", "$t5", argv1->id);
-                    pins3("sw", "$t5", "($t1)");
-                }
-                else if (argv1->type == S_ARRAY) {
-                    snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
-                    printf("HAHAHA %d\n", argv2->ival);
-                    pins3("li", "$t2", tbuf);
-                    pins3("la", "$t3", argv1->id);
-                    pins4("mul", "$t4", "$t2", "4");
-                    pins4("add", "$t1", "$t4", "$t3");
-                    pins3("lw", "$t5", "($t1)");
-                    pins3("sw", "$t5", res->id);
-                }
-                else {
-                    snpt(snprintf(tbuf, LEN, "%s := %s", dsymid(res), dsymid(argv1)));
-                    pcom(tbuf);
 
-                    pload("$t0", argv1);
-                    pstore("$t0", res);
-                }
+                qAffect(f, res, argv1, argv2);
                 break;
 
             case Q_LABEL:
@@ -365,34 +340,53 @@ void getText (FILE *f, quad *q) {
 // COMMON //
 ////////////
 
-void qRead (FILE *f, symbol *res) {
+void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
+    if (res->type == S_ARRAY) {
+        snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
+        pins3("li", "$t2", tbuf);
+        pins3("la", "$t3", res->id);
+        pins4("mul", "$t4", "$t2", "4");
+        pins4("add", "$t1", "$t4", "$t3");
+        pins3("lw", "$t5", argv1->id);
+        pins3("sw", "$t5", "($t1)");
+    } else if (argv1->type == S_ARRAY) {
+        snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
+        pins3("li", "$t2", tbuf);
+        pins3("la", "$t3", argv1->id);
+        pins4("mul", "$t4", "$t2", "4");
+        pins4("add", "$t1", "$t4", "$t3");
+        pins3("lw", "$t5", "($t1)");
+        pins3("sw", "$t5", res->id);
+    } else {
+        snpt(snprintf(tbuf, LEN, "%s := %s", dsymid(res), dsymid(argv1)));
+        pcom(tbuf);
+
+        pload("$t0", argv1);
+        pstore("$t0", res);
+    }
+}
+
+void qRead (FILE *f, symbol *res, symbol *argv1) {
     char *label, *label2;
+    // argv1 != NULL only if type == S_ARRAY (and argv1 = index of array value)
+
+    snpt(snprintf(tbuf, LEN, "read int %s", dsymid(res)));
+    pcom(tbuf);
+
+    pins3("li", "$v0", "4");
+    pins3("la", "$a0", "_read_int");
+    pins1("syscall");
+    pins3("li", "$v0", "5");
+    pins1("syscall");
 
     switch (res->type) {
         case S_INT:
-            snpt(snprintf(tbuf, LEN, "read integer %s", dsymid(res)));
-            pcom(tbuf);
-
-            pins3("li", "$v0", "4");
-            pins3("la", "$a0", "_read_int");
-            pins1("syscall");
-            pins3("li", "$v0", "5");
-            pins1("syscall");
             pstore("$v0", res);
             break;
 
         case S_BOOL:
             label  = nextTmplab();
             label2 = nextTmplab();
-
-            snpt(snprintf(tbuf, LEN, "read bool %s", dsymid(res)));
-            pcom(tbuf);
-
-            pins3("li", "$v0", "4");
-            pins3("la", "$a0", "_read_int");
-            pins1("syscall");
-            pins3("li", "$v0", "5");
-            pins1("syscall");
 
             pins4("beq", "$v0", "$zero", label);
             pins3("li", "$t0", "1");
@@ -408,13 +402,21 @@ void qRead (FILE *f, symbol *res) {
             free(label2);
             break;
 
-        default:
-            //TO AVOID WARNINGS
+        case S_ARRAY:
+            snpt(snprintf(tbuf, LEN, "%d", argv1->ival - 1));
+            pins3("li", "$t2", tbuf);
+            pins3("la", "$t3", res->id);
+            pins4("mul", "$t4", "$t2", "4");
+            pins4("add", "$t1", "$t4", "$t3");
+            pins3("sw", "$v0", "($t1)");
+            break;
+
+        default: // TO AVOID WARNIGS
             break;
     }
 }
 
-void qWrite (FILE *f, symbol *argv1, symbol *argv2) {
+void qWrite (FILE *f, symbol *argv1) {
     char *label, *label2;
 
     switch (argv1->type) {
@@ -454,19 +456,6 @@ void qWrite (FILE *f, symbol *argv1, symbol *argv2) {
             plab(label2);
             pins3("li", "$v0", "4");
             break;
-
-        case S_ARRAY:
-            printf("TOTOTOLANDOOOU %d\n", argv2->ival);
-            snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
-            //printf("HAHAHA %d\n", argv1->arr->index);
-            pins3("li", "$t2", tbuf);
-            pins3("la", "$t3", argv1->id);
-            pins4("mul", "$t4", "$t2", "4");
-            pins4("add", "$t1", "$t4", "$t3");
-            pins3("lw", "$a0", "($t1)");
-            pins3("li", "$v0", "1");
-            break;
-
         default:
             //TO AVOID WARNINGS
             break;

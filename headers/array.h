@@ -16,7 +16,8 @@ typedef struct rlist {
 	};
 } rlist;
 
-rlist *rlistNew (arglist *al, dimProp *dp);
-void rlistPrint (rlist *rl);
+rlist *rlistNew        (arglist *al, dimProp *dp);
+void rlistPrint        (rlist *rl);
+void arrayComputeIndex (arglist *indices, symbol *arr);
 
 #endif

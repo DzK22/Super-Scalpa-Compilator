@@ -1,12 +1,31 @@
 program tabz
   var a, b, c, d, s : int;
+  var toto : bool;
   var tab : array[1..3,1..10] of int ;
     begin
         tab[1,1] := 12;
         tab[1,2] := 99;
-        tab[1,6] := 101;
+        tab[1,6] := 8875675;
         a := tab[1,1];
         b := tab[1,2];
         write a + b;
+        write "\n";
+        write tab[1,1];
+        write "\n";
+        write tab[1,2];
+        write "\n";
+        write tab[1,6];
+        write "\n";
+        read tab[1,1];
+        write tab[1,1];
+        write "\n";
+        tab[1,1] := 67;
+        write tab[1,1];
+        write "\n";
+        read a;
+        write a;
+        write "\n";
+        read toto;
+        write toto;
         write "\n";
      end

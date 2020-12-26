@@ -466,11 +466,14 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = $2.quad;
             }
         | BEGIN_ END_ {}
-        | READ_ expr {
-                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL)
-                    ferr("cs.y instr : READ_ expr - type cannot be read");
+        | READ_ lvalue {
+                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_ARRAY)
+                    ferr("cs.y instr : READ_ lvalue - type cannot be read");
 
-                quad *q = qGen(Q_READ, $2.ptr, NULL, NULL);
+                symbol *arrIndex = NULL;
+                if ($2.ptr->type == S_ARRAY)
+                    arrIndex = newTmpInt(curtos(), $2.ptr->arr->index);
+                quad *q = qGen(Q_READ, $2.ptr, arrIndex, NULL);
                 $$.quad = concat($2.quad, q);
             }
         | WRITE_ expr {
@@ -551,38 +554,8 @@ lvalue: IDENT_ {
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
                 symbol *ptr = search(stable, curfun, $1);
                 testID(ptr, $1);
-
                 // calcul de la valeur de l'indice du tableau
-                arglist *indicesLst = $3.al;
-                dimProp *dimension = ptr->arr->dims;
-
-                rlist *rlal = rlistNew(indicesLst, NULL);
-                rlist *rldp = rlistNew(NULL, dimension);
-
-                int ind, min, max, cnt = 1, factor = 1, index = 1;
-
-                while (rlal && rldp) {
-                    ind = rlal->al->sym->ival;
-                    min = rldp->dp->min;
-                    max = rldp->dp->max;
-
-                    if (ind < min || ind > max) {
-                        fprintf(stderr, "Indice %d out of bound on dim n°%d\n", ind, cnt);
-                        exit(EXIT_FAILURE);
-                    }
-
-                    index  += (ind - min) * factor;
-                    factor *= max - min + 1;
-                    cnt ++;
-
-                    rlal = rlal->next;
-                    rldp = rldp->next;
-                }
-
-                ptr->arr->index = index;
-                printf(" |||||||||||| ar ind = %d\n", ptr->arr->index);
-                if (ptr->arr->index > ptr->arr->size)
-                    ferr("index out of range 1");
+                arrayComputeIndex($3.al, ptr);
 
                 $$.ptr  = ptr;
                 $$.quad = NULL ;
@@ -760,47 +733,16 @@ expr :  expr PLUS_ expr {
                 funcallExpression(&($$.quad), &($$.ptr), $1, NULL, NULL);
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
-        symbol *ptr = search(stable, curfun, $1);
-        testID(ptr, $1);
+          symbol *ptr = search(stable, curfun, $1);
+          testID(ptr, $1);
+          arrayComputeIndex($3.al, ptr);
 
-        // calcul de la valeur de l'indice du tableau
-        arglist *indicesLst = $3.al;
-        dimProp *dimension = ptr->arr->dims;
+          symbol *arrVal = newTmpInt(curtos(), 0);
+          symbol *tmp    = newTmpInt(curtos(), ptr->arr->index);
 
-        rlist *rlal = rlistNew(indicesLst, NULL);
-        rlist *rldp = rlistNew(NULL, dimension);
-
-        int ind, min, max, cnt = 1, factor = 1, index = 1;
-
-        while (rlal && rldp) {
-            ind = rlal->al->sym->ival;
-            min = rldp->dp->min;
-            max = rldp->dp->max;
-
-            if (ind < min || ind > max) {
-                fprintf(stderr, "Indice %d out of bound on dim n°%d\n", ind, cnt);
-                exit(EXIT_FAILURE);
-            }
-
-            index  += (ind - min) * factor;
-            factor *= max - min + 1;
-            cnt ++;
-
-            rlal = rlal->next;
-            rldp = rldp->next;
-        }
-
-        ptr->arr->index = index;
-        printf(" |||||||||||| ar ind = %d\n", ptr->arr->index);
-        if (ptr->arr->index > ptr->arr->size)
-            ferr("index out of range 1");
-
-        symbol *arrVal = newTmpInt(curtos(), 0);
-        symbol *tmp    = newTmpInt(curtos(), ptr->arr->index);
-
-        quad *q = qGen(Q_AFFEC, arrVal, ptr, tmp);
-        $$.ptr  = arrVal;
-        $$.quad = q;
+          quad *q = qGen(Q_AFFEC, arrVal, ptr, tmp);
+          $$.ptr  = arrVal;
+          $$.quad = q;
          }
       | IDENT_ {
             symbol *ptr = search(stable, curfun, $1);

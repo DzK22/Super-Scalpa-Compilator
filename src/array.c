@@ -39,3 +39,34 @@ void rlistPrint (rlist *rl) {
 		rl = rl->next;
 	}
 }
+
+// calcul de la valeur de l'indice du tableau
+void arrayComputeIndex (arglist *indices, symbol *sarr) {
+	dimProp *dimensions = sarr->arr->dims;
+
+	rlist *rlal = rlistNew(indices, NULL);
+	rlist *rldp = rlistNew(NULL, dimensions);
+
+	int ind, min, max;
+	int cnt = 1, factor = 1, index = 1;
+
+	while (rlal && rldp) {
+		ind = rlal->al->sym->ival;
+		min = rldp->dp->min;
+		max = rldp->dp->max;
+
+		if (ind < min || ind > max)
+			ferr("array.c arrayComputeIndex - ind out of bound");
+
+		index  += (ind - min) * factor;
+		factor *= max - min + 1;
+		cnt ++;
+
+		rlal = rlal->next;
+		rldp = rldp->next;
+	}
+
+	sarr->arr->index = index;
+	if (index > sarr->arr->size)
+		ferr("array.c arrayComputeIndex - ind > arr size");
+}
