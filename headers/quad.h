@@ -33,7 +33,7 @@ quad *concat   (quad *, quad *);
 quad *qGet     (quad *, int);
 quad *getLast  (quad *);
 void qPrint    (quad *);
-void ferr      (char *s);
+void ferr      (int , char *s);
 void complete  (quad *, bool, symbol *);
 
 #endif

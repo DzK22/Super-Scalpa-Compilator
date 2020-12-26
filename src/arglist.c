@@ -4,7 +4,7 @@
 arglist *arglistNew (char *id, symbol *sym) {
 	arglist *al = malloc(sizeof(arglist));
 	if (al == NULL)
-		ferr("arglist.c arglistNew malloc");
+		ferr(__LINE__ ,"arglist.c arglistNew malloc");
 
 	al->next = NULL;
 	al->id   = id;
@@ -51,7 +51,7 @@ symbol *arglistToSymlist (arglist *al) {
 
 		cur->id = strdup(al->sym->id);
 		if (cur->id == NULL)
-			ferr("arglist.c arglistToSymlist strdup");
+			ferr(__LINE__ ,"arglist.c arglistToSymlist strdup");
 
 		cur->tmp   = al->sym->tmp;
 		cur->type  = al->sym->type;
@@ -59,7 +59,7 @@ symbol *arglistToSymlist (arglist *al) {
 		switch (cur->type) {
 			case S_INT  : cur->ival = al->sym->ival; break;
 			case S_BOOL : cur->bval = al->sym->bval; break;
-			default: ferr("arglist.c arglistToSymlist wrong type");
+			default: ferr(__LINE__ ,"arglist.c arglistToSymlist wrong type");
 		}
 
 		slast = cur;

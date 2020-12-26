@@ -44,7 +44,7 @@ typedef struct symbol {
     };
 } symbol;
 
-void   ferr         (char *s);
+void   ferr         (int, char *s);
 void   sFree        (symbol *);
 symbol *sAlloc      (void);
 symbol *sAdd        (symbol **);
