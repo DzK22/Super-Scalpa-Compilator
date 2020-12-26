@@ -11,6 +11,7 @@
     #include "../headers/mips.h"
     #include "../headers/arglist.h"
     #include "../headers/opti.h"
+    #include "../headers/array.h"
     #define YYDEBUG 1
 
     int yyerror  (char *s);
@@ -155,7 +156,6 @@
 %type <cte>      CTE_
 %type <gencode>  expr instr program sequence lvalue m fundecllist  fundecl
 %type <type>     atomictype
-%type <signe>    sign
 %type <argl>     identlist varsdecl parlist par
 %type <exprl>    exprlist
 %type <sarray>    arraytype
@@ -247,7 +247,7 @@ typename : atomictype {
             $$.type = $1;
           }
           | arraytype {
-            $$.type = S_ARRAY;
+            $$.type   = S_ARRAY;
             $$.sarray = $1;
           }
          ;
@@ -260,26 +260,31 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                 s_array *arr = malloc(sizeof(s_array));
-                if (arr == NULL) {
-                    fprintf(stderr, "malloc error\n");
-                     exit(EXIT_FAILURE);
-                 }
-                 //printRange(rg);
-                 arr->dims = $3;
+                if (arr == NULL)
+                    ferr("cs.y arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - malloc");
+
+                 // printRange(rg);
+                 arr->dims  = $3;
                  arr->ndims = $3->dim;
-                 arr->type = $6;
+                 arr->type  = $6;
                  arr->index = 1;
-                 int cpt = 1, i;
+
+                 int size = 1;
                  dimProp *cur = $3;
-                 //calcule de size
+
+                 // calculate array total size
                  while (cur != NULL) {
-                     cpt *= (cur->max - cur->min + 1);
-                     cur = cur->next;
+                     size *= (cur->max - cur->min + 1);
+                     cur   = cur->next;
                  }
-                 arr->size = cpt;
+
+                 arr->size = size;
+
                  // ONLY FOR TESTS
                  time_t t;
+                 int i;
                  srand((unsigned)time(&t));
+
                  switch (arr->type) {
                      case S_INT:
                         arr->values = malloc(sizeof(int) * arr->size);
@@ -292,71 +297,53 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                      case S_BOOL:
                         break;
                  }
+
                  $$ = arr;
             }
           ;
 
-rangelist : sign CTE_ TWO_POINTS_ sign CTE_  {
-              // test array types
-                if ($2.type != S_INT || $5.type != S_INT) {
-                    fprintf(stderr, "Mauvais types array \n");
-                    exit(EXIT_FAILURE);
-                }
-                // test borns values
-                int min = $2.ival, max = $5.ival;
-                if ($1 == '-')
-                    min = -min;
-                if ($4 == '-')
-                    max = -max;
-                if (min > max) {
-                    fprintf(stderr, "Bornes inf > Borne sup\n");
-                    exit(EXIT_FAILURE);
-                }
+rangelist : CTE_ TWO_POINTS_ CTE_ {
+                if ($1.type != S_INT || $3.type != S_INT)
+                    ferr("cs.y rangelist : CTE_ TWO_POINTS_ CTE_ - wrong CTE_ type");
+
+                if ($1.ival > $3.ival)
+                    ferr("cs.y rangelist : CTE_ TWO_POINTS_ CTE_ - wrong range");
 
                 $$ = malloc(sizeof(dimProp));
-                if($$ == NULL )
-                {
-                  fprintf(stderr,"error malloc  \n") ;
-                  exit(0)  ;
-                }
-                $$->dim = 1;
-                $$->min = min;
-                $$->max = max;
+                if ($$ == NULL)
+                    ferr("cs.y rangelist : CTE_ TWO_POINTS_ CTE_ - malloc");
+
+                $$->dim  = 1;
+                $$->min  = $1.ival;
+                $$->max  = $3.ival;
                 $$->next = NULL;
-                fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$->min, $$->max, $$->dim);
 
-            }
-            |sign CTE_ TWO_POINTS_ sign CTE_ COMMA_ rangelist {
-                if ($2.type != S_INT || $5.type != S_INT) {
-                    fprintf(stderr, "Mauvais types array \n");
-                    exit(EXIT_FAILURE);
-                }
-                int min = $2.ival, max = $5.ival;
-                if ($1 == '-')
-                    min = -min;
-                if ($4 == '-')
-                    max = -max;
-                if (min > max) {
-                    fprintf(stderr, "Bornes inf > Borne sup\n");
-                    exit(EXIT_FAILURE);
-                }
-                $$ = malloc(sizeof(dimProp));
-                if($$ == NULL )
-                {
-                  fprintf(stderr,"error malloc  \n") ;
-                  exit(0)  ;
-                }
-                $$->dim = $7->dim + 1;
-                $$->min = min;
-                $$->max = max;
-                $$->next = $7;
+                // DEBUG a virer
+                // TODO
                 fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$->min, $$->max, $$->dim);
             }
-            ;
 
-sign : %empty                       {}
-      | MINUS_  {  $$ = '-'; }
-      ;
+        | CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist {
+            if ($1.type != S_INT || $3.type != S_INT)
+                ferr("cs.y rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong CTE_ type");
+
+            if ($1.ival > $3.ival)
+                ferr("cs.y rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong range");
+
+            $$ = malloc(sizeof(dimProp));
+            if ($$ == NULL )
+              ferr("cs.y rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - malloc");
+
+            $$->dim  = $5->dim + 1;
+            $$->min  = $1.ival;
+            $$->max  = $3.ival;
+            $$->next = $5;
+
+            // DEBUG a virer
+            // TODO
+            fprintf(stdout, "borne inf : %d et borne sup : %d et dims : %d\n", $$->min, $$->max, $$->dim);
+        }
+        ;
 
 fundecllist : %empty {
                     $$.quad = NULL;
@@ -423,31 +410,27 @@ par : IDENT_ DPOINT_ typename {
     ;
 
 instr: lvalue AFFEC_ expr {
-                if ($1.ptr->type == S_ARRAY) {
-                  if($3.ptr->type != $1.ptr->arr->type) {
-                      printf("type lvalue %d \n ", $1.ptr->arr->type) ;
-                      printf("type expr %d \n ", $3.ptr->type) ;
-                      ferr("cs.y instr: lvalue AFFEC_ expr - 1");
-                  }
+                if ($1.ptr->type == S_ARRAY && $3.ptr->type != $1.ptr->arr->type) {
+                    printf("type lvalue %d \n ", $1.ptr->arr->type) ;
+                    printf("type expr %d \n ", $3.ptr->type) ;
+                    ferr("cs.y instr: lvalue AFFEC_ expr - lvalue array type != expr type");
+                } else if ($3.ptr->type == S_ARRAY && $1.ptr->type != $3.ptr->arr->type) {
+                    printf("type lvalue %d \n ", $1.ptr->type) ;
+                    printf("type expr %d \n ", $3.ptr->type) ;
+                    ferr("cs.y instr: lvalue AFFEC_ expr - lvalue type != expr array type");
+                } else if ($1.ptr->type != $3.ptr->type) {
+                    printf("type lvalue %d \n ", $1.ptr->type) ;
+                    printf("type expr %d \n ", $3.ptr->type) ;
+                    ferr("cs.y instr: lvalue AFFEC_ expr - lvalue type != expr type");
                 }
-                else if ($3.ptr->type == S_ARRAY ) {
-                  if($1.ptr->type != $3.ptr->arr->type) {
-                      printf("type lvalue %d \n ", $1.ptr->type) ;
-                      printf("type expr %d \n ", $3.ptr->type) ;
-                      ferr("cs.y instr: lvalue AFFEC_ expr - 2");
-                  }
-                }
-                else if ($1.ptr->type != $3.ptr->type) {
-                  printf("type lvalue %d \n ", $1.ptr->type) ;
-                  printf("type expr %d \n ", $3.ptr->type) ;
-                  ferr("cs.y instr: lvalue AFFEC_ expr - 3");
-                }
+
                 //if ($1.ptr->type == S_ARRAY)
                 //    printf("TATALAND = %d\n", $1.ptr->arr->index);
                 //if ($1.ptr->type == S_ARRAY) {
                 //    $1.ptr->arr->values[$1.ptr->arr->index] = $3.ptr->ival;
                 //    printf("TOTO %d\n", $3.ptr->ival);
                 //}
+
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, NULL);
                 quad *quad = concat($3.quad, q); // segfault here for array affectation
                 $$.quad    = quad;
@@ -560,53 +543,54 @@ lvalue: IDENT_ {
             }
 
         | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
-              symbol *ptr = search(stable, curfun, $1);
-               testID(ptr, $1);
-              // calcul de la valeur de l'indice du tableau
-              arglist *indicesLst = $3.al;
-              dimProp *dimension = ptr->arr->dims;
-              int cpt = 1, curind, dimnum = 1, indPos = 0;
-              while (indicesLst != NULL && dimension != NULL) {
-                  //printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
-                  curind = indicesLst->sym->ival;
-                  if (curind < dimension->min || curind > dimension->max) {
-                      fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
-                      exit(EXIT_FAILURE);
-                  }
-                  indPos= (indicesLst->sym->ival - dimension->min) + 1;
-                  cpt *= indPos + (dimension->max - dimension->min) ;
-                  dimension = dimension->next;
-                  indicesLst = indicesLst->next;
-                  dimnum++;
-              }
-              if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
-                ferr("Nb dimension ne correspond pas");
-              ptr->arr->index = cpt;
-               if (ptr->arr->index > ptr->arr->size) {
-                  fprintf(stderr, "index out of range\n");
-                  exit(EXIT_FAILURE);
-              }
-              $$.ptr = ptr;
-              $$.quad = NULL ;
+                symbol *ptr = search(stable, curfun, $1);
+                testID(ptr, $1);
+
+                // calcul de la valeur de l'indice du tableau
+                arglist *indicesLst = $3.al;
+                dimProp *dimension = ptr->arr->dims;
+
+                rlist *rlal = rlistNew(indicesLst, NULL);
+                rlist *rldp = rlistNew(NULL, dimension);
+
+                int ind, min, max, cnt = 1, factor = 1, index = 1;
+
+                while (rlal && rldp) {
+                    ind = rlal->al->sym->ival;
+                    min = rldp->dp->min;
+                    max = rldp->dp->max;
+
+                    if (ind < min || ind > max) {
+                        fprintf(stderr, "Indice %d out of bound on dim n°%d\n", ind, cnt);
+                        exit(EXIT_FAILURE);
+                    }
+
+                    index  += (ind - min) * factor;
+                    factor *= max - min + 1;
+                    cnt ++;
+
+                    rlal = rlal->next;
+                    rldp = rldp->next;
+                }
+
+                ptr->arr->index = index;
+                printf(" |||||||||||| ar ind = %d\n", ptr->arr->index);
+                if (ptr->arr->index > ptr->arr->size)
+                    ferr("index out of range 1");
+
+                $$.ptr  = ptr;
+                $$.quad = NULL ;
             }
       ;
 
-exprlist : sign expr {
-                int temp = 1;
-                if ($1 == '-')
-                    temp = -1;
-                $2.ptr->ival *= temp;
-                $$.al   = arglistNew(NULL, $2.ptr);
-                $$.quad = $2.quad;
+exprlist : expr {
+                $$.al   = arglistNew(NULL, $1.ptr);
+                $$.quad = $1.quad;
              }
-        |  sign expr COMMA_ exprlist {
-                int temp = 1;
-                if ($1 == '-')
-                    temp = -1;
-                $2.ptr->ival *= temp;
-                arglist *al = arglistNew(NULL, $2.ptr);
-                $$.al       = arglistConcat(al, $4.al);
-                $$.quad     = concat($2.quad, $4.quad);
+        |  expr COMMA_ exprlist {
+                arglist *al = arglistNew(NULL, $1.ptr);
+                $$.al       = arglistConcat(al, $3.al);
+                $$.quad     = concat($1.quad, $3.quad);
             }
         ;
 
@@ -770,52 +754,55 @@ expr :  expr PLUS_ expr {
                 funcallExpression(&($$.quad), &($$.ptr), $1, NULL, NULL);
             }
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
+            symbol *ptr = search(stable, curfun, $1);
+            testID(ptr, $1);
 
-        symbol *ptr = search(stable, curfun, $1);
-        testID(ptr, $1);
-        arglist *indicesLst = $3.al;
-        dimProp *dimension = ptr->arr->dims;
-        int cpt = 1, curind, dimnum = 1;
-        int i, j, lastDim;
-        while (indicesLst != NULL && dimension != NULL) {
-            //printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
-            curind = indicesLst->sym->ival;
-            if (curind < dimension->min || curind > dimension->max) {
-                fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
-                exit(EXIT_FAILURE);
+            // calcul de la valeur de l'indice du tableau
+            arglist *indicesLst = $3.al;
+            dimProp *dimension = ptr->arr->dims;
+            int cpt = 1, curind, dimnum = 1, indPos = 0;
+
+            while (indicesLst != NULL && dimension != NULL) {
+                // printf("dims min %d || dims max %d\n",dimension->min, dimension->max);
+                curind = indicesLst->sym->ival;
+
+                if (curind < dimension->min || curind > dimension->max) {
+                    fprintf(stderr, "Indice %d out of bound on dim n°%d\n", curind, dimnum);
+                    exit(EXIT_FAILURE);
+                }
+
+                indPos = (indicesLst->sym->ival - dimension->min) + 1;
+                cpt *= indPos + (dimension->max - dimension->min) ;
+
+                dimension  = dimension->next;
+                indicesLst = indicesLst->next;
+                dimnum ++;
             }
-         //     (Dim2 * (i – 1) + (j – 1) )
-            if (dimnum - 1 == dimension->dim) {
-                j = curind - 1 ;
-                if (j < 0)
-                    j += abs( dimension->min)+1   ;
-                 lastDim = dimension->max - dimension->min + 1;
-                 printf("********************* lastdim taille c %d ave j %d \n",lastDim,j) ;
-                 cpt += i * lastDim + j ;
-             }
-            else {
-                 i = curind - 1;
-                 if (i < 0)
-                    i += abs( dimension->min)+1   ;
-                 printf(" ******************** i %d \n",i) ;
 
-            }
-            dimension = dimension->next;
-            indicesLst = indicesLst->next;
-            dimnum++;
-        }
-        if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
-          ferr("Nb dimension ne correspond pas");
-        ptr->arr->index = cpt;
-         printf("TOTOLANDDOOO %d\n", ptr->arr->index);
-         if (ptr->arr->index > ptr->arr->size) {
-            fprintf(stderr, "index out of range\n");
-            exit(EXIT_FAILURE);
-        }
-        $$.ptr = ptr;
-        $$.quad = NULL;
+            if ((dimnum - 1 != ptr->arr->ndims) || indicesLst != NULL)
+                ferr("Nb dimension ne correspond pas");
 
-             }
+            ptr->arr->index = cpt;
+            printf(" ||||||||||||ar ind = %d\n", ptr->arr->index);
+            if (ptr->arr->index > ptr->arr->size)
+                ferr("index out of range 2");
+
+            $$.ptr  = ptr;
+            $$.quad = NULL ;
+
+            // mettre le type de retour
+            /*$$.ptr->type = ptr->arr->type ;
+            $$.quad = NULL ;
+
+            // calcul de l'indice dans le tableau
+            int index = 0 ;
+            arglist *toto = $3.al;
+                 while (toto != NULL) {
+                fprintf(stdout, "liste indices de expr = ident[i, .. ,n]  %d\n", toto->sym->ival);
+                 toto = toto->next;
+            }*/
+
+         }
       | IDENT_ {
             symbol *ptr = search(stable, curfun, $1);
             testID(ptr, $1);

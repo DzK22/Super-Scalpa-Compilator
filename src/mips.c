@@ -789,6 +789,7 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
         al      = al->next;
     }
 }
+
 void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
     int offset = 0, bytes;
     arglist *al = ((fundata *) fun->fdata)->al;

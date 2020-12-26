@@ -38,7 +38,7 @@ digit              [0-9]
 letter             [a-zA-Z]
 ident              {letter}("'"|"_"|{letter}|{digit})*
 
-cst_int            {digit}+
+cst_int            -?{digit}+
 cst_bool           "true"|"false"
 cst_string         ["][^\"\n]*["]
 
