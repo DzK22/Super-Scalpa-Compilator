@@ -37,6 +37,10 @@ reset=`tput sgr0`
         echo  "${green}>>>>>>>>>>> Test mips/$file passed ${reset} "
 
    else
+        echo "We are waiting results like :  "
+        cat tests/results/$file.res
+        echo "We got this  :  "
+        cat tmp_res
         echo  "${red}>>>>>>>>>>> Test mips/$file failed ${reset}"
         exit 1 ;
    fi
