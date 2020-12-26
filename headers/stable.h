@@ -37,7 +37,7 @@ typedef struct symbol {
 
     union {
         uint32_t ival;   // integer
-        uint8_t  *sval;  // string
+        char     *sval;  // string
         uint32_t bval;   // boolean
 
         void     *fdata; // function data ( = struct fundata)
