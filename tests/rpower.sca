@@ -1,13 +1,26 @@
 program rpower
 var i, j : int;
+
 function power (x : int, n : int) : int
 begin
     if n = 0 then return 1
         else return (x * power(x, n - 1));
 end;
+
+function power_v2 (x : int, y : int) : int
+begin
+    if y = 0 then
+        return 1
+    else if y mod 2 = 0 then
+        return power(x, y/2) * power(x, y/2)
+    else
+        return x * power(x, y/2) * power(x, y/2);
+end;
 begin
     i := 2;
     j := 10;
     write power(i, j);
+    write "\n";
+    write power_v2(i, j);
     write "\n";
 end

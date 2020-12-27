@@ -821,7 +821,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-          yydebug = 1;
+         // yydebug = 1;
     #endif
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");
