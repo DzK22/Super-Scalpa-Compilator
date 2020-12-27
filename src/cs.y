@@ -386,16 +386,16 @@ instr: lvalue AFFEC_ expr {
                 } else if ($1.ptr->type != $3.ptr->type)
                     ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue type != expr type");
 
-                symbol *indTmp = NULL;
+                symbol *sargs = NULL;
                 if ($1.ptr->type == S_ARRAY) {
-                    indTmp = newTmpInt(curtos(), 0);
-                    indTmp->args = $1.ptr->arr->args;
+                    sargs = newTmpInt(curtos(), 0);
+                    sargs->args = $1.ptr->arr->args;
                 } else if ($3.ptr->type == S_ARRAY) {
-                    indTmp = newTmpInt(curtos(), 0);
-                    indTmp->args = $3.ptr->arr->args;
+                    sargs = newTmpInt(curtos(), 0);
+                    sargs->args = $3.ptr->arr->args;
                 }
 
-                quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, indTmp);
+                quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, sargs);
                 quad *quad = concat($3.quad, q);
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
@@ -431,10 +431,13 @@ instr: lvalue AFFEC_ expr {
                 if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_ARRAY)
                     ferr(linecpt,"cs.y instr : READ_ lvalue - type cannot be read");
 
-                symbol *arrIndex = NULL;
-                if ($2.ptr->type == S_ARRAY)
-                    arrIndex = newTmpInt(curtos(), $2.ptr->arr->index);
-                quad *q = qGen(Q_READ, $2.ptr, arrIndex, NULL);
+                symbol *sargs = NULL;
+                if ($2.ptr->type == S_ARRAY) {
+                    sargs = newTmpInt(curtos(), 0);
+                    sargs->args = $2.ptr->arr->args;
+                }
+
+                quad *q = qGen(Q_READ, $2.ptr, sargs, NULL);
                 $$.quad = concat($2.quad, q);
             }
         | WRITE_ expr {
@@ -711,9 +714,9 @@ expr :  expr PLUS_ expr {
               default: ferr(linecpt, "cs.y expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - array wrong type");
           }
 
-          symbol *indTmp = newTmpInt(curtos(), 0);
-          indTmp->args = $3.al;
-          quad *q = qGen(Q_AFFEC, arrVal, ptr, indTmp);
+          symbol *sargs = newTmpInt(curtos(), 0);
+          sargs->args = $3.al;
+          quad *q = qGen(Q_AFFEC, arrVal, ptr, sargs);
           $$.ptr  = arrVal;
           $$.quad = q;
          }
