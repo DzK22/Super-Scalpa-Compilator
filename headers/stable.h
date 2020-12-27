@@ -46,8 +46,14 @@ typedef struct symbol {
     };
 } symbol;
 
+typedef struct hash_item {
+    struct hash_item *next; //Pour gérer les collisions
+    void *data;             //Pour pouvoir refactorer les symboles plus tard sans avoir de pb de compil haha
+    char *key;              //Clé qui sera l'identificateur du symbol
+} hash_item;
+
 typedef struct h_table {
-    symbol **stable;
+    hash_item **stable;
     int size;
     int count;
 } hashtable;
@@ -78,10 +84,9 @@ void   stablePrint  (symbol *);
 /* HASHTABLE FUNCTIONS  */
 /*                      */
 /************************/
-unsigned long getHash (char *id);
+unsigned long getHash (char *key);
 hashtable *initHashTable (int size);
-void freeHashTable (hashtable *htable);
-//PROTOTYPE SUREMENT FAUX, il faudra split SYmbol en 2 je pense et virer le next
-void insertHashTable (hashtable *htable, char *id, symbol *s);
+//void freeHashTable (hashtable *htable);
+void *insertHashTable (hashtable *htable, char *key, void *data);
 
 #endif

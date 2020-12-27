@@ -1,11 +1,10 @@
 #include "../headers/stable.h"
 #include "../headers/arglist.h"
 
-unsigned long getHash (char *id) {
+unsigned long getHash (char *key) {
     unsigned long hash = 5381;
-    int c;
-    while ((c = *id++))
-        hash = ((hash << 5) + hash) + c;
+    while (*(key++))
+        hash = ((hash << 5) + hash) + (*key);
     return hash;
 }
 
@@ -16,7 +15,7 @@ hashtable *initHashTable (int size) {
     }
     hashT->size = size;
     hashT->count = 0;
-    hashT->stable = calloc(hashT->size, sizeof(symbol *));
+    hashT->stable = calloc(hashT->size, sizeof(hash_item *));
     if (hashT->stable == NULL)
         ferr(__LINE__, "stable.c initHashTable calloc error");
     int i;
@@ -25,15 +24,42 @@ hashtable *initHashTable (int size) {
     return hashT;
 }
 
-void freeHashTable (hashtable *htable) {
-    int i;
-    for (i = 0; i < htable->size; i++) {
-        symbol *s = htable->stable[i];
-        if (s != NULL)
-            sFree(s);
+//A FAIRE QUAND REFACTORING DE LA STRUCT SYMBOL POUR HASHTABLE
+//void freeHashTable (hashtable *htable) {
+//    int i;
+//    for (i = 0; i < htable->size; i++) {
+//        hash_item *s = htable->stable[i];
+//        if (s != NULL)
+//            //sFree(s);
+//    }
+//    free(htable->stable);
+//    free(htable);
+//}
+
+//Ecrit data (symbol surement quand refactored). Si les datas existent déjà avec le mm id (symbol existant) le symbol est renvoyer sinon return NULL
+void *insertHashTable (hashtable *htable, char *key, void *data) {
+    if (data == NULL)
+        return NULL;
+    unsigned long hash = getHash(key) % htable->size;
+    hash_item *item = htable->stable[hash];
+    while (item != NULL) {
+        if (!strcmp(item->key, key)) {
+            void *res = item->data;
+            item->data = data;
+            return res;
+        }
+        item = item->next;
     }
-    free(htable->stable);
-    free(htable);
+    if ((item = malloc(sizeof(hash_item) + strlen(key) + 1)) == NULL)
+        ferr(__LINE__, "stable.c insertHashTable malloc error");
+    if ((item->key = strdup(key)) == NULL)
+        ferr(__LINE__, "stable.c insertHashTable strdup error");
+    item->data = data;
+    //Ajouter l'élément en début de liste chaînée
+    item->next = htable->stable[hash];
+    htable->stable[hash] = item;
+    htable->count++;
+    return NULL;
 }
 
 
