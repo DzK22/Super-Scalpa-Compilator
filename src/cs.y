@@ -31,7 +31,7 @@
         if (curfun == NULL)
             return &stable;
 
-        return &((fundata *) curfun->fdata)->tos;
+        return &curfun->fdata->tos;
     }
 
     arglist *funcalls = NULL;
@@ -40,7 +40,7 @@
         if(s == NULL) {
             char s[LEN];
             snprintf(s, LEN, "cs.y ID \"%s\" not exists", name);
-            fundata *fdata = (fundata *) curfun->fdata;
+            fundata *fdata = curfun->fdata;
             stablePrint(fdata->tos);
             ferr(linecpt,s);
         }
@@ -76,7 +76,7 @@
             ferr(linecpt,"cs.y funcallExpression symbol is not a function");
 
         symbol *res;
-        fundata *fdata = (fundata *) fs->fdata;
+        fundata *fdata = fs->fdata;
 
         switch (fdata->rtype) {
             case S_INT  : res = newTmpInt(curtos(), 0)      ; break ;
@@ -326,7 +326,7 @@ fundecl : FUNCTION_ IDENT_ PARLEFT_ {
                 curfun      = fs;
             }
           parlist PARRIGHT_ DPOINT_ atomictype  vardecllist {
-                fundata *fdata = (fundata *) curfun->fdata;
+                fundata *fdata = curfun->fdata;
                 fdata->al      = $5.al;
                 fdata->rtype   = $8;
             }
@@ -386,14 +386,17 @@ instr: lvalue AFFEC_ expr {
                 } else if ($1.ptr->type != $3.ptr->type)
                     ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue type != expr type");
 
-                symbol *s = NULL;
-                if ($1.ptr->type == S_ARRAY)
-                    s = newTmpInt(curtos(), $1.ptr->arr->index);
-                else if ($3.ptr->type == S_ARRAY)
-                    s = newTmpInt(curtos(), $3.ptr->arr->index);
+                symbol *indTmp = NULL;
+                if ($1.ptr->type == S_ARRAY) {
+                    indTmp = newTmpInt(curtos(), 0);
+                    indTmp->args = $1.ptr->arr->args;
+                } else if ($3.ptr->type == S_ARRAY) {
+                    indTmp = newTmpInt(curtos(), 0);
+                    indTmp->args = $3.ptr->arr->args;
+                }
 
-                quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, s);
-                quad *quad = concat($3.quad, q); // segfault here for array affectation
+                quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, indTmp);
+                quad *quad = concat($3.quad, q);
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
             }
@@ -401,7 +404,7 @@ instr: lvalue AFFEC_ expr {
                 if (curfun == NULL)
                     ferr(linecpt,"cs.y instr : RETURN_ expr - Not in function");
 
-                if ($2.ptr->type != ((fundata *) curfun->fdata)->rtype)
+                if ($2.ptr->type != curfun->fdata->rtype)
                     ferr(linecpt,"cs.y instr : RETURN_ expr - Return expr type != fun ret type");
 
                 quad *qr = qGen(Q_FUNRETURN, NULL, curfun, $2.ptr);
@@ -516,9 +519,7 @@ lvalue: IDENT_ {
                 if (ptr->type != S_ARRAY)
                     ferr(__LINE__, "lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
 
-                // calcul de la valeur de l'indice du tableau
-                arrayComputeIndex($3.al, ptr);
-
+                ptr->arr->args = $3.al;
                 $$.ptr  = ptr;
                 $$.quad = NULL ;
             }
@@ -701,18 +702,18 @@ expr :  expr PLUS_ expr {
           if (ptr->type != S_ARRAY)
               ferr(__LINE__, "expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
 
-          arrayComputeIndex($3.al, ptr);
-
+          ptr->arr->args = $3.al;
           symbol *arrVal;
+
           switch (ptr->arr->type) {
               case S_INT  : arrVal = newTmpInt(curtos(), 0)      ; break;
               case S_BOOL : arrVal = newTmpBool(curtos(), false) ; break;
               default: ferr(linecpt, "cs.y expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - array wrong type");
           }
 
-          symbol *tmp = newTmpInt(curtos(), ptr->arr->index);
-
-          quad *q = qGen(Q_AFFEC, arrVal, ptr, tmp);
+          symbol *indTmp = newTmpInt(curtos(), 0);
+          indTmp->args = $3.al;
+          quad *q = qGen(Q_AFFEC, arrVal, ptr, indTmp);
           $$.ptr  = arrVal;
           $$.quad = q;
          }
@@ -817,7 +818,7 @@ int main (int argc, char **argv) {
     }
 
     #if YYDEBUG
-         // yydebug = 1;
+          yydebug = 1;
     #endif
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");

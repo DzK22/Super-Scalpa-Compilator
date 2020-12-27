@@ -279,7 +279,7 @@ symbol *search (symbol *gtos, symbol *curfun, char *id) {
     symbol *s;
     symbol *ftos = NULL;
     if (curfun != NULL)
-        ftos = ((fundata *) curfun->fdata)->tos;
+        ftos = curfun->fdata->tos;
 
     if (ftos != NULL && (s = searchTable(ftos, id, curfun)) != NULL)
         return s;
@@ -308,7 +308,7 @@ void stablePrint (symbol *tos) {
                 break;
             case S_FUNCTION:
                 fprintf(stdout, "Function : returns => ");
-                switch (((fundata *) tos->fdata)->rtype) {
+                switch (tos->fdata->rtype) {
                     case S_INT:
                         fprintf(stdout, "INTEGER\n");
                         break;

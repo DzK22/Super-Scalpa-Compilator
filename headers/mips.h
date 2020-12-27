@@ -8,15 +8,19 @@
 #include "quad.h"
 #include "stable.h"
 #include "arglist.h"
+#include "array.h"
 
 void getMips (FILE *, symbol *, quad *);
 void getData (FILE *f, symbol *s);
 void getText (FILE *f, quad *s);
 void ferr    (int, char *s );
+
 char * nextTmpLabel (void);
-char * opstr (qop);
+char * opstr        (qop);
+void getMipsCompind (FILE *f);
 
 // common
+void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs);
 void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2);
 void qRead   (FILE *f, symbol *res, symbol *argv1);
 void qWrite  (FILE *f, symbol *argv1);
