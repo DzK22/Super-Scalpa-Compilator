@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #define LEN 128
+#define CAPACITY 500000
 
 typedef enum stype {
     S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION, S_PROG
@@ -27,6 +28,7 @@ typedef struct s_array {
     int     index;
 } s_array;
 
+//Hash Item KEY = symbol->id
 typedef struct symbol {
     char   *id;
     bool   tmp; // is tmp var ? (true = cannot be modified by user)
@@ -43,6 +45,12 @@ typedef struct symbol {
         s_array *arr;   // array
     };
 } symbol;
+
+typedef struct h_table {
+    symbol **stable;
+    int size;
+    int count;
+} hashtable;
 
 void   ferr         (int, char *s);
 void   sFree        (symbol *);
@@ -64,5 +72,16 @@ symbol *newProg     (symbol **, char *);
 symbol *newVarArray (symbol **, char *, s_array *, symbol *, bool);
 
 void   stablePrint  (symbol *);
+
+/************************/
+/*                      */
+/* HASHTABLE FUNCTIONS  */
+/*                      */
+/************************/
+unsigned long getHash (char *id);
+hashtable *initHashTable (int size);
+void freeHashTable (hashtable *htable);
+//PROTOTYPE SUREMENT FAUX, il faudra split SYmbol en 2 je pense et virer le next
+void insertHashTable (hashtable *htable, char *id, symbol *s);
 
 #endif

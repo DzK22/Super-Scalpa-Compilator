@@ -32,6 +32,6 @@ all:
 
 test:
 	./run.sh
-	
+
 clean:
 	rm -rf $(TMP) scalpa $(MIPS) *.s tmp_res

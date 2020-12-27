@@ -1,6 +1,42 @@
 #include "../headers/stable.h"
 #include "../headers/arglist.h"
 
+unsigned long getHash (char *id) {
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *id++))
+        hash = ((hash << 5) + hash) + c;
+    return hash;
+}
+
+hashtable *initHashTable (int size) {
+    hashtable *hashT = malloc(sizeof(hashtable));
+    if (hashT == NULL) {
+        ferr(__LINE__, "stable.c initHashTable malloc error");
+    }
+    hashT->size = size;
+    hashT->count = 0;
+    hashT->stable = calloc(hashT->size, sizeof(symbol *));
+    if (hashT->stable == NULL)
+        ferr(__LINE__, "stable.c initHashTable calloc error");
+    int i;
+    for (i = 0; i < hashT->size; i++)
+        hashT->stable[i] = NULL;
+    return hashT;
+}
+
+void freeHashTable (hashtable *htable) {
+    int i;
+    for (i = 0; i < htable->size; i++) {
+        symbol *s = htable->stable[i];
+        if (s != NULL)
+            sFree(s);
+    }
+    free(htable->stable);
+    free(htable);
+}
+
+
 symbol *sAlloc (void) {
     symbol *ns = malloc(sizeof(struct symbol));
     if (ns == NULL)
@@ -33,6 +69,7 @@ symbol *sAdd (symbol **tos) {
     }
 }
 
+//Juste Free l'id et sval (si string) quand hashTable sera prête
 void sFree (symbol *s) {
     symbol *cur = s;
     symbol *prev;

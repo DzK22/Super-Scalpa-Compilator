@@ -14,7 +14,7 @@
     #include "../headers/array.h"
     #define YYDEBUG 1
 
-    int yyerror  ( char *s);
+    void yyerror  ( char *s);
     int yylex    (void);
     void freeLex (void);
     extern FILE *yyin;
@@ -758,13 +758,11 @@ m : %empty {
 
 %%
 
-int yyerror (char *s)
-{
+void yyerror (char *s) {
     ferr(linecpt, s);
 }
 
-int yywrap (void)
-{
+int yywrap (void) {
     return 1;
 }
 
