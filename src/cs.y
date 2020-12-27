@@ -12,7 +12,7 @@
     #include "../headers/arglist.h"
     #include "../headers/opti.h"
     #include "../headers/array.h"
-    #define YYDEBUG 1
+    #define YYDEBUG 0
 
     void yyerror  (char *s);
     int yylex     (void);
@@ -820,13 +820,14 @@ int main (int argc, char **argv) {
         fprintf(stdout, "Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n");
     }
 
-    #if YYDEBUG
-         // yydebug = 1;
+    #if YYDEBUG == 1
+          yydebug = 1;
     #endif
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");
     if (yyin == NULL)
         ferr(__LINE__, "cs.y main - error fopen");
+
     yyparse();
     if(!validComment)
         ferr(linecpt,"error comments \n") ;
@@ -837,8 +838,9 @@ int main (int argc, char **argv) {
         ferr(__LINE__, "cs.y main - snprintf");
 
     FILE *output = fopen(out, "w");
-    if (yydebug)
+    #if YYDEBUG == 1
         qPrint(all_code);
+    #endif
 
     optiLoop(&all_code, &stable);
     getMips(output, stable, all_code);

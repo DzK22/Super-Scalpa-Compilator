@@ -85,7 +85,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
     pdat("_true", ".asciiz \"true\"");
     pdat("_false", ".asciiz \"false\"");
     pdat("_read_int", ".asciiz \"Enter int: \"");
-    pdat("_segfault_mess", ".asciiz \"Invalid read of size 4\"");
+    pdat("_segfault_mess", ".asciiz \"Invalid read of size 4\n\"");
 
     // tos global
     pdir("");
@@ -392,43 +392,14 @@ void getText (FILE *f, quad *q) {
 // COMMON //
 ////////////
 
-/**
- * Compute array index from sargs->args and sarr->arr->dims
- * The index is put in register $t8
- */
-void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
-    arglist *lal = sargs->args;
-    dimProp *ldp = sarr->arr->dims;
-
-    rlist *rlal = rlistNew(lal, NULL);
-    rlist *rldp = rlistNew(NULL, ldp);
-
-    pins3("li", "$t8", "0"); // $t8 = index
-    pins3("li", "$t7", "1"); // $t7 = factor
-
-    while (rlal && rldp) {
-        pins3("lw", "$t0", rlal->al->sym->id); // $t0 cur ind
-        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->min));
-        pins3("li", "$t1", tbuf); // $t1 min
-        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->max));
-        pins3("li", "$t2", tbuf); // $t2 max
-        pins2("jal", "_compind");
-
-        rlal = rlal->next;
-        rldp = rldp->next;
-    }
-
-    snpt(snprintf(tbuf, LEN, "%d", sarr->arr->size));
-    pins3("li", "$t9", tbuf);
-    pins4("bgt", "$t8", "$t9", "_segfault");
-}
-
 void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
     // argv2 only for array = for index calculation
 
     if (res->type == S_ARRAY) {
         arrComputeIndex(f, res, argv2);
         // index in $t8
+        snpt(snprintf(tbuf, LEN, "%s[%s] := %s", res->id, "$t8", argv1->id));
+        pcom(tbuf);
 
         if (res->ref) {
             pins3("lw", "$t3", res->id);
@@ -448,6 +419,8 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
     } else if (argv1->type == S_ARRAY) {
         arrComputeIndex(f, argv1, argv2);
         // index in $t8
+        snpt(snprintf(tbuf, LEN, "%s := %s[%s]", res->id, argv1->id, "$t8"));
+        pcom(tbuf);
 
         if (argv1->ref) {
             pins3("lw", "$t3", argv1->id);
@@ -699,6 +672,41 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
     free(label);
     free(label2);
 }
+
+/**
+ * Compute array index from sargs->args and sarr->arr->dims
+ * The index is put in register $t8
+ */
+void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
+    snpt(snprintf(tbuf, LEN, "Compute array index of %s", sarr->id));
+    pcom(tbuf);
+
+    arglist *lal = sargs->args;
+    dimProp *ldp = sarr->arr->dims;
+
+    rlist *rlal = rlistNew(lal, NULL);
+    rlist *rldp = rlistNew(NULL, ldp);
+
+    pins3("li", "$t8", "0"); // $t8 = index
+    pins3("li", "$t7", "1"); // $t7 = factor
+
+    while (rlal && rldp) {
+        pins3("lw", "$t0", rlal->al->sym->id); // $t0 cur ind
+        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->min));
+        pins3("li", "$t1", tbuf); // $t1 min
+        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->max));
+        pins3("li", "$t2", tbuf); // $t2 max
+        pins2("jal", "_compind");
+
+        rlal = rlal->next;
+        rldp = rldp->next;
+    }
+
+    snpt(snprintf(tbuf, LEN, "%d", sarr->arr->size));
+    pins3("li", "$t9", tbuf);
+    pins4("bgt", "$t8", "$t9", "_segfault");
+}
+
 
 ///////////////
 // FUNCTIONS //
