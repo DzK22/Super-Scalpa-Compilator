@@ -1,4 +1,11 @@
 (* Test basique sur les opérations arithmétiques *)
+(* Nested comments test
+    comment father
+    (*
+     comment child 1
+    (********
+*)
+
 
 program arith
    var a, b, c, i, j : int;

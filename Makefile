@@ -21,12 +21,7 @@ all:
 	$(CC) -c $(SRC)opti.c $(CFLAGS)
 	$(CC) -c $(SRC)array.c $(CFLAGS)
 
-	mv stable.o $(TMP)
-	mv quad.o $(TMP)
-	mv mips.o $(TMP)
-	mv arglist.o $(TMP)
-	mv opti.o $(TMP)
-	mv array.o $(TMP)
+	mv *.o $(TMP)
 
 	$(CC) -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)arglist.o $(TMP)array.o $(TMP)mips.o $(TMP)opti.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 

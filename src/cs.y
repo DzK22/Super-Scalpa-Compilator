@@ -19,7 +19,7 @@
     void freeLex  (void);
     extern FILE *yyin;
     extern int  linecpt ;
-
+    extern int validComment ;
     symbol *stable = NULL; // global tos
     quad *all_code = NULL; // all quads
     char *progName = NULL;
@@ -824,6 +824,8 @@ int main (int argc, char **argv) {
     if (yyin == NULL)
         ferr(__LINE__, "cs.y main - error fopen");
     yyparse();
+    if(!validComment)
+        ferr(linecpt,"error comments \n") ;
     char out[LEN];
 
     res = snprintf(out, LEN, "%s.s", o ? filename : (*progName ? progName : "out"));

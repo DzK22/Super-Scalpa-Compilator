@@ -5,7 +5,7 @@ green=`tput setaf 2`
 reset=`tput sgr0`
 
 # Update files
-     make
+    # make
 
  echo ""
  echo "#####################################################"
