@@ -803,11 +803,49 @@ void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
     while (al != NULL) {
         snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
         pins3("lw", "$t0", tbuf);
-        pins3("sw", "$t0", al->sym->id);
+
+        if (al->sym->type == S_ARRAY && !al->sym->ref) {
+            // copy original array to function local array
+            funCopyArray(f, al->sym);
+        } else {
+            pins3("sw", "$t0", al->sym->id);
+        }
 
         bytes   = funSymTypeSize(al->sym);
         offset += bytes;
         al      = al->next;
+    }
+}
+
+/**
+ * @info $t0 should be the register which contains the address of the original array to copy from
+ * @param destSym Symbol array to copy data to (function parameter local array symbol)
+ */
+void funCopyArray (FILE *f, symbol *destSym) {
+    int i, off = 0;
+    int addOff = destSym->arr->type == S_INT ? 4 : 1;
+
+    snpt(snprintf(tbuf, LEN, "copy array ($t0) to %s", destSym->id));
+    pcom(tbuf);
+    pins3("la", "$t1", destSym->id);
+
+    char lins[3], sins[3];
+    if (destSym->arr->type == S_INT) {
+        sprintf(lins, "lw");
+        sprintf(sins, "sw");
+    } else {
+        sprintf(lins, "lb");
+        sprintf(sins, "sb");
+    }
+
+    for (i = 0; i < destSym->arr->size; i ++) {
+        snpt(snprintf(tbuf, LEN, "%d($t0)", off));
+        pins3(lins, "$t2", tbuf);
+
+        snpt(snprintf(tbuf, LEN, "%d($t1)", off));
+        pins3(sins, "$t2", tbuf);
+
+        off += addOff;
     }
 }
 
@@ -829,7 +867,7 @@ void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
                 ferr(__LINE__, "mips.c funStackPushArgs type array but array size differ");
         }
 
-        if (al->sym->ref) {
+        if (al->sym->ref || al->sym->type == S_ARRAY) {
             pins3("la", "$t0", args->id);
         } else {
             pins3("lw", "$t0", args->id);

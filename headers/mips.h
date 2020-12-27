@@ -35,6 +35,7 @@ int  funArgsSize         (symbol *fun);
 int  funSymTypeSize      (symbol *s);
 void funStackLoadArgs    (FILE *f, symbol *fun, int offset);
 void funStackPushArgs    (FILE *f, symbol *fun, symbol *args);
+void funCopyArray        (FILE *f, symbol *destSym);
 void funArgsDebugString  (symbol *fun, symbol *args, char *dstring, int maxlen);
 
 int  curfunVarSize       (void);

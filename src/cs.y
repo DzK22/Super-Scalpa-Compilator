@@ -14,11 +14,11 @@
     #include "../headers/array.h"
     #define YYDEBUG 1
 
-    void yyerror  ( char *s);
-    int yylex    (void);
-    void freeLex (void);
+    void yyerror  (char *s);
+    int yylex     (void);
+    void freeLex  (void);
     extern FILE *yyin;
-    extern int linecpt ;
+    extern int  linecpt ;
 
     symbol *stable = NULL; // global tos
     quad *all_code = NULL; // all quads
@@ -30,6 +30,7 @@
     symbol ** curtos (void) {
         if (curfun == NULL)
             return &stable;
+
         return &((fundata *) curfun->fdata)->tos;
     }
 
