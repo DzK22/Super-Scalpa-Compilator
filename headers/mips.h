@@ -15,9 +15,11 @@ void getData (FILE *f, symbol *s);
 void getText (FILE *f, quad *s);
 void ferr    (int, char *s );
 
+void getMipsFunctionCompind   (FILE *f);
+void getMipsInternalFunctions (FILE *f);
+
 char * nextTmpLabel (void);
 char * opstr        (qop);
-void getMipsCompind (FILE *f);
 
 // common
 void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs);

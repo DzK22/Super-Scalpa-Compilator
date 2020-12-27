@@ -86,8 +86,6 @@ void getMips (FILE *f, symbol *s, quad *q) {
     pdat("_false", ".asciiz \"false\"");
     pdat("_read_int", ".asciiz \"Enter int: \"");
     pdat("_segfault_mess", ".asciiz \"Invalid read of size 4\"");
-    // TODO virer
-    pdat("prout", ".asciiz \"\n\"");
 
     // tos global
     pdir("");
@@ -110,17 +108,25 @@ void getMips (FILE *f, symbol *s, quad *q) {
     // text
     pdir("\n.text");
     pdir(".globl main");
+
+    pdir("");
+    pcom("Internal functions")
+    getMipsInternalFunctions(f);
+
+    pdir("");
+    pcom("User functions");
     getText(f, q);
 
+    pcom("Exit program");
+    pins2("j", "_exit");
+}
+
+void getMipsInternalFunctions (FILE *f) {
     // quitter le programme proprement
     plab("_exit");
     pins3("li", "$v0", "10");
     pins1("syscall");
 
-    getMipsCompind(f);
-}
-
-void getMipsCompind (FILE *f) {
     // if segfault go HERE
     plab("_segfault");
     pins3("li", "$v0", "4");
@@ -128,6 +134,11 @@ void getMipsCompind (FILE *f) {
     pins1("syscall");
     pins2("j", "_exit");
 
+    // helper to compute array index
+    getMipsFunctionCompind(f);
+}
+
+void getMipsFunctionCompind (FILE *f) {
     /**
      * Function compind = compute array index with given args and props
      * Call this function after all these registers are set correctly:
@@ -387,15 +398,15 @@ void getText (FILE *f, quad *q) {
  */
 void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
     arglist *lal = sargs->args;
-	dimProp *ldp = sarr->arr->dims;
+    dimProp *ldp = sarr->arr->dims;
 
-	rlist *rlal = rlistNew(lal, NULL);
-	rlist *rldp = rlistNew(NULL, ldp);
+    rlist *rlal = rlistNew(lal, NULL);
+    rlist *rldp = rlistNew(NULL, ldp);
 
     pins3("li", "$t8", "0"); // $t8 = index
     pins3("li", "$t7", "1"); // $t7 = factor
 
-	while (rlal && rldp) {
+    while (rlal && rldp) {
         pins3("lw", "$t0", rlal->al->sym->id); // $t0 cur ind
         snpt(snprintf(tbuf, LEN, "%d", rldp->dp->min));
         pins3("li", "$t1", tbuf); // $t1 min
@@ -403,9 +414,9 @@ void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
         pins3("li", "$t2", tbuf); // $t2 max
         pins2("jal", "_compind");
 
-		rlal = rlal->next;
-		rldp = rldp->next;
-	}
+        rlal = rlal->next;
+        rldp = rldp->next;
+    }
 
     snpt(snprintf(tbuf, LEN, "%d", sarr->arr->size));
     pins3("li", "$t9", tbuf);
