@@ -5,6 +5,7 @@
     #include "../headers/quad.h"
     #include "../tmp/cs.tab.h"
     int linecpt = 1;
+    int validComment = 1 ;
 %}
 
 A                  [aA]
@@ -43,7 +44,7 @@ cst_bool           "true"|"false"
 cst_string         ["][^\"\n]*["]
 
 atomic_type        {type_int}|{type_bool}|{type_unit}
-comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
+comment           \((\*([^*]|\*+[^*)]|\n)*)
 
 %%
 
@@ -109,7 +110,9 @@ comment            \(\*([^*]|\*+[^*)]|\n)*\*+\)
                                   yylval.cte.sval = strdup(yytext);
                                   return CTE_;                      }
 
-{comment}                       { /* ignore comments*/              }
+{comment}                       {  validComment = 0  ;          }
+
+"*)"                             {  validComment = 1  ;          }
 
 ":"                             { return DPOINT_;                   }
 
