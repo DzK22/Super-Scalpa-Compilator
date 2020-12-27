@@ -85,6 +85,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
     pdat("_true", ".asciiz \"true\"");
     pdat("_false", ".asciiz \"false\"");
     pdat("_read_int", ".asciiz \"Enter int: \"");
+    pdat("_segfault_mess", ".asciiz \"Invalid read of size 4\"");
 
     // tos global
     pdir("");
@@ -107,12 +108,61 @@ void getMips (FILE *f, symbol *s, quad *q) {
     // text
     pdir("\n.text");
     pdir(".globl main");
+
+    pdir("");
+    pcom("Internal functions")
+    getMipsInternalFunctions(f);
+
+    pdir("");
+    pcom("User functions");
     getText(f, q);
 
+    pcom("Exit program");
+    pins2("j", "_exit");
+}
+
+void getMipsInternalFunctions (FILE *f) {
     // quitter le programme proprement
-    plab("exit");
+    plab("_exit");
     pins3("li", "$v0", "10");
     pins1("syscall");
+
+    // if segfault go HERE
+    plab("_segfault");
+    pins3("li", "$v0", "4");
+    pins3("la", "$a0", "_segfault_mess");
+    pins1("syscall");
+    pins2("j", "_exit");
+
+    // helper to compute array index
+    getMipsFunctionCompind(f);
+}
+
+void getMipsFunctionCompind (FILE *f) {
+    /**
+     * Function compind = compute array index with given args and props
+     * Call this function after all these registers are set correctly:
+     * $t8: index init to 0, $t7: factor init to 1
+     * $t0: cur ind, $t1: dim min, $t2: dim max  -> they should change on each call
+     * Call this function for each dim/args in reverse order
+     * ex: tab[1,2] => call for ind "2" and next call for ind "1"
+     */
+
+    // check if segfault
+    plab("_compind");
+    pins4("blt", "$t0", "$t1", "_segfault");
+    pins4("bgt", "$t0", "$t2", "_segfault");
+
+    // Calcul de index
+    pins4("sub", "$t3", "$t0", "$t1");
+    pins4("mul", "$t4", "$t3", "$t7");
+    pins4("add", "$t8", "$t8", "$t4");
+
+    // Calcul de factor
+    pins4("sub", "$t3", "$t2", "$t1");
+    pins4("add", "$t4", "$t3", "1");
+    pins4("mul", "$t7", "$t7", "$t4");
+    pins2("jr", "$ra");
 }
 
 void getData (FILE *f, symbol *s) {
@@ -180,14 +230,14 @@ char * opstr (qop op) {
     return str;
 }
 
-char * nextTmplab (void) {
+char * nextTmpLabel (void) {
     static int nlabel = 0;
     char tmplab[LEN];
     sprintf(tmplab, "tmplab_%d", nlabel ++);
 
     char *res = strdup(tmplab);
     if (res == NULL)
-        ferr(__LINE__ ,"mips.c nextTmplab strdup");
+        ferr(__LINE__ ,"mips.c nextTmpLabel strdup");
 
     return res;
 }
@@ -228,15 +278,16 @@ void getText (FILE *f, quad *q) {
             case Q_READ:
                 if (!res)
                     ferr(__LINE__ ,"mips.c getText Q_READ quad error");
-                // argv1 can be != NULL = index of array if type == S_ARRAY
 
+                // argv1 only for array = for index calculation
                 qRead(f, res, argv1);
                 break;
 
             case Q_AFFEC:
-                if (!res || !argv1) // argv2 = symbol qui stocke index du tab dans ival
+                if (!res || !argv1)
                     ferr(__LINE__ ,"mips.c getText Q_AFFEC quad error");
 
+                // argv2 only for array = for index calculation
                 qAffect(f, res, argv1, argv2);
                 break;
 
@@ -341,10 +392,43 @@ void getText (FILE *f, quad *q) {
 // COMMON //
 ////////////
 
+/**
+ * Compute array index from sargs->args and sarr->arr->dims
+ * The index is put in register $t8
+ */
+void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
+    arglist *lal = sargs->args;
+    dimProp *ldp = sarr->arr->dims;
+
+    rlist *rlal = rlistNew(lal, NULL);
+    rlist *rldp = rlistNew(NULL, ldp);
+
+    pins3("li", "$t8", "0"); // $t8 = index
+    pins3("li", "$t7", "1"); // $t7 = factor
+
+    while (rlal && rldp) {
+        pins3("lw", "$t0", rlal->al->sym->id); // $t0 cur ind
+        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->min));
+        pins3("li", "$t1", tbuf); // $t1 min
+        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->max));
+        pins3("li", "$t2", tbuf); // $t2 max
+        pins2("jal", "_compind");
+
+        rlal = rlal->next;
+        rldp = rldp->next;
+    }
+
+    snpt(snprintf(tbuf, LEN, "%d", sarr->arr->size));
+    pins3("li", "$t9", tbuf);
+    pins4("bgt", "$t8", "$t9", "_segfault");
+}
+
 void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
+    // argv2 only for array = for index calculation
+
     if (res->type == S_ARRAY) {
-        snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
-        pins3("li", "$t2", tbuf);
+        arrComputeIndex(f, res, argv2);
+        // index in $t8
 
         if (res->ref) {
             pins3("lw", "$t3", res->id);
@@ -353,17 +437,17 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
         }
 
         if (res->arr->type == S_INT) {
-            pins4("mul", "$t4", "$t2", "4");
+            pins4("mul", "$t4", "$t8", "4");
             pins4("add", "$t1", "$t4", "$t3" );
         } else
-            pins4("add", "$t1", "$t2", "$t3");
+            pins4("add", "$t1", "$t8", "$t3");
 
         pload("$t5", argv1);
         pins3(argv1->type == S_BOOL ? "sb" : "sw", "$t5", "($t1)");
 
     } else if (argv1->type == S_ARRAY) {
-        snpt(snprintf(tbuf, LEN, "%d", argv2->ival - 1));
-        pins3("li", "$t2", tbuf);
+        arrComputeIndex(f, argv1, argv2);
+        // index in $t8
 
         if (argv1->ref) {
             pins3("lw", "$t3", argv1->id);
@@ -372,10 +456,10 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
         }
 
         if (argv1->arr->type == S_INT) {
-            pins4("mul", "$t4", "$t2", "4");
+            pins4("mul", "$t4", "$t8", "4");
             pins4("add", "$t1", "$t4", "$t3");
         } else
-            pins4("add", "$t1", "$t2", "$t3");
+            pins4("add", "$t1", "$t8", "$t3");
 
         pins3(res->type == S_BOOL ? "lb" : "lw", "$t5", "($t1)");
         pstore("$t5", res);
@@ -390,8 +474,8 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
 }
 
 void qRead (FILE *f, symbol *res, symbol *argv1) {
+    // argv1 only for array = for index calculation
     char *label, *label2;
-    // argv1 != NULL only if type == S_ARRAY (and argv1 = index of array value)
 
     snpt(snprintf(tbuf, LEN, "read int %s", dsymid(res)));
     pcom(tbuf);
@@ -408,8 +492,8 @@ void qRead (FILE *f, symbol *res, symbol *argv1) {
             break;
 
         case S_BOOL:
-            label  = nextTmplab();
-            label2 = nextTmplab();
+            label  = nextTmpLabel();
+            label2 = nextTmpLabel();
 
             pins4("beq", "$v0", "$zero", label);
             pins3("li", "$t0", "1");
@@ -426,15 +510,16 @@ void qRead (FILE *f, symbol *res, symbol *argv1) {
             break;
 
         case S_ARRAY:
-            snpt(snprintf(tbuf, LEN, "%d", argv1->ival - 1));
-            pins3("li", "$t2", tbuf);
+            arrComputeIndex(f, res, argv1);
+            // index in $t8
+
             pins3("la", "$t3", res->id);
 
             if (res->arr->type == S_INT) {
-                pins4("mul", "$t4", "$t2", "4");
+                pins4("mul", "$t4", "$t8", "4");
                 pins4("add", "$t1", "$t4", "$t3");
             } else
-                pins4("add", "$t1", "$t2", "$t3");
+                pins4("add", "$t1", "$t8", "$t3");
 
             pins3("sw", "$v0", "($t1)");
             break;
@@ -467,8 +552,8 @@ void qWrite (FILE *f, symbol *argv1) {
             break;
 
         case S_BOOL:
-            label  = nextTmplab();
-            label2 = nextTmplab();
+            label  = nextTmpLabel();
+            label2 = nextTmpLabel();
 
             snpt(snprintf(tbuf, LEN, "print bool %s", dsymid(argv1)));
             pcom(tbuf);
@@ -507,8 +592,8 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
         case Q_DIV   : pins4("div", "$t2", "$t0", "$t1") ; break ;
         case Q_MOD   : pins4("rem", "$t2", "$t0", "$t1") ; break ;
         case Q_EXP   :
-           label  = nextTmplab();
-           label2 = nextTmplab();
+           label  = nextTmpLabel();
+           label2 = nextTmpLabel();
 
            pload("$t2", argv1);
            pins3("li", "$t3", "1");
@@ -535,8 +620,8 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
 
 void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     char *label, *label2;
-    label  = nextTmplab();
-    label2 = nextTmplab();
+    label  = nextTmpLabel();
+    label2 = nextTmpLabel();
 
     snpt(snprintf(tbuf, LEN, "%s := %s %s %s", dsymid(res), dsymid(argv1), opstr(op), dsymid(argv2)));
     pcom(tbuf);
@@ -594,8 +679,8 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
 
 void qNot (FILE *f, symbol *res, symbol *argv1) {
     char *label, *label2;
-    label  = nextTmplab();
-    label2 = nextTmplab();
+    label  = nextTmpLabel();
+    label2 = nextTmpLabel();
 
     snpt(snprintf(tbuf, LEN, "%s := NOT %s", dsymid(res), dsymid(argv1)));
     pcom(tbuf);

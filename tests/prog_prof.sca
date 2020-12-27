@@ -8,22 +8,23 @@ program maxi
   end;
 
   function maxtab(t : array[-4..4, 0..10] of int) : int
-    var i,j,maximum : int
+    var i, j, maximum : int
 
     begin
       i := -4;
-      j := 0;
       maximum := t[-4,0];
 
       while i <= 4 do
       begin
+        j := 0;
+
         while j <= 10 do
         begin
           if t[i,j] > maximum then maximum := t[i,j];
-          j := j+1
+          j := j + 1
         end;
 
-        i := i+1;
+        i := i + 1;
       end;
 
     return maximum
@@ -31,16 +32,18 @@ program maxi
 
 begin
   i := -4;
-  j := 0;
 
   while i <= 4 do
   begin
+    j := 0;
+
     while j <= 10 do
     begin
       read val[i,j];
       j := j+1
     end;
-    i := i+1
+
+    i := i + 1
   end;
 
   max:= maxtab(val);

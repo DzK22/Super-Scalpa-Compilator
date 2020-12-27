@@ -13,6 +13,8 @@ typedef enum stype {
     S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION, S_PROG
 } stype;
 
+#include "arglist.h"
+
 typedef struct arr_range {
     int min;
     int max;
@@ -24,6 +26,7 @@ typedef struct s_array {
     int     ndims;
     int     size;
     dimProp *dims;    // pointeur sur la première dimension
+    struct arglist *args; // only for array index calculation tmp
     stype   type;
     int     index;
 } s_array;
@@ -41,7 +44,8 @@ typedef struct symbol {
         int8_t  bval;   // boolean
         char    *sval;  // string
 
-        void    *fdata; // function data ( = struct fundata)
+        struct arglist *args; // only for array index calculation
+        struct fundata *fdata; // function data ( = struct fundata)
         s_array *arr;   // array
     };
 } symbol;

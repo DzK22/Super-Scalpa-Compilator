@@ -10,13 +10,13 @@
 typedef struct arglist {
 	struct arglist *next;
 	char   *id;  // only for var decl
-	symbol *sym; // only for fun args
+	struct symbol *sym; // only for fun args
 } arglist;
 
 typedef struct fundata {
     arglist *al;
     stype rtype;
-		symbol *tos;
+	struct symbol *tos;
 } fundata;
 
 typedef struct exprlist {
@@ -24,9 +24,9 @@ typedef struct exprlist {
 	struct arglist *al;
 } exprlist;
 
-arglist * arglistNew       (char *, symbol *);
+arglist * arglistNew       (char *, struct symbol *);
 arglist * arglistConcat    (arglist *, arglist *);
 void arglistPrint          (arglist *);
-symbol  * arglistToSymlist (arglist *);
+struct symbol  * arglistToSymlist (arglist *);
 
 #endif
