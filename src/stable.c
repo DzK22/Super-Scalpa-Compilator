@@ -228,6 +228,8 @@ symbol *newVarBool (symbol **tos, char *id, bool bol, symbol *curfun, bool ref) 
 
 symbol *newVarFun (symbol **tos, char *id) {
     fundata *fdata = malloc(sizeof(fundata));
+    if (fdata == NULL)
+        ferr(__LINE__, "stable.c malloc error\n"),
     fdata->al      = NULL;
     fdata->rtype   = S_NONE;
     fdata->tos     = NULL;

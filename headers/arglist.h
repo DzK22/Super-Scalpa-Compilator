@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stable.h"
-#include "quad.h"
+#include "types.h"
 
 typedef struct arglist {
 	struct arglist *next;

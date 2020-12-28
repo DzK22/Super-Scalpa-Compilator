@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "array.h"
+#include "arglist.h"
 #define LEN 8192
 #define COL_RESET "\e[0;m"
 #define GREEN "\e[38;2;100;200;60m"
@@ -14,28 +16,6 @@
 #define CYAN "\e[0;36m"
 
 #define CAPACITY 500000
-
-typedef enum stype {
-    S_NONE, S_INT, S_BOOL, S_STRING, S_UNIT, S_LABEL, S_ARRAY, S_FUNCTION, S_PROG
-} stype;
-
-#include "arglist.h"
-
-typedef struct arr_range {
-    int min;
-    int max;
-    int dim;
-    struct arr_range *next;
-} dimProp;
-
-typedef struct s_array {
-    int     ndims;
-    int     size;
-    dimProp *dims;    // pointeur sur la première dimension
-    struct arglist *args; // only for array index calculation tmp
-    stype   type;
-    int     index;
-} s_array;
 
 //Hash Item KEY = symbol->id
 typedef struct symbol {
@@ -52,7 +32,7 @@ typedef struct symbol {
 
         struct arglist *args; // only for array index calculation
         struct fundata *fdata; // function data ( = struct fundata)
-        s_array *arr;   // array
+        struct s_array *arr;   // array
     };
 } symbol;
 
@@ -85,7 +65,7 @@ symbol *newVarStr   (symbol **, char *, char *, symbol *);
 symbol *newVarBool  (symbol **, char *, bool, symbol *, bool);
 symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
-symbol *newVarArray (symbol **, char *, s_array *, symbol *, bool);
+symbol *newVarArray (symbol **, char *, struct s_array *, symbol *, bool);
 
 void   stablePrint  (symbol *);
 

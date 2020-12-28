@@ -5,9 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "quad.h"
-#include "stable.h"
-#include "arglist.h"
 #include "array.h"
 
 void getMips (FILE *, symbol *, quad *);
