@@ -570,7 +570,7 @@ expr :  expr PLUS_ expr {
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
-            quad *q   = qGen(Q_EQUAL, ptr, $1.ptr, $3.ptr);
+            quad *q   = qGen(Q_OR, ptr, $1.ptr, $3.ptr);
             $$.quad   = qConcat($$.quad, $3.quad);
             $$.quad   = qConcat($$.quad, q);
           }
