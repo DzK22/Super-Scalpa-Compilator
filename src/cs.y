@@ -492,6 +492,8 @@ lvalue: IDENT_ {
                 if (ptr->type != S_ARRAY)
                     yferr("lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Type != S_ARRAY");
                 free($1);
+                if (!testArrayIndices(ptr->arr->dims, $3.al))
+                    yferr("lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Indices doesnt match");
                 ptr->arr->args = $3.al;
                 $$.ptr  = ptr;
                 $$.quad = NULL ;
@@ -662,6 +664,8 @@ expr :  expr PLUS_ expr {
           if (ptr->type != S_ARRAY)
               yferr("expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Type != S_ARRAY");
 
+          if (!testArrayIndices(ptr->arr->dims, $3.al))
+              yferr("lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Indices doesnt match");
           ptr->arr->args = $3.al;
           symbol *arrVal;
 

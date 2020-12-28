@@ -63,3 +63,13 @@ s_array *initArray (dimProp *rangelist, stype type) {
 	nArr->size = size;
 	return nArr;
 }
+
+bool testArrayIndices (dimProp *dp, struct list *al) {
+	int len = 1;
+	struct list *cur = al;
+	while (cur != NULL) {
+		len++;
+		cur = cur->next;
+	}
+	return (len - 1) == dp->dim;
+}

@@ -32,5 +32,6 @@ typedef struct rlist {
 rlist *rlistNew      (struct list *al, dimProp *dp);
 s_array *initArray   (dimProp *rangelist, stype type);
 dimProp *initDimProp (int min, int max, dimProp *dp);
+bool testArrayIndices (dimProp *dp, struct list *al);
 
 #endif
