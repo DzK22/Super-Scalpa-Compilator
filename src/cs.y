@@ -9,7 +9,7 @@
     #include "../headers/stable.h"
     #include "../headers/quad.h"
     #include "../headers/mips.h"
-    #include "../headers/arglist.h"
+    #include "../headers/list.h"
     #include "../headers/opti.h"
     #include "../headers/array.h"
     #define YYDEBUG 0
@@ -34,7 +34,7 @@
         return &curfun->fdata->tos;
     }
 
-    arglist *funcalls = NULL;
+    list *funcalls = NULL;
 
     void testID (symbol *s, char *name) {
         if(s == NULL) {
@@ -68,7 +68,7 @@
      }
 
     // qd et al = NULL for procedure (no args)
-    void funcallExpression (quad **quadRes, symbol **symRes, char *id, quad *qd, arglist *al) {
+    void funcallExpression (quad **quadRes, symbol **symRes, char *id, quad *qd, list *al) {
         symbol *fs = search(stable, curfun, id);
         testID(fs, id);
         free(id);
@@ -87,7 +87,7 @@
 
         symbol *slist = NULL;
         if (al)
-            slist = arglistToSymlist(al);
+            slist = listToSymlist(al);
 
         quad *q  = qGen(Q_FUNCALL, res, fs, slist);
         *quadRes = NULL;
@@ -124,14 +124,14 @@
     } cte;
 
     struct {
-        struct arglist *al;
+        struct list *al;
         char   *id;
         symbol *sym; // arg symbol (only for function args)
     } argl;
 
     struct {
         struct quad *quad;
-        struct arglist *al;
+        struct list *al;
     } exprl;
 
     struct {
@@ -188,7 +188,7 @@ vardecllist : %empty                         { }
            ;
 
 varsdecl: VAR_ identlist DPOINT_ typename {
-             arglistPrint($2.al);
+             listPrint($2.al);
 
              switch ($4.type) {
                  case S_INT:
@@ -203,7 +203,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                 default: ferr(linecpt,"cs.y varsdecl : VAR_ identlist DPOINT_ typename - wrong typename");
 
              }
-             arglist *al = $2.al;
+             list *al = $2.al;
 
               while (al != NULL) {
                   switch ($4.type) {
@@ -226,12 +226,12 @@ varsdecl: VAR_ identlist DPOINT_ typename {
           ;
 
 identlist : IDENT_ {
-                $$.al = arglistNew(strdup($1), NULL);
+                $$.al = listNew(strdup($1), NULL);
                 free($1);
             }
          | IDENT_ COMMA_ identlist {
-                arglist *al = arglistNew(strdup($1), NULL);
-                $$.al = arglistConcat(al, $3.al);
+                list *al = listNew(strdup($1), NULL);
+                $$.al = listConcat(al, $3.al);
                 free($1);
             }
          ;
@@ -317,7 +317,7 @@ parlist : %empty {
                 $$ = $1;
             }
         | par COMMA_ parlist {
-                $$.al = arglistConcat($1.al, $3.al);
+                $$.al = listConcat($1.al, $3.al);
             }
         ;
 
@@ -330,7 +330,7 @@ par : IDENT_ DPOINT_ typename {
                 default: ferr(linecpt,"cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
             }
             free($1);
-            $$.al = arglistNew(NULL, s);
+            $$.al = listNew(NULL, s);
         }
 
     | REF_ IDENT_ DPOINT_ typename {
@@ -342,7 +342,7 @@ par : IDENT_ DPOINT_ typename {
                 default: ferr(linecpt,"cs.y par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
             }
             free($2);
-            $$.al = arglistNew(NULL, s);
+            $$.al = listNew(NULL, s);
         }
     ;
 
@@ -493,13 +493,13 @@ lvalue: IDENT_ {
       ;
 
 exprlist : expr {
-                $$.al   = arglistNew(NULL, $1.ptr);
+                $$.al   = listNew(NULL, $1.ptr);
                 $$.quad = $1.quad;
              }
         |  expr COMMA_ exprlist {
-                arglist *al = arglistNew(NULL, $1.ptr);
-                $$.al       = arglistConcat(al, $3.al);
-                $$.quad     = qConcat($1.quad, $3.quad);
+                list *al = listNew(NULL, $1.ptr);
+                $$.al    = listConcat(al, $3.al);
+                $$.quad  = qConcat($1.quad, $3.quad);
             }
         ;
 

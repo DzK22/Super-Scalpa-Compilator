@@ -678,7 +678,7 @@ void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
     snpt(snprintf(tbuf, LEN, "Compute array index of %s", sarr->id));
     pcom(tbuf);
 
-    arglist *lal = sargs->args;
+    list *lal    = sargs->args;
     dimProp *ldp = sarr->arr->dims;
 
     rlist *rlal = rlistNew(lal, NULL);
@@ -854,7 +854,7 @@ void funreturn (FILE *f, symbol *fun, symbol *ret) {
 
 int funArgsSize (symbol *fun) {
     int size = 0, bytes;
-    arglist *al = ((fundata *) fun->fdata)->al;
+    list *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
         bytes = funSymTypeSize(al->sym);
@@ -888,7 +888,7 @@ int funSymTypeSize (symbol *sym) {
  */
 void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
     int bytes;
-    arglist *al = ((fundata *) fun->fdata)->al;
+    list *al = ((fundata *) fun->fdata)->al;
 
     while (al != NULL) {
         snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
@@ -940,8 +940,8 @@ void funCopyArray (FILE *f, symbol *destSym) {
 }
 
 void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
-    int offset  = 0, bytes;
-    arglist *al = ((fundata *) fun->fdata)->al;
+    int offset = 0, bytes;
+    list *al = fun->fdata->al;
 
     while (args != NULL) {
         if (al == NULL)
@@ -978,7 +978,7 @@ void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
 
 void funArgsDebugString (symbol *fun, symbol *args, char *dstring, int maxlen) {
     int bytes, len = 0;
-    arglist *al = ((fundata *) fun->fdata)->al;
+    list *al = fun->fdata->al;
 
     while (args != NULL) {
         if (al == NULL)

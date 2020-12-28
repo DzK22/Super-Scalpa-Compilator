@@ -3,7 +3,7 @@
 
 #include "util.h"
 #include "quad.h"
-#include "arglist.h"
+#include "list.h"
 #include "stable.h"
 
 typedef struct arr_range {
@@ -16,7 +16,7 @@ typedef struct arr_range {
 typedef struct s_array {
 	int     ndims;
 	int     size;
-	struct  arglist *args; // only for array index calculation tmp
+	struct  list *args; // only for array index calculation tmp
 	dimProp *dims;         // pointeur sur la première dimension
 	stype   type;
 } s_array;
@@ -24,12 +24,12 @@ typedef struct s_array {
 typedef struct rlist {
 	struct rlist *next;
 	union {
-		struct arglist *al;
+		struct list *al;
 		dimProp *dp;
 	};
 } rlist;
 
-rlist *rlistNew      (struct arglist *al, dimProp *dp);
+rlist *rlistNew      (struct list *al, dimProp *dp);
 s_array *initArray   (dimProp *rangelist, stype type);
 dimProp *initDimProp (int min, int max, dimProp *dp);
 
