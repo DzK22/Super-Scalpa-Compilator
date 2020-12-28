@@ -5,8 +5,8 @@
 #include "array.h"
 #include "arglist.h"
 
-#define LEN       8192
-#define CAPACITY  500000
+#define LEN       512
+#define CAPACITY  100000
 
 //Hash Item KEY = symbol->id
 typedef struct symbol {
@@ -34,8 +34,7 @@ typedef struct hash_item {
 } hash_item;
 
 typedef struct h_table {
-    hash_item **stable;
-    int size;
+    hash_item *stable[CAPACITY];
     int count;
 } hashtable;
 
@@ -66,7 +65,7 @@ void stablePrint  (symbol *);
 /*                      */
 /************************/
 unsigned long getHash (char *key);
-hashtable *initHashTable (int size);
+hashtable *initHashTable (void);
 // void freeHashTable (hashtable *htable);
 void *insertHashTable (hashtable *htable, char *key, void *data);
 

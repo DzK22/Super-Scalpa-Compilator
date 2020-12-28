@@ -10,20 +10,14 @@ unsigned long getHash (char *key) {
     return hash;
 }
 
-hashtable *initHashTable (int size) {
+hashtable *initHashTable (void) {
     hashtable *hashT = malloc(sizeof(hashtable));
     if (hashT == NULL)
         ferr(__LINE__, "stable.c initHashTable malloc error");
 
-    hashT->size = size;
     hashT->count = 0;
-    hashT->stable = calloc(hashT->size, sizeof(hash_item *));
-
-    if (hashT->stable == NULL)
-        ferr(__LINE__, "stable.c initHashTable calloc error");
-
     int i;
-    for (i = 0; i < hashT->size; i++)
+    for (i = 0; i < CAPACITY; i++)
         hashT->stable[i] = NULL;
 
     return hashT;
@@ -48,7 +42,7 @@ void *insertHashTable (hashtable *htable, char *key, void *data) {
     if (data == NULL)
         return NULL;
 
-    unsigned long hash = getHash(key) % htable->size;
+    unsigned long hash = getHash(key) % CAPACITY;
     hash_item *item = htable->stable[hash];
 
     while (item != NULL) {
@@ -85,7 +79,6 @@ symbol *sAlloc (void) {
     ns->id   = NULL;
     ns->tmp  = false;
     ns->type = S_NONE;
-    ns->next = NULL;
 
     ns->ival = 0;
     ns->sval = NULL;
