@@ -254,29 +254,11 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 
 
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
-                s_array *arr = malloc(sizeof(s_array));
-                if (arr == NULL)
-                    ferr(linecpt,"cs.y arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - malloc");
-
-                 arr->dims  = $3;
-                 arr->ndims = $3->dim;
-                 arr->type  = $6;
-                 arr->index = 1;
-
-                 int size = 1;
-                 dimProp *cur = $3;
-
-                 // calculate array total size
-                 while (cur != NULL) {
-                     size *= (cur->max - cur->min + 1);
-                     cur   = cur->next;
-                 }
-
-                 arr->size = size;
-                if (arr->type != S_INT && arr->type != S_BOOL)
+                 //Si le type de valeurs des tableaux n'est ni bool ni int alors erreur
+                 if ($6 != S_INT && $6 != S_BOOL)
                     ferr(linecpt, "cs.y arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - wrong array type");
 
-                 $$ = arr;
+                 $$ = initArray($3, $6);
             }
           ;
 
@@ -287,14 +269,7 @@ rangelist : CTE_ TWO_POINTS_ CTE_ {
                 if ($1.ival > $3.ival)
                     ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ - wrong range");
 
-                $$ = malloc(sizeof(dimProp));
-                if ($$ == NULL)
-                    ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ - malloc");
-
-                $$->dim  = 1;
-                $$->min  = $1.ival;
-                $$->max  = $3.ival;
-                $$->next = NULL;
+                $$ = initDimProp($1.ival, $3.ival, NULL);
             }
 
         | CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist {
@@ -304,14 +279,7 @@ rangelist : CTE_ TWO_POINTS_ CTE_ {
             if ($1.ival > $3.ival)
                 ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong range");
 
-            $$ = malloc(sizeof(dimProp));
-            if ($$ == NULL )
-              ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - malloc");
-
-            $$->dim  = $5->dim + 1;
-            $$->min  = $1.ival;
-            $$->max  = $3.ival;
-            $$->next = $5;
+            $$ = initDimProp($1.ival, $3.ival, $5);
         }
         ;
 
@@ -448,11 +416,13 @@ instr: lvalue AFFEC_ expr {
                 if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING && $2.ptr->type != S_ARRAY)
                     ferr(linecpt,"cs.y instr : WRITE_ expr - type cannot be write");
 
-                symbol *s = NULL;
-                if ($2.ptr->type == S_ARRAY)
-                    s = newTmpInt(curtos(), $2.ptr->arr->index);
+                symbol *sargs = NULL;
+                if ($2.ptr->type == S_ARRAY) {
+                    sargs = newTmpInt(curtos(), 0);
+                    sargs->args = $2.ptr->arr->args;
+                }
 
-                quad *q = qGen(Q_WRITE, NULL, $2.ptr, s);
+                quad *q = qGen(Q_WRITE, NULL, $2.ptr, sargs);
                 $$.quad = concat($2.quad, q);
 
             }

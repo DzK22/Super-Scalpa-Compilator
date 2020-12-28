@@ -1,4 +1,6 @@
 program debug
+var tab : array [1..3, 1..3] of int;
+var i, j : int;
 function power (x : int, y : int) : int
 begin
     if y = 0 then
@@ -10,5 +12,12 @@ begin
 end;
 begin
     write power(2,0);
+    write "\n";
+    i := 3;
+    j := 3;
+    write tab[3,3];
+    write "\n";
+    tab[3,3] := 45;
+    write tab[3,3];
     write "\n";
 end

@@ -21,7 +21,6 @@ typedef struct s_array {
     dimProp *dims;    // pointeur sur la première dimension
     struct arglist *args; // only for array index calculation tmp
     stype   type;
-    int     index;
 } s_array;
 
 typedef struct rlist {
@@ -33,5 +32,7 @@ typedef struct rlist {
 } rlist;
 
 rlist *rlistNew        (struct arglist *al, dimProp *dp);
+s_array *initArray     (dimProp *rangelist, stype type);
+dimProp *initDimProp   (int min, int max, dimProp *dp);
 
 #endif

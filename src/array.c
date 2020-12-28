@@ -25,3 +25,37 @@ rlist *rlistNew (arglist *al, dimProp *dp) {
 
 	return rl;
 }
+
+dimProp *initDimProp   (int min, int max, dimProp *dp) {
+	dimProp *nDp = malloc(sizeof(dimProp));
+	if (nDp == NULL)
+		ferr(__LINE__, "array.c malloc error\n");
+	if (dp == NULL) {
+		nDp->dim = 1;
+		nDp->next = NULL;
+	}
+	else {
+		nDp->dim = dp->dim + 1;
+		nDp->next = dp;
+	}
+	nDp->min = min;
+	nDp->max = max;
+	return nDp;
+}
+
+s_array *initArray (dimProp *rangelist, stype type) {
+	s_array *nArr = malloc(sizeof(struct s_array));
+	if (nArr == NULL)
+		ferr(__LINE__, "array.c malloc error");
+	nArr->dims = rangelist;
+	nArr->ndims = rangelist->dim;
+	nArr->type = type;
+	int size = 1;
+	dimProp *cur = rangelist;
+	while (cur != NULL) {
+		size *= (cur->max - cur->min + 1);
+		cur = cur->next;
+	}
+	nArr->size = size;
+	return nArr;
+}
