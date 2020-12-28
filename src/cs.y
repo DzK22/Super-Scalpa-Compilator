@@ -71,7 +71,7 @@
     void funcallExpression (quad **quadRes, symbol **symRes, char *id, quad *qd, arglist *al) {
         symbol *fs = search(stable, curfun, id);
         testID(fs, id);
-
+        free(id);
         if (fs->type != S_FUNCTION)
             ferr(linecpt,"cs.y funcallExpression symbol is not a function");
 
@@ -174,6 +174,7 @@
 program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         symbol *ptr = newProg(&stable, $2);
         progName    = strdup($2);
+        free($2);
         $$.ltrue    = NULL;
         $$.lfalse   = NULL;
         $$.quad     = $5.quad;
@@ -228,10 +229,12 @@ varsdecl: VAR_ identlist DPOINT_ typename {
 
 identlist : IDENT_ {
                 $$.al = arglistNew(strdup($1), NULL);
+                free($1);
             }
          | IDENT_ COMMA_ identlist {
                 arglist *al = arglistNew(strdup($1), NULL);
                 $$.al = arglistConcat(al, $3.al);
+                free($1);
             }
          ;
 
@@ -324,6 +327,7 @@ fundecl : FUNCTION_ IDENT_ PARLEFT_ {
                 // we should init the function symbol as soon as possible to have curfun set
                 symbol *fs  = newVarFun(&stable, $2);
                 curfun      = fs;
+                free($2);
             }
           parlist PARRIGHT_ DPOINT_ atomictype  vardecllist {
                 fundata *fdata = curfun->fdata;
@@ -359,7 +363,7 @@ par : IDENT_ DPOINT_ typename {
                 case S_ARRAY : s = newVarArray(curtos(), $1, $3.sarray, curfun, false) ; break ;
                 default: ferr(linecpt,"cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
             }
-
+            free($1);
             $$.al = arglistNew(NULL, s);
         }
 
@@ -371,7 +375,7 @@ par : IDENT_ DPOINT_ typename {
                 case S_ARRAY : s = newVarArray(curtos(), $2, $4.sarray, curfun, true)    ; break ;
                 default: ferr(linecpt,"cs.y par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
             }
-
+            free($2);
             $$.al = arglistNew(NULL, s);
         }
     ;
@@ -521,7 +525,7 @@ lvalue: IDENT_ {
                 testID(ptr, $1);
                 if (ptr->type != S_ARRAY)
                     ferr(__LINE__, "lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
-
+                free($1);
                 ptr->arr->args = $3.al;
                 $$.ptr  = ptr;
                 $$.quad = NULL ;
@@ -701,7 +705,7 @@ expr :  expr PLUS_ expr {
       | IDENT_ BRALEFT_ exprlist BRARIGHT_ {
           symbol *ptr = search(stable, curfun, $1);
           testID(ptr, $1);
-
+          free($1);
           if (ptr->type != S_ARRAY)
               ferr(__LINE__, "expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
 
@@ -723,12 +727,11 @@ expr :  expr PLUS_ expr {
       | IDENT_ {
             symbol *ptr = search(stable, curfun, $1);
             testID(ptr, $1);
-
+            free($1);
             $$.ptr    = ptr;
             $$.quad   = NULL;
             $$.ltrue  = NULL;
             $$.lfalse = NULL;
-            free($1);
         }
       | CTE_ {
               symbol *ptr;
@@ -816,8 +819,8 @@ int main (int argc, char **argv) {
     }
 
     if (version) {
-        fprintf(stdout, "Members:\n");
-        fprintf(stdout, "Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n");
+        fprintf(stdout, YELLOW"Members:\n"COL_RESET);
+        fprintf(stdout, CYAN"Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n"COL_RESET);
     }
 
     #if YYDEBUG == 1
