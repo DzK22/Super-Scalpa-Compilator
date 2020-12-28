@@ -768,6 +768,7 @@ int main (int argc, char **argv) {
     if (version) {
         printf(YELLOW"Members:\n"COL_RESET);
         printf(CYAN"Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n"COL_RESET);
+        exit(EXIT_FAILURE);
     }
 
     #if YYDEBUG == 1

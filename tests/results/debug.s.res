@@ -1,3 +1,4 @@
-1
-0
-45
+true
+false
+true
+true

@@ -4,7 +4,7 @@ program maxi
 
   function fini() : unit
   begin
-    write "programme terminé"
+    write "\nprogramme terminé\n"
   end;
   function maxtab(t : array[-4..4, 0..10] of int) : int
     var i,j,maximum : int
