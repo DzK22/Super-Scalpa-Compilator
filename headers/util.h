@@ -13,6 +13,13 @@
 #define YELLOW    "\e[38;2;255;250;0m"
 #define CYAN      "\e[0;36m"
 
-void ferr (int , char *s);
+#define ferr(str) { \
+    fprintf(stderr, "Error in %s at line %d : %s\n", __FILE__, __LINE__, str); \
+    exit(EXIT_FAILURE); }
+
+// snprintf test
+#define snpt(res) \
+    if (res < 0 || res >= LEN) \
+        ferr("snprintf");
 
 #endif

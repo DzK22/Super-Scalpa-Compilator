@@ -20,10 +20,11 @@ all:
 	$(CC) -c $(SRC)list.c $(CFLAGS)
 	$(CC) -c $(SRC)opti.c $(CFLAGS)
 	$(CC) -c $(SRC)array.c $(CFLAGS)
+	$(CC) -c $(SRC)util.c $(CFLAGS)
 
 	mv *.o $(TMP)
 
-	$(CC) -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)list.o $(TMP)array.o $(TMP)mips.o $(TMP)opti.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
+	$(CC) -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)list.o $(TMP)array.o $(TMP)mips.o $(TMP)opti.o $(TMP)util.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 
 test:
 	./run.sh

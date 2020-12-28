@@ -13,10 +13,11 @@ unsigned long getHash (char *key) {
 hashtable *initHashTable (void) {
     hashtable *hashT = malloc(sizeof(hashtable));
     if (hashT == NULL)
-        ferr(__LINE__, "stable.c initHashTable malloc error");
+        ferr("initHashTable malloc error");
 
     hashT->count = 0;
     int i;
+
     for (i = 0; i < CAPACITY; i++)
         hashT->stable[i] = NULL;
 
@@ -56,10 +57,10 @@ void *insertHashTable (hashtable *htable, char *key, void *data) {
     }
 
     if ((item = malloc(sizeof(hash_item) + strlen(key) + 1)) == NULL)
-        ferr(__LINE__, "stable.c insertHashTable malloc error");
+        ferr("insertHashTable malloc error");
 
     if ((item->key = strdup(key)) == NULL)
-        ferr(__LINE__, "stable.c insertHashTable strdup error");
+        ferr("insertHashTable strdup error");
 
     item->data = data;
     //Ajouter l'élément en début de liste chaînée
@@ -74,7 +75,7 @@ void *insertHashTable (hashtable *htable, char *key, void *data) {
 symbol *sAlloc (void) {
     symbol *ns = malloc(sizeof(struct symbol));
     if (ns == NULL)
-        ferr(__LINE__ ,"stable.c sAlloc malloc");
+        ferr("sAlloc malloc");
 
     ns->id   = NULL;
     ns->tmp  = false;
@@ -147,7 +148,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
 
     } else {
         if (searchTable(*tos, id, curfun) != NULL)
-            ferr(__LINE__ ,"stable.c newVar var ID already exists");
+            ferr("newVar var ID already exists");
 
         if (type == S_PROG)
             res = sprintf(tid, "prog_%s", id);
@@ -162,11 +163,11 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
     }
 
     if (res < 0 || res >= LEN)
-        ferr(__LINE__ ,"stable.c newVar tid snprintf");
+        ferr("newVar tid snprintf");
 
     symbol *nt = sAdd(tos);
     if ((nt->id = strdup(tid)) == NULL)
-        ferr(__LINE__ ,"stable.c newVar strdup data ID");
+        ferr("newVar strdup data ID");
 
     nt->type = type;
     nt->tmp  = isTmp;
@@ -183,11 +184,11 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
             break;
         case S_STRING:
             if ((nt->sval = strdup((char *) data)) == NULL)
-                ferr(__LINE__ ,"stable.c newVar strdup data");
+                ferr("newVar strdup data");
             break;
         case S_LABEL:
             if ((nt->sval = strdup(tid)) == NULL)
-                ferr(__LINE__ ,"stable.c newVar strdup data");
+                ferr("newVar strdup data");
             break;
         case S_FUNCTION:
             nt->fdata = data;
@@ -198,7 +199,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
         case S_PROG:
             break;
         default:
-            ferr(__LINE__ ,"stable.c newVar unknow type");
+            ferr("newVar unknow type");
     }
 
     return nt;
@@ -237,9 +238,9 @@ symbol *newVarBool (symbol **tos, char *id, bool bol, symbol *curfun, bool ref) 
 symbol *newVarFun (symbol **tos, char *id) {
     fundata *fdata = malloc(sizeof(fundata));
     if (fdata == NULL)
-        ferr(__LINE__, "stable.c malloc error\n"),
-            fdata->al      = NULL;
+        ferr("malloc error");
 
+    fdata->al    = NULL;
     fdata->rtype = S_NONE;
     fdata->tos   = NULL;
     // do not forget to set fdata->al and fdata->rtype after init !
@@ -265,11 +266,11 @@ symbol *searchTable (symbol *tos, char *id, symbol *curfun) {
         res = snprintf(var, LEN, "funvar_%s_%s", curfun->id, id);
 
     if (res < 0 || res >= LEN)
-        ferr(__LINE__ ,"stable.c searchTable snprintf");
+        ferr("searchTable snprintf");
 
     res = snprintf(fun, LEN, "fun_%s", id);
     if (res < 0 || res >= LEN)
-        ferr(__LINE__ ,"stable.c searchTable snprintf");
+        ferr("searchTable snprintf");
 
     while (tos != NULL) {
         if (((strcmp(tos->id, var)) == 0) || (strcmp(tos->id, fun) == 0))

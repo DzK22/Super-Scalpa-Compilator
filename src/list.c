@@ -4,7 +4,7 @@
 list *listNew (char *id, symbol *sym) {
 		list *al = malloc(sizeof(list));
 		if (al == NULL)
-				ferr(__LINE__ ,"list.c listNew malloc");
+				ferr("listNew malloc");
 
 		al->next = NULL;
 		al->id   = id;
@@ -51,7 +51,7 @@ symbol *listToSymlist (list *al) {
 
 				cur->id = strdup(al->sym->id);
 				if (cur->id == NULL)
-						ferr(__LINE__ ,"list.c listToSymlist strdup");
+						ferr("listToSymlist strdup");
 
 				cur->tmp   = al->sym->tmp;
 				cur->type  = al->sym->type;
@@ -60,7 +60,7 @@ symbol *listToSymlist (list *al) {
 						case S_INT  : cur->ival = al->sym->ival; break;
 						case S_BOOL : cur->bval = al->sym->bval; break;
 						case S_ARRAY : cur->arr = al->sym->arr;  break;
-						default: ferr(__LINE__ ,"list.c listToSymlist wrong type");
+						default: ferr("listToSymlist wrong type");
 				}
 
 				slast = cur;

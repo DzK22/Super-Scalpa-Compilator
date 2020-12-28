@@ -38,7 +38,6 @@ typedef struct h_table {
     int count;
 } hashtable;
 
-void   ferr         (int, char *s);
 void   sFree        (symbol *);
 symbol *sAlloc      (void);
 symbol *sAdd        (symbol **);

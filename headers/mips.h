@@ -7,7 +7,6 @@
 void getMips (FILE *, symbol *, quad *);
 void getData (FILE *f, symbol *s);
 void getText (FILE *f, quad *s);
-void ferr    (int, char *s );
 
 void getMipsFunctionCompind   (FILE *f);
 void getMipsInternalFunctions (FILE *f);

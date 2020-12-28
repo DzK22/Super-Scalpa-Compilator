@@ -19,7 +19,7 @@ void optiLoop (quad **code, symbol **gtos) {
 
 		res = snprintf(tbuf, LEN, "LOOP [%d] => %2d changes", loops, cnt);
 		if (res < 0 || res >= LEN)
-			ferr(__LINE__ ,"opti.c optiLoop snprintf");
+			ferr("optiLoop snprintf");
 
 		optideb(tbuf);
 	}

@@ -3,7 +3,7 @@
 quad *qGen (qop op, symbol *res, symbol *argv1, symbol *argv2) {
     quad *nq = malloc(sizeof(struct quad));
     if (nq == NULL)
-        ferr(__LINE__ ,"quad.c qGen malloc");
+        ferr("qGen malloc");
 
     nq->op     = op;
     nq->next   = NULL;

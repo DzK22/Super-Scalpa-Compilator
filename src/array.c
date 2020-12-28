@@ -3,7 +3,7 @@
 // obtain a reverse list of list* or dimProp*
 rlist *rlistNew (list *al, dimProp *dp) {
 	if (al && dp)
-		ferr(__LINE__ ,"array.c rlistNew - only one of al or dp should be set");
+		ferr("rlistNew - only one of al or dp should be set");
 
 	rlist *rl = NULL, *last = NULL;
 
@@ -29,7 +29,7 @@ rlist *rlistNew (list *al, dimProp *dp) {
 dimProp *initDimProp (int min, int max, dimProp *dp) {
 	dimProp *nDp = malloc(sizeof(dimProp));
 	if (nDp == NULL)
-		ferr(__LINE__, "array.c malloc error\n");
+		ferr("malloc error\n");
 
 	if (dp == NULL) {
 		nDp->dim = 1;
@@ -47,7 +47,7 @@ dimProp *initDimProp (int min, int max, dimProp *dp) {
 s_array *initArray (dimProp *rangelist, stype type) {
 	s_array *nArr = malloc(sizeof(struct s_array));
 	if (nArr == NULL)
-		ferr(__LINE__, "array.c malloc error");
+		ferr("malloc error");
 
 	nArr->dims   = rangelist;
 	nArr->ndims  = rangelist->dim;

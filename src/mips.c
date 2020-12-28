@@ -32,11 +32,6 @@
 #define pdir(s) \
     fprintf(f, "%s\n", s);
 
-// snprintf test
-#define snpt(res) \
-    if (res < 0 || res >= LEN) \
-        ferr(__LINE__ ,"mips.c snprintf");
-
 #define pload(reg, sym) \
     snpt(snprintf(tbuf, LEN, "%s", sym->type == S_BOOL ? "lb" : "lw")); \
     if (sym->ref) { \
@@ -72,11 +67,6 @@ char *dsymid(symbol *sym) {
     dsymidcnt ++;
     snpt(snprintf(buf, LEN, "%s%s", sym->ref ? "*" : "", sym->id));
     return buf;
-}
-
-void ferr (int line , char *s ) {
-    fprintf(stderr, "Error: %s at line %d\n", s,line);
-    exit(EXIT_FAILURE);
 }
 
 void getMips (FILE *f, symbol *s, quad *q) {
@@ -224,7 +214,7 @@ char * opstr (qop op) {
         case Q_OR    : sprintf(str, "OR")  ; break ;
         case Q_XOR   : sprintf(str, "XOR") ; break ;
         case Q_NOT   : sprintf(str, "NOT") ; break ;
-        default: ferr(__LINE__ ,"mips.c opstr unknow op");
+        default: ferr("opstr unknow op");
     }
 
     return str;
@@ -237,7 +227,7 @@ char * nextTmpLabel (void) {
 
     char *res = strdup(tmplab);
     if (res == NULL)
-        ferr(__LINE__ ,"mips.c nextTmpLabel strdup");
+        ferr("nextTmpLabel strdup");
 
     return res;
 }
@@ -260,21 +250,21 @@ void getText (FILE *f, quad *q) {
             case Q_MOD:
             case Q_EXP:
                 if (!res || !argv1 || !argv2)
-                    ferr(__LINE__ ,"mips.c getText arith quad error");
+                    ferr("getText arith quad error");
 
                 qArith(f, q->op, res, argv1, argv2);
                 break;
 
             case Q_WRITE:
                 if (!argv1)
-                    ferr(__LINE__ ,"mips.c getText Q_WRITE quad error");
+                    ferr("getText Q_WRITE quad error");
 
                 qWrite(f, argv1);
                 break;
 
             case Q_READ:
                 if (!res)
-                    ferr(__LINE__ ,"mips.c getText Q_READ quad error");
+                    ferr("getText Q_READ quad error");
 
                 // argv1 only for array = for index calculation
                 qRead(f, res, argv1);
@@ -282,7 +272,7 @@ void getText (FILE *f, quad *q) {
 
             case Q_AFFEC:
                 if (!res || !argv1)
-                    ferr(__LINE__ ,"mips.c getText Q_AFFEC quad error");
+                    ferr("getText Q_AFFEC quad error");
 
                 // argv2 only for array = for index calculation
                 qAffect(f, res, argv1, argv2);
@@ -290,14 +280,14 @@ void getText (FILE *f, quad *q) {
 
             case Q_LABEL:
                 if (!res)
-                    ferr(__LINE__ ,"mips.c getText Q_LABEL quad error");
+                    ferr("getText Q_LABEL quad error");
 
                 plab(res->id);
                 break;
 
             case Q_GOTO:
                 if (!res)
-                    ferr(__LINE__ ,"mips.c getText Q_GOTO quad error");
+                    ferr("getText Q_GOTO quad error");
 
                 snpt(snprintf(tbuf, LEN, "goto %s", res->id));
                 pcom(tbuf);
@@ -307,7 +297,7 @@ void getText (FILE *f, quad *q) {
 
             case Q_IF:
                 if (!argv1 || !gfalse)
-                    ferr(__LINE__ ,"mips.c getText Q_IF quad error");
+                    ferr("getText Q_IF quad error");
 
                 snpt(snprintf(tbuf, LEN, "if %s is false then goto %s", dsymid(argv1), gfalse->sval));
                 pcom(tbuf);
@@ -326,14 +316,14 @@ void getText (FILE *f, quad *q) {
             case Q_OR:
             case Q_XOR:
                 if (!res || !argv1 || !argv2)
-                    ferr(__LINE__ ,"mips.c getText comp quad error");
+                    ferr("getText comp quad error");
 
                 qComp(f, q->op, res, argv1, argv2);
                 break;
 
             case Q_NOT:
                 if (!res || !argv1)
-                    ferr(__LINE__ ,"mips.c getText Q_NOT quad error");
+                    ferr("getText Q_NOT quad error");
 
                 qNot(f, res, argv1);
                 break;
@@ -341,7 +331,7 @@ void getText (FILE *f, quad *q) {
             case Q_FUNDEC:
                 // argv1 = function symbol
                 if (!argv1)
-                    ferr(__LINE__ ,"mips.c getText Q_FUNDEC quad error");
+                    ferr("getText Q_FUNDEC quad error");
 
                 fundec(f, argv1);
                 break;
@@ -349,7 +339,7 @@ void getText (FILE *f, quad *q) {
             case Q_FUNEND:
                 // argv1 = function symbol
                 if (!argv1)
-                    ferr(__LINE__ ,"mips.c getText Q_FUNEND quad error");
+                    ferr("getText Q_FUNEND quad error");
 
                 funend(f, argv1);
                 break;
@@ -359,7 +349,7 @@ void getText (FILE *f, quad *q) {
                 // arvg1 = function symbol
                 // argv2 = funcall args: list of symbol = symbol * (can be null = no args)
                 if (!argv1)
-                    ferr(__LINE__ ,"mips.c getText Q_FUNCALL quad error");
+                    ferr("getText Q_FUNCALL quad error");
 
                 funcall(f, argv1, argv2, res);
                 break;
@@ -368,7 +358,7 @@ void getText (FILE *f, quad *q) {
                 // arvg1 = function symbol
                 // arvg2 = symbol to return (can be NULL if fun unit)
                 if (!argv1)
-                    ferr(__LINE__ ,"mips.c getText Q_FUNRETURN quad error");
+                    ferr("getText Q_FUNRETURN quad error");
 
                 funreturn(f, argv1, argv2);
                 break;
@@ -378,7 +368,7 @@ void getText (FILE *f, quad *q) {
                 break;
 
             default:
-                ferr(__LINE__ ,"mips.c getText unknown op");
+                ferr("getText unknown op");
         }
 
         q = q->next;
@@ -631,7 +621,7 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
             pins4("beq", "$t2", "$zero", label);
             break;
         default:
-            ferr(__LINE__ ,"mips.c qComp wrong op");
+            ferr("qComp wrong op");
     }
 
     pins3("li", "$t3", "1");
@@ -875,7 +865,7 @@ int funSymTypeSize (symbol *sym) {
             case S_INT    : bytes = 4 ; break ;
             case S_BOOL   : bytes = 1 ; break ;
             case S_ARRAY  : bytes = 4;   break ;
-            default       : ferr(__LINE__, "mips.c funSymTypeSize arg wrong type");
+            default       : ferr("funSymTypeSize arg wrong type");
 
         }
     }
@@ -945,16 +935,16 @@ void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
 
     while (args != NULL) {
         if (al == NULL)
-            ferr(__LINE__ , "mips.c funStackPushArgs args len > fun param len");
+            ferr("funStackPushArgs args len > fun param len");
 
         if (args->type != al->sym->type)
-            ferr(__LINE__ , "mips.c funStackPushArgs arg type != fun param type");
+            ferr("funStackPushArgs arg type != fun param type");
 
         if (args->type == S_ARRAY) {
             if (args->arr->type != al->sym->arr->type)
-                ferr(__LINE__, "mips.c funStackPushArgs type array but array elems type differ");
+                ferr("funStackPushArgs type array but array elems type differ");
             if (args->arr->size != al->sym->arr->size)
-                ferr(__LINE__, "mips.c funStackPushArgs type array but array size differ");
+                ferr("funStackPushArgs type array but array size differ");
         }
 
         if (al->sym->ref || al->sym->type == S_ARRAY) {
@@ -973,7 +963,7 @@ void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
     }
 
     if (al != NULL)
-        ferr(__LINE__ ,"mips.c funStackPushArgs args len < fun param len");
+        ferr("funStackPushArgs args len < fun param len");
 }
 
 void funArgsDebugString (symbol *fun, symbol *args, char *dstring, int maxlen) {
@@ -982,11 +972,11 @@ void funArgsDebugString (symbol *fun, symbol *args, char *dstring, int maxlen) {
 
     while (args != NULL) {
         if (al == NULL)
-            ferr(__LINE__ ,"mips.c funArgsDebugString args len > fun param len");
+            ferr("funArgsDebugString args len > fun param len");
 
         bytes = snprintf(dstring + len, maxlen - len, "%s%s, ", al->sym->ref ? "&" : "", args->id);
         if (bytes < 0 || bytes >= maxlen - len)
-            ferr(__LINE__ ,"mips.c funArgsDebugString snprintf");
+            ferr("funArgsDebugString snprintf");
 
         len += bytes;
         args = args->next;
@@ -994,7 +984,7 @@ void funArgsDebugString (symbol *fun, symbol *args, char *dstring, int maxlen) {
     }
 
     if (al != NULL)
-        ferr(__LINE__ ,"mips.c funArgsDebugString args len < fun param len");
+        ferr("funArgsDebugString args len < fun param len");
 
     if (len > 2)
         dstring[len - 2] = '\0'; // erase the last ", "
@@ -1004,7 +994,7 @@ void funArgsDebugString (symbol *fun, symbol *args, char *dstring, int maxlen) {
 
 int curfunVarSize (void) {
     if (curfun == NULL)
-        ferr(__LINE__ ,"mips.c curfunVarSize - curfun is NULL");
+        ferr("curfunVarSize - curfun is NULL");
 
     int size = 0, bytes;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
@@ -1020,7 +1010,7 @@ int curfunVarSize (void) {
 
 void curfunStackPushVars (FILE *f) {
     if (curfun == NULL)
-        ferr(__LINE__ ,"mips.c curfunStackPushVars - curfun is NULL");
+        ferr("curfunStackPushVars - curfun is NULL");
 
     int offset = 0, bytes;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
@@ -1038,7 +1028,7 @@ void curfunStackPushVars (FILE *f) {
 
 void curfunStackLoadVars (FILE *f) {
     if (curfun == NULL)
-        ferr(__LINE__ ,"mips.c curfunStackLoadVars - curfun is NULL");
+        ferr("curfunStackLoadVars - curfun is NULL");
 
     int offset = 0, bytes;
     symbol *tos = ((fundata *) curfun->fdata)->tos;
@@ -1065,7 +1055,7 @@ void curfunStackLoadVars (FILE *f) {
  */
 symbol * curfunNextUsefullLocalVar (symbol *tos) {
     if (curfun == NULL)
-        ferr(__LINE__ ,"mips.c curfunNextUsefullLocalVar - curfun is NULL");
+        ferr("curfunNextUsefullLocalVar - curfun is NULL");
 
     quad *q;
 

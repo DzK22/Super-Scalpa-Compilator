@@ -1,28 +1,31 @@
 %{
-    #include <stdio.h>
-    #include <stdint.h>
-    #include <stdlib.h>
-    #include <math.h>
     #include <time.h>
     #include <getopt.h>
-    #include <unistd.h>
     #include "../headers/stable.h"
     #include "../headers/quad.h"
     #include "../headers/mips.h"
     #include "../headers/list.h"
     #include "../headers/opti.h"
     #include "../headers/array.h"
+    #include "../headers/util.h"
     #define YYDEBUG 0
 
+    static char tbuf[LEN], tbuf2[LEN];
     void yyerror  (char *s);
     int yylex     (void);
     void freeLex  (void);
+
     extern FILE *yyin;
-    extern int  linecpt ;
-    extern int validComment ;
+    extern int   linecpt ;
+    extern int   validComment ;
+
     symbol *stable = NULL; // global tos
     quad *all_code = NULL; // all quads
     char *progName = NULL;
+
+    #define yferr(str) { \
+        snpt(snprintf(tbuf2, LEN, "%s (source line %d)", str, linecpt)); \
+        ferr(tbuf2); }
 
     // current parsing function symbol or NULL
     static symbol *curfun = NULL;
@@ -38,11 +41,10 @@
 
     void testID (symbol *s, char *name) {
         if(s == NULL) {
-            char s[LEN];
-            snprintf(s, LEN, "cs.y ID \"%s\" not exists", name);
             fundata *fdata = curfun->fdata;
             stablePrint(fdata->tos);
-            ferr(linecpt,s);
+            snpt(snprintf(tbuf, LEN, "ID \"%s\" not exists", name));
+            yferr(tbuf);
         }
     }
 
@@ -72,8 +74,11 @@
         symbol *fs = search(stable, curfun, id);
         testID(fs, id);
         free(id);
-        if (fs->type != S_FUNCTION)
-            ferr(linecpt,"cs.y funcallExpression symbol is not a function");
+
+        if (fs->type != S_FUNCTION) {
+            snpt(snprintf(tbuf, LEN, "funcallExpression symbol is not a function"));
+            ferr(tbuf);
+        }
 
         symbol *res;
         fundata *fdata = fs->fdata;
@@ -82,7 +87,7 @@
             case S_INT  : res = newTmpInt(curtos(), 0)      ; break ;
             case S_BOOL : res = newTmpBool(curtos(), false) ; break ;
             case S_UNIT : res = NULL                        ; break ;
-            default: ferr(linecpt,"cs.y funcallExpression wrong return type");
+            default: yferr("funcallExpression wrong return type");
         }
 
         symbol *slist = NULL;
@@ -200,7 +205,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                  case S_ARRAY:
                     printf("array\n");
                     break;
-                default: ferr(linecpt,"cs.y varsdecl : VAR_ identlist DPOINT_ typename - wrong typename");
+                default: yferr("varsdecl : VAR_ identlist DPOINT_ typename - wrong typename");
 
              }
              list *al = $2.al;
@@ -217,7 +222,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                           newVarArray(curtos(), al->id, $4.sarray, curfun, false);
                           break;
                     default:
-                        ferr(linecpt,"cs.y varsdecl identlist An arg has wrong type");
+                        yferr("varsdecl identlist An arg has wrong type");
                   }
 
                   al = al->next;
@@ -254,7 +259,7 @@ atomictype : UNIT_   { $$ = S_UNIT;    }
 arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                  //Si le type de valeurs des tableaux n'est ni bool ni int alors erreur
                  if ($6 != S_INT && $6 != S_BOOL)
-                    ferr(linecpt, "cs.y arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - wrong array type");
+                    yferr("arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - wrong array type");
 
                  $$ = initArray($3, $6);
             }
@@ -262,20 +267,20 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
 
 rangelist : CTE_ TWO_POINTS_ CTE_ {
                 if ($1.type != S_INT || $3.type != S_INT)
-                    ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ - wrong CTE_ type");
+                    yferr("rangelist : CTE_ TWO_POINTS_ CTE_ - wrong CTE_ type");
 
                 if ($1.ival > $3.ival)
-                    ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ - wrong range");
+                    yferr("rangelist : CTE_ TWO_POINTS_ CTE_ - wrong range");
 
                 $$ = initDimProp($1.ival, $3.ival, NULL);
             }
 
         | CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist {
             if ($1.type != S_INT || $3.type != S_INT)
-                ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong CTE_ type");
+                yferr("rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong CTE_ type");
 
             if ($1.ival > $3.ival)
-                ferr(linecpt,"cs.y rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong range");
+                yferr("rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong range");
 
             $$ = initDimProp($1.ival, $3.ival, $5);
         }
@@ -323,11 +328,12 @@ parlist : %empty {
 
 par : IDENT_ DPOINT_ typename {
             symbol *s;
+
             switch ($3.type) {
                 case S_INT   : s = newVarInt(curtos(), $1, 0, curfun, false)           ; break ;
                 case S_BOOL  : s = newVarBool(curtos(), $1, false, curfun, false)      ; break ;
                 case S_ARRAY : s = newVarArray(curtos(), $1, $3.sarray, curfun, false) ; break ;
-                default: ferr(linecpt,"cs.y par : IDENT_ DPOINT_ typename Incorrect typename");
+                default: yferr("par : IDENT_ DPOINT_ typename Incorrect typename");
             }
             free($1);
             $$.al = listNew(NULL, s);
@@ -339,7 +345,7 @@ par : IDENT_ DPOINT_ typename {
                 case S_INT   : s = newVarInt(curtos(), $2, 0, curfun, true)              ; break ;
                 case S_BOOL  : s = newVarBool(curtos(), $2, false, curfun, true)         ; break ;
                 case S_ARRAY : s = newVarArray(curtos(), $2, $4.sarray, curfun, true)    ; break ;
-                default: ferr(linecpt,"cs.y par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
+                default: yferr("par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
             }
             free($2);
             $$.al = listNew(NULL, s);
@@ -349,12 +355,12 @@ par : IDENT_ DPOINT_ typename {
 instr: lvalue AFFEC_ expr {
                 if ($1.ptr->type == S_ARRAY) {
                     if ($3.ptr->type != $1.ptr->arr->type)
-                        ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue array type != expr type");
+                        yferr("instr: lvalue AFFEC_ expr - lvalue array type != expr type");
                 } else if ($3.ptr->type == S_ARRAY) {
                     if ($1.ptr->type != $3.ptr->arr->type)
-                        ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue type != expr array type");
+                        yferr("instr: lvalue AFFEC_ expr - lvalue type != expr array type");
                 } else if ($1.ptr->type != $3.ptr->type)
-                    ferr(linecpt,"cs.y instr: lvalue AFFEC_ expr - lvalue type != expr type");
+                    yferr("instr: lvalue AFFEC_ expr - lvalue type != expr type");
 
                 symbol *sargs = NULL;
                 if ($1.ptr->type == S_ARRAY) {
@@ -372,17 +378,17 @@ instr: lvalue AFFEC_ expr {
             }
         | RETURN_ expr {
                 if (curfun == NULL)
-                    ferr(linecpt,"cs.y instr : RETURN_ expr - Not in function");
+                    yferr("instr : RETURN_ expr - Not in function");
 
                 if ($2.ptr->type != curfun->fdata->rtype)
-                    ferr(linecpt,"cs.y instr : RETURN_ expr - Return expr type != fun ret type");
+                    yferr("instr : RETURN_ expr - Return expr type != fun ret type");
 
                 quad *qr = qGen(Q_FUNRETURN, NULL, curfun, $2.ptr);
                 $$.quad  = qConcat($2.quad, qr);
             }
         | RETURN_ {
                 if (curfun == NULL)
-                    ferr(linecpt,"cs.y instr : RETURN_ - Not in function");
+                    yferr("instr : RETURN_ - Not in function");
 
                 $$.quad = qGen(Q_FUNRETURN, NULL, curfun, NULL);
             }
@@ -399,7 +405,7 @@ instr: lvalue AFFEC_ expr {
         | BEGIN_ END_ {}
         | READ_ lvalue {
                 if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_ARRAY)
-                    ferr(linecpt,"cs.y instr : READ_ lvalue - type cannot be read");
+                    yferr("instr : READ_ lvalue - Type cannot be read");
 
                 symbol *sargs = NULL;
                 if ($2.ptr->type == S_ARRAY) {
@@ -412,7 +418,7 @@ instr: lvalue AFFEC_ expr {
             }
         | WRITE_ expr {
                 if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING && $2.ptr->type != S_ARRAY)
-                    ferr(linecpt,"cs.y instr : WRITE_ expr - type cannot be write");
+                    yferr("instr : WRITE_ expr - Type cannot be write");
 
                 symbol *sargs = NULL;
                 if ($2.ptr->type == S_ARRAY) {
@@ -484,7 +490,7 @@ lvalue: IDENT_ {
                 symbol *ptr = search(stable, curfun, $1);
                 testID(ptr, $1);
                 if (ptr->type != S_ARRAY)
-                    ferr(__LINE__, "lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
+                    yferr("lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Type != S_ARRAY");
                 free($1);
                 ptr->arr->args = $3.al;
                 $$.ptr  = ptr;
@@ -505,21 +511,21 @@ exprlist : expr {
 
 expr :  expr PLUS_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-              ferr(linecpt,"cs.y expr PLUS expr type error");
+              yferr("expr: expr PLUS expr - Type error");
 
             arithmeticExpression(Q_PLUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | expr MINUS_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-                ferr(linecpt,"cs.y expr MULT expr type error");
+                yferr("expr : expr MULT expr - Type error");
 
             arithmeticExpression(Q_MINUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | MINUS_ expr %prec NEG_ {
           if ($2.ptr->type != S_INT)
-              ferr(linecpt,"cs.y MINUS expr INT type error");
+              yferr("expr : MINUS expr INT - Type error");
 
           symbol *ptr = newTmpInt(curtos(), 0);
           symbol *tmp = newTmpInt(curtos(), 0);
@@ -531,35 +537,35 @@ expr :  expr PLUS_ expr {
 
        | expr MULT_ expr {
            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-               ferr(linecpt,"cs.y expr MULT expr type error");
+               yferr("expr : expr MULT expr - Type error");
             arithmeticExpression(Q_MULT, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | expr DIV_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-                ferr(linecpt,"cs.y expr MULT expr type error");
+                yferr("expr : expr MULT expr - Type error");
             if ($3.ptr->ival == 0)
-                ferr(linecpt,"Error division by 0");
+                yferr("expr : expr MULT expr - Division by 0");
             arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | expr MOD_ expr {
           if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-              ferr(linecpt,"cs.y expr MOD expr type error");
+              yferr("expr : expr MOD expr - Type error");
 
           arithmeticExpression(Q_MOD, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
 
       | expr EXP_ expr {
           if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-              ferr(linecpt,"cs.y expr MULT expr type error");
+              yferr("expr : expr MULT expr - Type error");
 
           arithmeticExpression(Q_EXP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
 
       | expr OR_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
-                ferr(linecpt,"cs.y expr OR expr type error");
+                yferr("expr : expr OR expr - Type error");
 
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
@@ -571,7 +577,7 @@ expr :  expr PLUS_ expr {
 
       | expr AND_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
-                ferr(linecpt,"cs.y expr AND expr type error");
+                yferr("expr : expr AND expr - Type error");
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
@@ -582,7 +588,7 @@ expr :  expr PLUS_ expr {
 
       | expr XOR_ expr {
             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
-                ferr(linecpt,"cs.y expr XOR expr type error");
+                yferr("expr : expr XOR expr - Type error");
 
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
@@ -594,45 +600,45 @@ expr :  expr PLUS_ expr {
 
        | expr SUP_ expr {
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-               ferr(linecpt,"cs.y expr SUP_ expr type error");
+               yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_SUP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
 
        | expr SUP_EQ_ expr {
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-               ferr(linecpt,"cs.y expr SUP_ expr type error");
+               yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_SUPEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr INF_ expr {
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-               ferr(linecpt,"cs.y expr SUP_ expr type error");
+               yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_INF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr INF_EQ_ expr {
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-               ferr(linecpt,"cs.y expr SUP_ expr type error");
+               yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_INFEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr EQUAL_ expr {
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-               ferr(linecpt,"cs.y expr SUP_ expr type error");
+               yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_EQUAL, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr DIFF_ expr {
              if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
-               ferr(linecpt,"cs.y expr SUP_ expr type error");
+               yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_DIFF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
 
        | NOT_ expr {
            if ($2.ptr->type != S_BOOL)
-               ferr(linecpt,"cs.y expr NOT type error");
+               yferr("expr : expr NOT - Type error");
 
            symbol *ptr = newTmpBool(curtos(), false);
            $$.ptr      = ptr;
@@ -654,7 +660,7 @@ expr :  expr PLUS_ expr {
           testID(ptr, $1);
           free($1);
           if (ptr->type != S_ARRAY)
-              ferr(__LINE__, "expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - type != S_ARRAY");
+              yferr("expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Type != S_ARRAY");
 
           ptr->arr->args = $3.al;
           symbol *arrVal;
@@ -662,7 +668,7 @@ expr :  expr PLUS_ expr {
           switch (ptr->arr->type) {
               case S_INT  : arrVal = newTmpInt(curtos(), 0)      ; break;
               case S_BOOL : arrVal = newTmpBool(curtos(), false) ; break;
-              default: ferr(linecpt, "cs.y expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - array wrong type");
+              default: yferr("expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Array wrong type");
           }
 
           symbol *sargs = newTmpInt(curtos(), 0);
@@ -688,7 +694,7 @@ expr :  expr PLUS_ expr {
                                   break;
                   case S_STRING : ptr = newTmpStr (curtos(), $1.sval);
                                   break;
-                  default: ferr(linecpt,"cs.y expr : CTE_ Unknow cte type");
+                  default: yferr("expr : CTE_ - Unknow cte type");
               }
 
               $$.ptr    = ptr;
@@ -708,7 +714,7 @@ m : %empty {
 %%
 
 void yyerror (char *s) {
-    ferr(linecpt, s);
+    yferr(s);
 }
 
 int yywrap (void) {
@@ -750,10 +756,7 @@ int main (int argc, char **argv) {
                 break;
             case 'o':
                 o = true;
-                res = snprintf(filename, LEN, "%s", optarg);
-                if (res < 0 || res >= LEN)
-                    ferr(__LINE__, "cs.y main snprintf");
-
+                snpt(snprintf(filename, LEN, "%s", optarg));
                 opt += 2;
                 break;
             default:
@@ -773,16 +776,14 @@ int main (int argc, char **argv) {
     // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
     yyin = fopen(argv[opt], "r");
     if (yyin == NULL)
-        ferr(__LINE__, "cs.y main - error fopen");
+        ferr("fopen");
 
     yyparse();
     if(!validComment)
-        ferr(linecpt,"error comments \n") ;
+        yferr("error comments") ;
     char out[LEN];
 
-    res = snprintf(out, LEN, "%s.s", o ? filename : (*progName ? progName : "out"));
-    if (res < 0 || res >= LEN)
-        ferr(__LINE__, "cs.y main - snprintf");
+    snpt(snprintf(out, LEN, "%s.s", o ? filename : (*progName ? progName : "out")));
 
     FILE *output = fopen(out, "w");
     #if YYDEBUG == 1
