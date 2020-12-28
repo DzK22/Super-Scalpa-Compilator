@@ -16,7 +16,7 @@ void optiLoop (quad **code, symbol **gtos) {
 
 		cnt += optiDeadCode(code);
 		cnt += optiVarDuplicate(code);
-		cnt += optiArithOps(code);
+		//cnt += optiArithOps(code);
 		res = snprintf(tbuf, LEN, "LOOP [%d] => %2d changes", loops, cnt);
 		if (res < 0 || res >= LEN)
 			ferr(__LINE__ ,"opti.c optiLoop snprintf");
