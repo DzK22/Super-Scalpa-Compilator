@@ -243,18 +243,15 @@ char * nextTmpLabel (void) {
 }
 
 void getText (FILE *f, quad *q) {
-    symbol *res, *argv1, *argv2, *gtrue, *gfalse, *gnext;
+    symbol *res, *argv1, *argv2, *gfalse;
 
     while (q != NULL) {
         curquad = q;
         res     = q->res;
         argv1   = q->argv1;
         argv2   = q->argv2;
-        gtrue   = q->gtrue;
         gfalse  = q->gfalse;
-        gnext   = q->gnext;
-        (void)gtrue;
-        (void)gnext;
+
         switch (q->op) {
             case Q_PLUS:
             case Q_MINUS:
@@ -360,7 +357,7 @@ void getText (FILE *f, quad *q) {
             case Q_FUNCALL:
                 // res   = where to put function return value (can be null = fun type S_UNIT)
                 // arvg1 = function symbol
-                // argv2 = list of symbol = symbol * (can be null = no args)
+                // argv2 = funcall args: list of symbol = symbol * (can be null = no args)
                 if (!argv1)
                     ferr(__LINE__ ,"mips.c getText Q_FUNCALL quad error");
 

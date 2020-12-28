@@ -113,8 +113,6 @@
     struct {
         struct symbol *ptr;
         struct quad   *quad;
-        struct quad   *ltrue;
-        struct quad   *lfalse;
     } gencode; // Pour les expressions
     struct {
         stype type;
@@ -151,8 +149,8 @@
 %type <type>     atomictype
 %type <argl>     identlist varsdecl parlist par
 %type <exprl>    exprlist
-%type <sarray>    arraytype
-%type <dimprop>    rangelist
+%type <sarray>   arraytype
+%type <dimprop>  rangelist
 %type <ctype>    typename
 
 %left   OR_
@@ -175,13 +173,12 @@ program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         symbol *ptr = newProg(&stable, $2);
         progName    = strdup($2);
         free($2);
-        $$.ltrue    = NULL;
-        $$.lfalse   = NULL;
-        $$.quad     = $5.quad;
-        $$.ptr      = ptr;
-        quad *q     = qGen(Q_MAIN, NULL, NULL, NULL);
-        all_code    = concat($4.quad, q);
-        all_code    = concat(all_code, $5.quad);
+
+        $$.quad  = $5.quad;
+        $$.ptr   = ptr;
+        quad *q  = qGen(Q_MAIN, NULL, NULL, NULL);
+        all_code = concat($4.quad, q);
+        all_code = concat(all_code, $5.quad);
     }
     ;
 
@@ -428,9 +425,7 @@ instr: lvalue AFFEC_ expr {
             }
         | IF_ expr THEN_ instr m %prec IFX {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gtrue  = NULL;
                 qif->gfalse = $5.quad->res;
-                qif->gnext  = $5.quad->res;
 
                 $$.quad = concat($2.quad, qif);
                 $$.quad = concat($$.quad, $4.quad);
@@ -438,31 +433,25 @@ instr: lvalue AFFEC_ expr {
             }
         | IF_ expr THEN_ instr ELSE_ m instr m {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gtrue  = NULL;
                 qif->gfalse = $6.quad->res;
-                qif->gnext  = $8.quad->res;
-
-                quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
+                quad *gnext = qGen(Q_GOTO, $8.quad->res, NULL, NULL);
 
                 $$.quad = concat($2.quad, qif);
                 $$.quad = concat($$.quad, $4.quad);
-                $$.quad = concat($$.quad, go);
+                $$.quad = concat($$.quad, gnext);
                 $$.quad = concat($$.quad, $6.quad);
                 $$.quad = concat($$.quad, $7.quad);
                 $$.quad = concat($$.quad, $8.quad);
             }
         | WHILE_ m expr DO_ instr m {
                 quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
-                qif->gtrue  = NULL;
                 qif->gfalse = $6.quad->res;
-                qif->gnext  = $2.quad->res;
-
-                quad *go = qGen(Q_GOTO, qif->gnext, NULL, NULL);
+                quad *gnext = qGen(Q_GOTO, $2.quad->res, NULL, NULL);
 
                 $$.quad = concat($2.quad, $3.quad);
                 $$.quad = concat($$.quad, qif);
                 $$.quad = concat($$.quad, $5.quad);
-                $$.quad = concat($$.quad, go);
+                $$.quad = concat($$.quad, gnext);
                 $$.quad = concat($$.quad, $6.quad);
             }
       ;
@@ -567,51 +556,38 @@ expr :  expr PLUS_ expr {
           arithmeticExpression(Q_EXP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
 
-      | expr OR_ m expr {
-            if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
+      | expr OR_ expr {
+            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
                 ferr(linecpt,"cs.y expr OR expr type error");
 
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
-            complete($1.lfalse, false, $3.quad->res);
-            $$.lfalse = $4.lfalse;
-            $$.ltrue  = concat($1.ltrue, $4.ltrue);
-
-            quad *q   = qGen(Q_OR, ptr, $1.ptr, $4.ptr);
-            $$.quad   = concat($1.quad, $3.quad);
-            $$.quad   = concat($$.quad, $4.quad);
+            quad *q   = qGen(Q_EQUAL, ptr, $1.ptr, $3.ptr);
+            $$.quad   = concat($$.quad, $3.quad);
             $$.quad   = concat($$.quad, q);
           }
 
-      | expr AND_ m expr {
-            if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
+      | expr AND_ expr {
+            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
                 ferr(linecpt,"cs.y expr AND expr type error");
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
-            complete($1.ltrue, true, $3.quad->res);
-            $$.lfalse = concat($1.lfalse, $4.lfalse);
-            $$.ltrue  = $4.ltrue;
-
-            quad *q = qGen(Q_AND, ptr, $1.ptr, $4.ptr);
-            $$.quad = concat($1.quad, $3.quad);
-            $$.quad = concat($$.quad, $4.quad);
+            quad *q = qGen(Q_AND, ptr, $1.ptr, $3.ptr);
+            $$.quad = concat($$.quad, $3.quad);
             $$.quad = concat($$.quad, q);
           }
 
-      | expr XOR_ m expr {
-            if ($1.ptr->type != $4.ptr->type || $1.ptr->type != S_BOOL)
+      | expr XOR_ expr {
+            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
                 ferr(linecpt,"cs.y expr XOR expr type error");
 
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
 
-            // complete true false etc
-
-            quad *q = qGen(Q_XOR, ptr, $1.ptr, $4.ptr);
-            $$.quad = concat($1.quad, $3.quad);
-            $$.quad = concat($$.quad, $4.quad);
+            quad *q = qGen(Q_XOR, ptr, $1.ptr, $3.ptr);
+            $$.quad = concat($$.quad, $3.quad);
             $$.quad = concat($$.quad, q);
           }
 
@@ -700,8 +676,6 @@ expr :  expr PLUS_ expr {
             free($1);
             $$.ptr    = ptr;
             $$.quad   = NULL;
-            $$.ltrue  = NULL;
-            $$.lfalse = NULL;
         }
       | CTE_ {
               symbol *ptr;
@@ -718,14 +692,10 @@ expr :  expr PLUS_ expr {
 
               $$.ptr    = ptr;
               $$.quad   = NULL;
-              $$.ltrue  = NULL;
-              $$.lfalse = NULL;
           }
       | PARLEFT_ expr PARRIGHT_ {
               $$.ptr    = $2.ptr;
               $$.quad   = $2.quad;
-              $$.ltrue  = $2.ltrue;
-              $$.lfalse = $2.lfalse;
           }
       ;
 
@@ -753,6 +723,7 @@ int main (int argc, char **argv) {
     char arg;
     bool tos = false, version = false, o = false;
     int opt = 1, res;
+
     while (1) {
         static struct option long_options[] =
         {
@@ -761,10 +732,12 @@ int main (int argc, char **argv) {
           {"o", required_argument, 0, 'o'},
           {0, 0, 0, 0}
         };
+
         int option_index = 0;
         arg = getopt_long_only(argc, argv, "", long_options, &option_index);
         if (arg == -1)
             break;
+
         switch (arg) {
             case 'v':
                 version = true;
