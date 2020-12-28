@@ -1,12 +1,10 @@
 #ifndef QUAD_H
 #define QUAD_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+#include "util.h"
 #include "stable.h"
 #include "types.h"
+
 typedef struct quad {
     qop           op;
     struct quad   *next;
@@ -17,10 +15,9 @@ typedef struct quad {
     struct symbol *argv2;
 } quad;
 
-quad *qGen     (qop, struct symbol *, struct symbol *, struct symbol *);
-void qFree     (quad *);
-quad *concat   (quad *, quad *);
-void qPrint    (quad *);
-void ferr      (int , char *s);
+quad *qGen    (qop, struct symbol *, struct symbol *, struct symbol *);
+void  qFree   (quad *);
+quad *qConcat (quad *, quad *);
+void  qPrint  (quad *);
 
 #endif

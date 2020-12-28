@@ -1,10 +1,7 @@
 #ifndef OPTI_H
 #define OPTI_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+#include "util.h"
 #include "quad.h"
 #include "stable.h"
 #include "arglist.h"

@@ -1,10 +1,7 @@
 #ifndef MIPS_H
 #define MIPS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+#include "util.h"
 #include "array.h"
 
 void getMips (FILE *, symbol *, quad *);

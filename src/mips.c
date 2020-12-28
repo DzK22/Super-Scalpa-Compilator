@@ -111,7 +111,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
 
     pdir("");
     pcom("Internal functions")
-    getMipsInternalFunctions(f);
+        getMipsInternalFunctions(f);
 
     pdir("");
     pcom("User functions");
@@ -189,9 +189,9 @@ void getData (FILE *f, symbol *s) {
 
                     for (i = 0; i < s->arr->size; i++) {
                         if (i != s->arr->size - 1)
-                        fprintf(f, "0, ");
+                            fprintf(f, "0, ");
                         else
-                        fprintf(f, "0\n");
+                            fprintf(f, "0\n");
                     }
 
                     break;
@@ -208,23 +208,23 @@ void getData (FILE *f, symbol *s) {
 char * opstr (qop op) {
     static char str[LEN]; // NOT THREAD SAFE
     switch (op) {
-            case Q_PLUS  : sprintf(str, "+")   ; break ;
-            case Q_MINUS : sprintf(str, "-")   ; break ;
-            case Q_MULT  : sprintf(str, "*")   ; break ;
-            case Q_DIV   : sprintf(str, "/")   ; break ;
-            case Q_MOD   : sprintf(str, "MOD") ; break ;
-            case Q_EXP   : sprintf(str, "^")   ; break ;
-            case Q_EQUAL : sprintf(str, "=")   ; break ;
-            case Q_DIFF  : sprintf(str, "!=")  ; break ;
-            case Q_INF   : sprintf(str, "<")   ; break ;
-            case Q_INFEQ : sprintf(str, "<=")  ; break ;
-            case Q_SUP   : sprintf(str, ">")   ; break ;
-            case Q_SUPEQ : sprintf(str, ">=")  ; break ;
-            case Q_AND   : sprintf(str, "AND") ; break ;
-            case Q_OR    : sprintf(str, "OR")  ; break ;
-            case Q_XOR   : sprintf(str, "XOR") ; break ;
-            case Q_NOT   : sprintf(str, "NOT") ; break ;
-            default: ferr(__LINE__ ,"mips.c opstr unknow op");
+        case Q_PLUS  : sprintf(str, "+")   ; break ;
+        case Q_MINUS : sprintf(str, "-")   ; break ;
+        case Q_MULT  : sprintf(str, "*")   ; break ;
+        case Q_DIV   : sprintf(str, "/")   ; break ;
+        case Q_MOD   : sprintf(str, "MOD") ; break ;
+        case Q_EXP   : sprintf(str, "^")   ; break ;
+        case Q_EQUAL : sprintf(str, "=")   ; break ;
+        case Q_DIFF  : sprintf(str, "!=")  ; break ;
+        case Q_INF   : sprintf(str, "<")   ; break ;
+        case Q_INFEQ : sprintf(str, "<=")  ; break ;
+        case Q_SUP   : sprintf(str, ">")   ; break ;
+        case Q_SUPEQ : sprintf(str, ">=")  ; break ;
+        case Q_AND   : sprintf(str, "AND") ; break ;
+        case Q_OR    : sprintf(str, "OR")  ; break ;
+        case Q_XOR   : sprintf(str, "XOR") ; break ;
+        case Q_NOT   : sprintf(str, "NOT") ; break ;
+        default: ferr(__LINE__ ,"mips.c opstr unknow op");
     }
 
     return str;
@@ -562,27 +562,27 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
         case Q_DIV   : pins4("div", "$t2", "$t0", "$t1") ; break ;
         case Q_MOD   : pins4("rem", "$t2", "$t0", "$t1") ; break ;
         case Q_EXP   :
-           label  = nextTmpLabel();
-           label2 = nextTmpLabel();
+                       label  = nextTmpLabel();
+                       label2 = nextTmpLabel();
 
-           pload("$t2", argv1);
-           pins3("li", "$t3", "1");
+                       pload("$t2", argv1);
+                       pins3("li", "$t3", "1");
 
-           // warning: seulement les puissances > 0 fonctionnent avec ce code
-           plab(label);
-           pins4("ble", "$t1", "$t3", label2);
-           pins4("mul", "$t2", "$t2", "$t0");
-           pins4("sub", "$t1", "$t1", "$t3");
-           pins2("j", label);
-           plab(label2);
+                       // warning: seulement les puissances > 0 fonctionnent avec ce code
+                       plab(label);
+                       pins4("ble", "$t1", "$t3", label2);
+                       pins4("mul", "$t2", "$t2", "$t0");
+                       pins4("sub", "$t1", "$t1", "$t3");
+                       pins2("j", label);
+                       plab(label2);
 
-           free(label);
-           free(label2);
-           break;
+                       free(label);
+                       free(label2);
+                       break;
 
         default:
-            //TO AVOID WARNING
-            break;
+                       //TO AVOID WARNING
+                       break;
     }
 
     pstore("$t2", res);
@@ -729,7 +729,7 @@ void fundec (FILE *f, symbol *fun) {
        4 -> arg 1
        8 -> arg 2
        etc ...
-    */
+       */
 
     curfun = fun;
 }
@@ -740,7 +740,7 @@ void funend (FILE *f, symbol *fun) {
        4 -> arg 1
        8 -> arg 2
        etc ...
-    */
+       */
 
     // label to jump to after a return
     snpt(snprintf(tbuf, LEN, "end_%s", fun->id));
@@ -791,11 +791,11 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     /* Stack now (no curfun)    Stack now (curfun != NULL)
        0 -> arg 1               0 -> arg 1
        4 -> arg 2               4 -> arg 2
-         etc ...                  etc ...
-                                8  -> var1
-                                12 -> var2
-                                etc ...
-    */
+       etc ...                  etc ...
+       8  -> var1
+       12 -> var2
+       etc ...
+       */
 
     // show funcall args string for debugging
     char argsDebug[LEN];
@@ -817,7 +817,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
            0 -> var1
            4 -> var2
            etc ...
-        */
+           */
 
         pcom("load usefull local vars from the stack");
         // load local vars from stack

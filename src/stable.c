@@ -3,35 +3,42 @@
 
 unsigned long getHash (char *key) {
     unsigned long hash = 5381;
+
     while (*(key++))
         hash = ((hash << 5) + hash) + (*key);
+
     return hash;
 }
 
 hashtable *initHashTable (int size) {
     hashtable *hashT = malloc(sizeof(hashtable));
-    if (hashT == NULL) {
+    if (hashT == NULL)
         ferr(__LINE__, "stable.c initHashTable malloc error");
-    }
+
     hashT->size = size;
     hashT->count = 0;
     hashT->stable = calloc(hashT->size, sizeof(hash_item *));
+
     if (hashT->stable == NULL)
         ferr(__LINE__, "stable.c initHashTable calloc error");
+
     int i;
     for (i = 0; i < hashT->size; i++)
         hashT->stable[i] = NULL;
+
     return hashT;
 }
 
 //A FAIRE QUAND REFACTORING DE LA STRUCT SYMBOL POUR HASHTABLE
 //void freeHashTable (hashtable *htable) {
 //    int i;
+//
 //    for (i = 0; i < htable->size; i++) {
 //        hash_item *s = htable->stable[i];
 //        if (s != NULL)
 //            //sFree(s);
 //    }
+//
 //    free(htable->stable);
 //    free(htable);
 //}
@@ -40,25 +47,32 @@ hashtable *initHashTable (int size) {
 void *insertHashTable (hashtable *htable, char *key, void *data) {
     if (data == NULL)
         return NULL;
+
     unsigned long hash = getHash(key) % htable->size;
     hash_item *item = htable->stable[hash];
+
     while (item != NULL) {
         if (!strcmp(item->key, key)) {
             void *res = item->data;
             item->data = data;
             return res;
         }
+
         item = item->next;
     }
+
     if ((item = malloc(sizeof(hash_item) + strlen(key) + 1)) == NULL)
         ferr(__LINE__, "stable.c insertHashTable malloc error");
+
     if ((item->key = strdup(key)) == NULL)
         ferr(__LINE__, "stable.c insertHashTable strdup error");
+
     item->data = data;
     //Ajouter l'élément en début de liste chaînée
     item->next = htable->stable[hash];
     htable->stable[hash] = item;
     htable->count++;
+
     return NULL;
 }
 
@@ -123,6 +137,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
     static int nsym = 0;
     static int nlabels = 0;
     bool isTmp;
+
     if (id != NULL)
         isTmp = false;
     else
@@ -193,7 +208,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
             ferr(__LINE__ ,"stable.c newVar unknow type");
     }
 
-     return nt;
+    return nt;
 }
 
 // Helpers functions which call newVar
@@ -230,9 +245,10 @@ symbol *newVarFun (symbol **tos, char *id) {
     fundata *fdata = malloc(sizeof(fundata));
     if (fdata == NULL)
         ferr(__LINE__, "stable.c malloc error\n"),
-    fdata->al      = NULL;
-    fdata->rtype   = S_NONE;
-    fdata->tos     = NULL;
+            fdata->al      = NULL;
+
+    fdata->rtype = S_NONE;
+    fdata->tos   = NULL;
     // do not forget to set fdata->al and fdata->rtype after init !
 
     return newVar(tos, S_FUNCTION, id, fdata, NULL, false);
@@ -291,34 +307,34 @@ symbol *search (symbol *gtos, symbol *curfun, char *id) {
 
 void stablePrint (symbol *tos) {
     while (tos != NULL) {
-        fprintf(stdout, "%s: ", tos->id);
+        printf("%s: ", tos->id);
         switch (tos->type) {
             case S_INT:
-                fprintf(stdout, "INTEGER\n");
+                printf("INTEGER\n");
                 break;
             case S_BOOL:
-                fprintf(stdout, "BOOLEAN\n");
+                printf("BOOLEAN\n");
                 break;
             case S_ARRAY:
-                fprintf(stdout, "ARRAY\n"); // ajouter type de valeurs quand tableaux seront faits
+                printf("ARRAY\n"); // ajouter type de valeurs quand tableaux seront faits
                 break;
             case S_STRING:
-                fprintf(stdout, "STRING\n");
+                printf("STRING\n");
                 break;
             case S_PROG:
-                fprintf(stdout, "PROGRAM NAME\n");
+                printf("PROGRAM NAME\n");
                 break;
             case S_FUNCTION:
-                fprintf(stdout, "Function : returns => ");
+                printf("Function : returns => ");
                 switch (tos->fdata->rtype) {
                     case S_INT:
-                        fprintf(stdout, "INTEGER\n");
+                        printf("INTEGER\n");
                         break;
                     case S_BOOL:
-                        fprintf(stdout, "BOOLEAN\n");
+                        printf("BOOLEAN\n");
                         break;
                     case S_UNIT:
-                        fprintf(stdout, "UNIT\n");
+                        printf("UNIT\n");
                         break;
                     default:
                         //Others todo
@@ -326,10 +342,9 @@ void stablePrint (symbol *tos) {
                 }
                 break;
             default:
-                //OTHERS TODO
                 break;
         }
-        // fprintf(stdout, "\n");
+
         tos = tos->next;
     }
 }

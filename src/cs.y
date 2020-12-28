@@ -52,8 +52,8 @@
         quad *q     = qGen(op, ptr, arg1, arg2);
 
         *res        = ptr;
-        *quadRes    = concat(quad1, quad2);
-        *quadRes    = concat(*quadRes, q);
+        *quadRes    = qConcat(quad1, quad2);
+        *quadRes    = qConcat(*quadRes, q);
      }
 
     void booleanExpression (qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
@@ -62,8 +62,8 @@
         quad *q      = qGen(op, ptr, arg1, arg2);
 
         *res         = ptr;
-        *quadRes     = concat(quad1, quad2);
-        *quadRes     = concat(*quadRes, q);
+        *quadRes     = qConcat(quad1, quad2);
+        *quadRes     = qConcat(*quadRes, q);
         (*res)->type = S_BOOL;
      }
 
@@ -93,9 +93,9 @@
         *quadRes = NULL;
 
         if (qd)
-            *quadRes = concat(*quadRes, qd);
+            *quadRes = qConcat(*quadRes, qd);
 
-        *quadRes = concat(*quadRes, q);
+        *quadRes = qConcat(*quadRes, q);
         *symRes  = res;
      }
 %}
@@ -177,8 +177,8 @@ program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
         $$.quad  = $5.quad;
         $$.ptr   = ptr;
         quad *q  = qGen(Q_MAIN, NULL, NULL, NULL);
-        all_code = concat($4.quad, q);
-        all_code = concat(all_code, $5.quad);
+        all_code = qConcat($4.quad, q);
+        all_code = qConcat(all_code, $5.quad);
     }
     ;
 
@@ -189,15 +189,16 @@ vardecllist : %empty                         { }
 
 varsdecl: VAR_ identlist DPOINT_ typename {
              arglistPrint($2.al);
+
              switch ($4.type) {
                  case S_INT:
-                    fprintf(stdout, "integer\n");
+                    printf("integer\n");
                     break;
                  case S_BOOL:
-                    fprintf(stdout, "boolean\n");
+                    printf("boolean\n");
                     break;
                  case S_ARRAY:
-                    fprintf(stdout, "array\n");
+                    printf("array\n");
                     break;
                 default: ferr(linecpt,"cs.y varsdecl : VAR_ identlist DPOINT_ typename - wrong typename");
 
@@ -284,7 +285,7 @@ fundecllist : %empty {
                     $$.quad = NULL;
                 }
             | fundecl DOTCOMMA_ fundecllist {
-                    $$.quad = concat($1.quad, $3.quad);
+                    $$.quad = qConcat($1.quad, $3.quad);
                 }
            ;
 
@@ -304,8 +305,8 @@ fundecl : FUNCTION_ IDENT_ PARLEFT_ {
                 quad *qend = qGen(Q_FUNEND, NULL, curfun, NULL);
 
                 curfun  = NULL;
-                $$.quad = concat(qdec, $11.quad);
-                $$.quad = concat($$.quad, qend);
+                $$.quad = qConcat(qdec, $11.quad);
+                $$.quad = qConcat($$.quad, qend);
             }
         ;
 
@@ -365,7 +366,7 @@ instr: lvalue AFFEC_ expr {
                 }
 
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, sargs);
-                quad *quad = concat($3.quad, q);
+                quad *quad = qConcat($3.quad, q);
                 $$.quad    = quad;
                 $$.ptr     = $1.ptr;
             }
@@ -377,7 +378,7 @@ instr: lvalue AFFEC_ expr {
                     ferr(linecpt,"cs.y instr : RETURN_ expr - Return expr type != fun ret type");
 
                 quad *qr = qGen(Q_FUNRETURN, NULL, curfun, $2.ptr);
-                $$.quad  = concat($2.quad, qr);
+                $$.quad  = qConcat($2.quad, qr);
             }
         | RETURN_ {
                 if (curfun == NULL)
@@ -407,7 +408,7 @@ instr: lvalue AFFEC_ expr {
                 }
 
                 quad *q = qGen(Q_READ, $2.ptr, sargs, NULL);
-                $$.quad = concat($2.quad, q);
+                $$.quad = qConcat($2.quad, q);
             }
         | WRITE_ expr {
                 if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING && $2.ptr->type != S_ARRAY)
@@ -420,44 +421,44 @@ instr: lvalue AFFEC_ expr {
                 }
 
                 quad *q = qGen(Q_WRITE, NULL, $2.ptr, sargs);
-                $$.quad = concat($2.quad, q);
+                $$.quad = qConcat($2.quad, q);
 
             }
         | IF_ expr THEN_ instr m %prec IFX {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
                 qif->gfalse = $5.quad->res;
 
-                $$.quad = concat($2.quad, qif);
-                $$.quad = concat($$.quad, $4.quad);
-                $$.quad = concat($$.quad, $5.quad);
+                $$.quad = qConcat($2.quad, qif);
+                $$.quad = qConcat($$.quad, $4.quad);
+                $$.quad = qConcat($$.quad, $5.quad);
             }
         | IF_ expr THEN_ instr ELSE_ m instr m {
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
                 qif->gfalse = $6.quad->res;
                 quad *gnext = qGen(Q_GOTO, $8.quad->res, NULL, NULL);
 
-                $$.quad = concat($2.quad, qif);
-                $$.quad = concat($$.quad, $4.quad);
-                $$.quad = concat($$.quad, gnext);
-                $$.quad = concat($$.quad, $6.quad);
-                $$.quad = concat($$.quad, $7.quad);
-                $$.quad = concat($$.quad, $8.quad);
+                $$.quad = qConcat($2.quad, qif);
+                $$.quad = qConcat($$.quad, $4.quad);
+                $$.quad = qConcat($$.quad, gnext);
+                $$.quad = qConcat($$.quad, $6.quad);
+                $$.quad = qConcat($$.quad, $7.quad);
+                $$.quad = qConcat($$.quad, $8.quad);
             }
         | WHILE_ m expr DO_ instr m {
                 quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
                 qif->gfalse = $6.quad->res;
                 quad *gnext = qGen(Q_GOTO, $2.quad->res, NULL, NULL);
 
-                $$.quad = concat($2.quad, $3.quad);
-                $$.quad = concat($$.quad, qif);
-                $$.quad = concat($$.quad, $5.quad);
-                $$.quad = concat($$.quad, gnext);
-                $$.quad = concat($$.quad, $6.quad);
+                $$.quad = qConcat($2.quad, $3.quad);
+                $$.quad = qConcat($$.quad, qif);
+                $$.quad = qConcat($$.quad, $5.quad);
+                $$.quad = qConcat($$.quad, gnext);
+                $$.quad = qConcat($$.quad, $6.quad);
             }
       ;
 
 sequence : instr DOTCOMMA_ sequence  {
-                $$.quad = concat($1.quad, $3.quad);
+                $$.quad = qConcat($1.quad, $3.quad);
                 $$.ptr  = $1.ptr;
              }
              | instr DOTCOMMA_ {
@@ -498,7 +499,7 @@ exprlist : expr {
         |  expr COMMA_ exprlist {
                 arglist *al = arglistNew(NULL, $1.ptr);
                 $$.al       = arglistConcat(al, $3.al);
-                $$.quad     = concat($1.quad, $3.quad);
+                $$.quad     = qConcat($1.quad, $3.quad);
             }
         ;
 
@@ -525,7 +526,7 @@ expr :  expr PLUS_ expr {
           $$.ptr      = ptr;
           quad *q     = qGen(Q_MINUS, ptr, tmp, $2.ptr);
           $$.quad     = $2.quad;
-          $$.quad     = concat($$.quad, q);
+          $$.quad     = qConcat($$.quad, q);
       }
 
        | expr MULT_ expr {
@@ -564,8 +565,8 @@ expr :  expr PLUS_ expr {
             $$.ptr      = ptr;
 
             quad *q   = qGen(Q_EQUAL, ptr, $1.ptr, $3.ptr);
-            $$.quad   = concat($$.quad, $3.quad);
-            $$.quad   = concat($$.quad, q);
+            $$.quad   = qConcat($$.quad, $3.quad);
+            $$.quad   = qConcat($$.quad, q);
           }
 
       | expr AND_ expr {
@@ -575,8 +576,8 @@ expr :  expr PLUS_ expr {
             $$.ptr      = ptr;
 
             quad *q = qGen(Q_AND, ptr, $1.ptr, $3.ptr);
-            $$.quad = concat($$.quad, $3.quad);
-            $$.quad = concat($$.quad, q);
+            $$.quad = qConcat($$.quad, $3.quad);
+            $$.quad = qConcat($$.quad, q);
           }
 
       | expr XOR_ expr {
@@ -587,8 +588,8 @@ expr :  expr PLUS_ expr {
             $$.ptr      = ptr;
 
             quad *q = qGen(Q_XOR, ptr, $1.ptr, $3.ptr);
-            $$.quad = concat($$.quad, $3.quad);
-            $$.quad = concat($$.quad, q);
+            $$.quad = qConcat($$.quad, $3.quad);
+            $$.quad = qConcat($$.quad, q);
           }
 
        | expr SUP_ expr {
@@ -638,7 +639,7 @@ expr :  expr PLUS_ expr {
 
            quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
            $$.quad = $2.quad;
-           $$.quad = concat($$.quad, q);
+           $$.quad = qConcat($$.quad, q);
        }
 
       | IDENT_ PARLEFT_ exprlist PARRIGHT_ {
@@ -762,8 +763,8 @@ int main (int argc, char **argv) {
     }
 
     if (version) {
-        fprintf(stdout, YELLOW"Members:\n"COL_RESET);
-        fprintf(stdout, CYAN"Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n"COL_RESET);
+        printf(YELLOW"Members:\n"COL_RESET);
+        printf(CYAN"Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n"COL_RESET);
     }
 
     #if YYDEBUG == 1

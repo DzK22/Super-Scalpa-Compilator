@@ -1,7 +1,6 @@
 #include "../headers/quad.h"
 
 quad *qGen (qop op, symbol *res, symbol *argv1, symbol *argv2) {
-
     quad *nq = malloc(sizeof(struct quad));
     if (nq == NULL)
         ferr(__LINE__ ,"quad.c qGen malloc");
@@ -22,12 +21,12 @@ void qFree (quad *q) {
 
     while (q != NULL) {
         cur = q;
-        q = q->next;
+        q   = q->next;
         free(cur);
     }
 }
 
-quad *concat (quad *q1, quad *q2) {
+quad *qConcat (quad *q1, quad *q2) {
     quad *res = NULL;
 
     if (q1 != NULL) {
@@ -50,47 +49,40 @@ void qPrint (quad *q) {
     while (cur != NULL) {
         switch (cur->op) {
             case Q_PLUS:
-                fprintf(stdout, "ADD\t\t");
+                printf("ADD\t\t");
                 break;
             case Q_MINUS:
-                fprintf(stdout, "SUB\t\t");
+                printf("SUB\t\t");
                 break;
             case Q_MULT:
-                fprintf(stdout, "MULT\t\t");
-                break;
-            case Q_DIV:
-                fprintf(stdout, "DIV\t\t");
+                printf("DIV\t\t");
                 break;
             case Q_EXP:
-                fprintf(stdout, "EXP\t\t");
-                break;
-            case Q_WRITE:
-                fprintf(stdout, "WRITE\t\t");
+                printf("WRITE\t\t");
                 break;
             case Q_AFFEC:
-                fprintf(stdout, "AFFEC\t\t");
+                printf("AFFEC\t\t");
                 break;
             default:
-                //TO AVOID WARNINGS AT COMPILATION MAYBE TODO ?
                 break;
         }
 
         if (cur->argv1 == NULL)
-            fprintf(stdout, "%s\t\t", "NULL");
+            printf("%s\t\t", "NULL");
         else
-            fprintf(stdout, "%s\t\t", cur->argv1->id);
+            printf("%s\t\t", cur->argv1->id);
 
         if (cur->argv2 == NULL)
-            fprintf(stdout, "%s\t\t", "NULL");
+            printf("%s\t\t", "NULL");
         else
-            fprintf(stdout, "%s\t\t", cur->argv2->id);
+            printf("%s\t\t", cur->argv2->id);
 
         if (cur->res == NULL)
-            fprintf(stdout, "%s\t\t", "NULL");
+            printf("%s\t\t", "NULL");
         else
-            fprintf(stdout, "%s\t\t", cur->res->id);
+            printf("%s\t\t", cur->res->id);
 
-        fprintf(stdout, "\n");
+        printf("\n");
         cur = cur->next;
     }
 }

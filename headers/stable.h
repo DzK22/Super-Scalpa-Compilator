@@ -1,21 +1,12 @@
 #ifndef STABLE_H
 #define STABLE_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include "util.h"
 #include "array.h"
 #include "arglist.h"
-#define LEN 8192
-#define COL_RESET "\e[0;m"
-#define GREEN "\e[38;2;100;200;60m"
-#define PINK "\e[38;2;250;20;160m"
-#define YELLOW "\e[38;2;255;250;0m"
-#define CYAN "\e[0;36m"
 
-#define CAPACITY 500000
+#define LEN       8192
+#define CAPACITY  500000
 
 //Hash Item KEY = symbol->id
 typedef struct symbol {
@@ -67,7 +58,7 @@ symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
 symbol *newVarArray (symbol **, char *, struct s_array *, symbol *, bool);
 
-void   stablePrint  (symbol *);
+void stablePrint  (symbol *);
 
 /************************/
 /*                      */
@@ -76,7 +67,7 @@ void   stablePrint  (symbol *);
 /************************/
 unsigned long getHash (char *key);
 hashtable *initHashTable (int size);
-//void freeHashTable (hashtable *htable);
+// void freeHashTable (hashtable *htable);
 void *insertHashTable (hashtable *htable, char *key, void *data);
 
 #endif
