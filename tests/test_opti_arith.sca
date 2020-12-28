@@ -1,0 +1,13 @@
+program optiTest
+var a, b, c, i, j : int;
+begin
+    b := 15;
+    c := 6;
+    i := 1;
+    write b + c;
+    write "\n";
+    write c * i;
+    write "\n";
+    write b + j;
+    write "\n";
+end

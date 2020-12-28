@@ -12,6 +12,8 @@
 void optiLoop        (quad **code, symbol **gtos);
 int optiDeadCode     (quad **code);
 int optiVarDuplicate (quad **code);
+int optiArithOps     (quad **code);
+int optiAddZero (quad *q);
+int optiMultOne (quad *q);
 
 #endif
-
