@@ -2,8 +2,8 @@ program tabz
     var i, j, a, b : int;
     var tab : array[1..3,1..3] of int ;
     begin
-        read tab[1,3];
-        read tab[2,1];
+        tab[1,3] := 4 ;
+        tab[2,1] := 11;
         i := 1;
         j := 3;
         a := 2;

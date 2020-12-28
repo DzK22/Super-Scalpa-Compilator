@@ -13,9 +13,9 @@ reset=`tput sgr0`
  echo "#####################################################"
  echo ""
 
- for file in `ls tests`; do
+ for file in `ls tests/auto`; do
   echo "----------  Compiling $file  ----------"
-  ./scalpa tests/$file
+  ./scalpa tests/auto/$file
   echo ""
 
  done

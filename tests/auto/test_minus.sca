@@ -3,6 +3,6 @@ var i, j : int
 begin
     i := -10;
     j := 2;
-    write i;
+    write i * j;
     write "\n";
 end

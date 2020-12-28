@@ -1,7 +1,7 @@
 program prime_checker
     var n, r, i : int;
     begin
-        read n;
+        n := 7 ;
         r := 0;
         i := 1;
         while i <= n do

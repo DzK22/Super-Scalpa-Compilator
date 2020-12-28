@@ -1,8 +1,8 @@
 program pgcd
     var a, b, c, d : int;
     begin
-        read a;
-        read b;
+        a := 15;
+        b := 6;
         c := a;
         d := b;
         while a <> b do
