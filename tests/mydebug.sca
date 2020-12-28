@@ -15,7 +15,7 @@ begin
     write "\n";
     i := 3;
     j := 3;
-    write tab[3,3];
+    write tab[i,j];
     write "\n";
     tab[3,3] := 45;
     write tab[3,3];
