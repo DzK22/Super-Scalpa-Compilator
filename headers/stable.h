@@ -3,10 +3,10 @@
 
 #include "util.h"
 #include "array.h"
-#include "arglist.h"
+#include "list.h"
 
-#define LEN       8192
-#define CAPACITY  500000
+#define LEN       512
+#define CAPACITY  8192
 
 //Hash Item KEY = symbol->id
 typedef struct symbol {
@@ -21,7 +21,7 @@ typedef struct symbol {
         int8_t  bval;   // boolean
         char    *sval;  // string
 
-        struct arglist *args; // only for array index calculation
+        struct list *args; // only for array index calculation
         struct fundata *fdata; // function data ( = struct fundata)
         struct s_array *arr;   // array
     };
@@ -58,7 +58,7 @@ symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
 symbol *newVarArray (symbol **, char *, struct s_array *, symbol *, bool);
 
-void stablePrint  (symbol *);
+void   stablePrint  (symbol *);
 
 /************************/
 /*                      */

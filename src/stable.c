@@ -1,5 +1,5 @@
 #include "../headers/stable.h"
-#include "../headers/arglist.h"
+#include "../headers/list.h"
 
 unsigned long getHash (char *key) {
     unsigned long hash = 5381;

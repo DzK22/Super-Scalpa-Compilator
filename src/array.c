@@ -1,7 +1,7 @@
 #include "../headers/array.h"
 
-// obtain a reverse list of arglist* or dimProp*
-rlist *rlistNew (arglist *al, dimProp *dp) {
+// obtain a reverse list of list* or dimProp*
+rlist *rlistNew (list *al, dimProp *dp) {
 	if (al && dp)
 		ferr(__LINE__ ,"array.c rlistNew - only one of al or dp should be set");
 
@@ -26,7 +26,7 @@ rlist *rlistNew (arglist *al, dimProp *dp) {
 	return rl;
 }
 
-dimProp *initDimProp   (int min, int max, dimProp *dp) {
+dimProp *initDimProp (int min, int max, dimProp *dp) {
 	dimProp *nDp = malloc(sizeof(dimProp));
 	if (nDp == NULL)
 		ferr(__LINE__, "array.c malloc error\n");
@@ -49,11 +49,11 @@ s_array *initArray (dimProp *rangelist, stype type) {
 	if (nArr == NULL)
 		ferr(__LINE__, "array.c malloc error");
 
-	nArr->dims = rangelist;
-	nArr->ndims = rangelist->dim;
-	nArr->type = type;
-	int size = 1;
+	nArr->dims   = rangelist;
+	nArr->ndims  = rangelist->dim;
+	nArr->type   = type;
 	dimProp *cur = rangelist;
+	int size     = 1;
 
 	while (cur != NULL) {
 		size *= (cur->max - cur->min + 1);
