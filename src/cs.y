@@ -431,6 +431,8 @@ instr: lvalue AFFEC_ expr {
 
             }
         | IF_ expr THEN_ instr m %prec IFX {
+                if ($2.ptr->type != S_BOOL)
+                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
                 qif->gfalse = $5.quad->res;
 
@@ -439,6 +441,8 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = qConcat($$.quad, $5.quad);
             }
         | IF_ expr THEN_ instr ELSE_ m instr m {
+                if ($2.ptr->type != S_BOOL)
+                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
                 quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
                 qif->gfalse = $6.quad->res;
                 quad *gnext = qGen(Q_GOTO, $8.quad->res, NULL, NULL);
@@ -451,6 +455,8 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = qConcat($$.quad, $8.quad);
             }
         | WHILE_ m expr DO_ instr m {
+                if ($3.ptr->type != S_BOOL)
+                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
                 quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
                 qif->gfalse = $6.quad->res;
                 quad *gnext = qGen(Q_GOTO, $2.quad->res, NULL, NULL);
@@ -512,14 +518,14 @@ exprlist : expr {
         ;
 
 expr :  expr PLUS_ expr {
-            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+            if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
               yferr("expr: expr PLUS expr - Type error");
 
             arithmeticExpression(Q_PLUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | expr MINUS_ expr {
-            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+            if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr MULT expr - Type error");
 
             arithmeticExpression(Q_MINUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
@@ -538,13 +544,14 @@ expr :  expr PLUS_ expr {
       }
 
        | expr MULT_ expr {
-           if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+           if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr MULT expr - Type error");
+
             arithmeticExpression(Q_MULT, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | expr DIV_ expr {
-            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+            if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr MULT expr - Type error");
             if ($3.ptr->ival == 0)
                 yferr("expr : expr MULT expr - Division by 0");
@@ -552,21 +559,21 @@ expr :  expr PLUS_ expr {
           }
 
       | expr MOD_ expr {
-          if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+          if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
               yferr("expr : expr MOD expr - Type error");
 
           arithmeticExpression(Q_MOD, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
 
       | expr EXP_ expr {
-          if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+          if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
               yferr("expr : expr MULT expr - Type error");
 
           arithmeticExpression(Q_EXP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
 
       | expr OR_ expr {
-            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
+            if ($1.ptr->type != S_BOOL || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr OR expr - Type error");
 
             symbol *ptr = newTmpBool(curtos(), false);
@@ -578,7 +585,7 @@ expr :  expr PLUS_ expr {
           }
 
       | expr AND_ expr {
-            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
+            if ($1.ptr->type != S_BOOL || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr AND expr - Type error");
             symbol *ptr = newTmpBool(curtos(), false);
             $$.ptr      = ptr;
@@ -589,7 +596,7 @@ expr :  expr PLUS_ expr {
           }
 
       | expr XOR_ expr {
-            if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_BOOL)
+            if ($1.ptr->type != S_BOOL || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr XOR expr - Type error");
 
             symbol *ptr = newTmpBool(curtos(), false);
@@ -601,38 +608,38 @@ expr :  expr PLUS_ expr {
           }
 
        | expr SUP_ expr {
-             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_SUP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
 
        | expr SUP_EQ_ expr {
-             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_SUPEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr INF_ expr {
-             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_INF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr INF_EQ_ expr {
-             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_INFEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr EQUAL_ expr {
-             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_EQUAL, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr DIFF_ expr {
-             if ($1.ptr->type != $3.ptr->type || $1.ptr->type != S_INT)
+             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
 
              booleanExpression(Q_DIFF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);

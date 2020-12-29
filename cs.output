@@ -1,0 +1,2280 @@
+Terminals unused in grammar
+
+    NEWLINE_
+    STRING_
+
+
+State 64 conflicts: 1 shift/reduce
+State 65 conflicts: 1 shift/reduce
+State 99 conflicts: 1 shift/reduce
+State 100 conflicts: 1 shift/reduce
+State 101 conflicts: 1 shift/reduce
+State 102 conflicts: 1 shift/reduce
+State 103 conflicts: 1 shift/reduce
+State 104 conflicts: 1 shift/reduce
+State 105 conflicts: 1 shift/reduce
+State 106 conflicts: 1 shift/reduce
+State 107 conflicts: 1 shift/reduce
+State 108 conflicts: 1 shift/reduce
+State 109 conflicts: 1 shift/reduce
+State 110 conflicts: 1 shift/reduce
+State 111 conflicts: 1 shift/reduce
+State 112 conflicts: 15 shift/reduce
+State 113 conflicts: 1 shift/reduce
+State 115 conflicts: 1 shift/reduce
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 program: PROGRAM_ IDENT_ vardecllist fundecllist instr
+
+    2 vardecllist: %empty
+    3            | varsdecl
+    4            | varsdecl DOTCOMMA_ vardecllist
+
+    5 varsdecl: VAR_ identlist DPOINT_ typename
+
+    6 identlist: IDENT_
+    7          | IDENT_ COMMA_ identlist
+
+    8 typename: atomictype
+    9         | arraytype
+
+   10 atomictype: UNIT_
+   11           | BOOL_
+   12           | INT_
+
+   13 arraytype: ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype
+
+   14 rangelist: CTE_ TWO_POINTS_ CTE_
+   15          | CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist
+
+   16 fundecllist: %empty
+   17            | fundecl DOTCOMMA_ fundecllist
+
+   18 $@1: %empty
+
+   19 $@2: %empty
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ atomictype vardecllist $@2 instr
+
+   21 parlist: %empty
+   22        | par
+   23        | par COMMA_ parlist
+
+   24 par: IDENT_ DPOINT_ typename
+   25    | REF_ IDENT_ DPOINT_ typename
+
+   26 instr: lvalue AFFEC_ expr
+   27      | RETURN_ expr
+   28      | RETURN_
+   29      | IDENT_ PARLEFT_ exprlist PARRIGHT_
+   30      | IDENT_ PARLEFT_ PARRIGHT_
+   31      | BEGIN_ sequence END_
+   32      | BEGIN_ END_
+   33      | READ_ lvalue
+   34      | WRITE_ expr
+   35      | IF_ expr THEN_ instr m
+   36      | IF_ expr THEN_ instr ELSE_ m instr m
+   37      | WHILE_ m expr DO_ instr m
+
+   38 sequence: instr DOTCOMMA_ sequence
+   39         | instr DOTCOMMA_
+   40         | instr
+
+   41 lvalue: IDENT_
+   42       | IDENT_ BRALEFT_ exprlist BRARIGHT_
+
+   43 exprlist: expr
+   44         | expr COMMA_ exprlist
+
+   45 expr: expr PLUS_ expr
+   46     | expr MINUS_ expr
+   47     | MINUS_ expr
+   48     | expr MULT_ expr
+   49     | expr DIV_ expr
+   50     | expr MOD_ expr
+   51     | expr EXP_ expr
+   52     | expr OR_ expr
+   53     | expr AND_ expr
+   54     | expr XOR_ expr
+   55     | expr SUP_ expr
+   56     | expr SUP_EQ_ expr
+   57     | expr INF_ expr
+   58     | expr INF_EQ_ expr
+   59     | expr EQUAL_ expr
+   60     | expr DIFF_ expr
+   61     | NOT_ expr
+   62     | IDENT_ PARLEFT_ exprlist PARRIGHT_
+   63     | IDENT_ PARLEFT_ PARRIGHT_
+   64     | IDENT_ BRALEFT_ exprlist BRARIGHT_
+   65     | IDENT_
+   66     | CTE_
+   67     | PARLEFT_ expr PARRIGHT_
+
+   68 m: %empty
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    error (256)
+    PROGRAM_ (258) 1
+    IDENT_ <sval> (259) 1 6 7 20 24 25 29 30 41 42 62 63 64 65
+    NEWLINE_ (260)
+    END_ (261) 31 32
+    TWO_POINTS_ (262) 14 15
+    ARRAY_ (263) 13
+    OF_ (264) 13
+    WRITE_ (265) 34
+    BEGIN_ (266) 31 32
+    READ_ (267) 33
+    AFFEC_ (268) 26
+    INT_ (269) 12
+    BOOL_ (270) 11
+    STRING_ (271)
+    UNIT_ (272) 10
+    VAR_ (273) 5
+    RETURN_ (274) 27 28
+    REF_ (275) 25
+    IF_ (276) 35 36
+    THEN_ (277) 35 36
+    ELSE_ (278) 36
+    WHILE_ (279) 37
+    DO_ (280) 37
+    DOTCOMMA_ (281) 4 17 38 39
+    COMMA_ (282) 7 15 23 44
+    CTE_ <cte> (283) 14 15 66
+    PARLEFT_ (284) 20 29 30 62 63 67
+    PARRIGHT_ (285) 20 29 30 62 63 67
+    BRALEFT_ (286) 13 42 64
+    BRARIGHT_ (287) 13 42 64
+    DPOINT_ (288) 5 20 24 25
+    FUNCTION_ (289) 20
+    MULT_ (290) 48
+    DIV_ (291) 49
+    PLUS_ (292) 45
+    MINUS_ (293) 46 47
+    EXP_ (294) 51
+    INF_ (295) 57
+    INF_EQ_ (296) 58
+    SUP_ (297) 55
+    SUP_EQ_ (298) 56
+    EQUAL_ (299) 59
+    DIFF_ (300) 60
+    AND_ (301) 53
+    OR_ (302) 52
+    XOR_ (303) 54
+    NOT_ (304) 61
+    MOD_ (305) 50
+    NEG_ (306)
+    IFX (307)
+
+
+Nonterminals, with rules where they appear
+
+    $accept (53)
+        on left: 0
+    program <gencode> (54)
+        on left: 1
+        on right: 0
+    vardecllist (55)
+        on left: 2 3 4
+        on right: 1 4 20
+    varsdecl <argl> (56)
+        on left: 5
+        on right: 3 4
+    identlist <argl> (57)
+        on left: 6 7
+        on right: 5 7
+    typename <ctype> (58)
+        on left: 8 9
+        on right: 5 24 25
+    atomictype <type> (59)
+        on left: 10 11 12
+        on right: 8 13 20
+    arraytype <sarray> (60)
+        on left: 13
+        on right: 9
+    rangelist <dimprop> (61)
+        on left: 14 15
+        on right: 13 15
+    fundecllist <gencode> (62)
+        on left: 16 17
+        on right: 1 17
+    fundecl <gencode> (63)
+        on left: 20
+        on right: 17
+    $@1 (64)
+        on left: 18
+        on right: 20
+    $@2 (65)
+        on left: 19
+        on right: 20
+    parlist <argl> (66)
+        on left: 21 22 23
+        on right: 20 23
+    par <argl> (67)
+        on left: 24 25
+        on right: 22 23
+    instr <gencode> (68)
+        on left: 26 27 28 29 30 31 32 33 34 35 36 37
+        on right: 1 20 35 36 37 38 39 40
+    sequence <gencode> (69)
+        on left: 38 39 40
+        on right: 31 38
+    lvalue <gencode> (70)
+        on left: 41 42
+        on right: 26 33
+    exprlist <exprl> (71)
+        on left: 43 44
+        on right: 29 42 44 62 64
+    expr <gencode> (72)
+        on left: 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67
+        on right: 26 27 34 35 36 37 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 67
+    m <gencode> (73)
+        on left: 68
+        on right: 35 36 37
+
+
+State 0
+
+    0 $accept: . program $end
+
+    PROGRAM_  shift, and go to state 1
+
+    program  go to state 2
+
+
+State 1
+
+    1 program: PROGRAM_ . IDENT_ vardecllist fundecllist instr
+
+    IDENT_  shift, and go to state 3
+
+
+State 2
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 4
+
+
+State 3
+
+    1 program: PROGRAM_ IDENT_ . vardecllist fundecllist instr
+
+    VAR_  shift, and go to state 5
+
+    $default  reduce using rule 2 (vardecllist)
+
+    vardecllist  go to state 6
+    varsdecl     go to state 7
+
+
+State 4
+
+    0 $accept: program $end .
+
+    $default  accept
+
+
+State 5
+
+    5 varsdecl: VAR_ . identlist DPOINT_ typename
+
+    IDENT_  shift, and go to state 8
+
+    identlist  go to state 9
+
+
+State 6
+
+    1 program: PROGRAM_ IDENT_ vardecllist . fundecllist instr
+
+    FUNCTION_  shift, and go to state 10
+
+    $default  reduce using rule 16 (fundecllist)
+
+    fundecllist  go to state 11
+    fundecl      go to state 12
+
+
+State 7
+
+    3 vardecllist: varsdecl .
+    4            | varsdecl . DOTCOMMA_ vardecllist
+
+    DOTCOMMA_  shift, and go to state 13
+
+    $default  reduce using rule 3 (vardecllist)
+
+
+State 8
+
+    6 identlist: IDENT_ .
+    7          | IDENT_ . COMMA_ identlist
+
+    COMMA_  shift, and go to state 14
+
+    $default  reduce using rule 6 (identlist)
+
+
+State 9
+
+    5 varsdecl: VAR_ identlist . DPOINT_ typename
+
+    DPOINT_  shift, and go to state 15
+
+
+State 10
+
+   20 fundecl: FUNCTION_ . IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ atomictype vardecllist $@2 instr
+
+    IDENT_  shift, and go to state 16
+
+
+State 11
+
+    1 program: PROGRAM_ IDENT_ vardecllist fundecllist . instr
+
+    IDENT_   shift, and go to state 17
+    WRITE_   shift, and go to state 18
+    BEGIN_   shift, and go to state 19
+    READ_    shift, and go to state 20
+    RETURN_  shift, and go to state 21
+    IF_      shift, and go to state 22
+    WHILE_   shift, and go to state 23
+
+    instr   go to state 24
+    lvalue  go to state 25
+
+
+State 12
+
+   17 fundecllist: fundecl . DOTCOMMA_ fundecllist
+
+    DOTCOMMA_  shift, and go to state 26
+
+
+State 13
+
+    4 vardecllist: varsdecl DOTCOMMA_ . vardecllist
+
+    VAR_  shift, and go to state 5
+
+    $default  reduce using rule 2 (vardecllist)
+
+    vardecllist  go to state 27
+    varsdecl     go to state 7
+
+
+State 14
+
+    7 identlist: IDENT_ COMMA_ . identlist
+
+    IDENT_  shift, and go to state 8
+
+    identlist  go to state 28
+
+
+State 15
+
+    5 varsdecl: VAR_ identlist DPOINT_ . typename
+
+    ARRAY_  shift, and go to state 29
+    INT_    shift, and go to state 30
+    BOOL_   shift, and go to state 31
+    UNIT_   shift, and go to state 32
+
+    typename    go to state 33
+    atomictype  go to state 34
+    arraytype   go to state 35
+
+
+State 16
+
+   20 fundecl: FUNCTION_ IDENT_ . PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ atomictype vardecllist $@2 instr
+
+    PARLEFT_  shift, and go to state 36
+
+
+State 17
+
+   29 instr: IDENT_ . PARLEFT_ exprlist PARRIGHT_
+   30      | IDENT_ . PARLEFT_ PARRIGHT_
+   41 lvalue: IDENT_ .
+   42       | IDENT_ . BRALEFT_ exprlist BRARIGHT_
+
+    PARLEFT_  shift, and go to state 37
+    BRALEFT_  shift, and go to state 38
+
+    $default  reduce using rule 41 (lvalue)
+
+
+State 18
+
+   34 instr: WRITE_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 44
+
+
+State 19
+
+   31 instr: BEGIN_ . sequence END_
+   32      | BEGIN_ . END_
+
+    IDENT_   shift, and go to state 17
+    END_     shift, and go to state 45
+    WRITE_   shift, and go to state 18
+    BEGIN_   shift, and go to state 19
+    READ_    shift, and go to state 20
+    RETURN_  shift, and go to state 21
+    IF_      shift, and go to state 22
+    WHILE_   shift, and go to state 23
+
+    instr     go to state 46
+    sequence  go to state 47
+    lvalue    go to state 25
+
+
+State 20
+
+   33 instr: READ_ . lvalue
+
+    IDENT_  shift, and go to state 48
+
+    lvalue  go to state 49
+
+
+State 21
+
+   27 instr: RETURN_ . expr
+   28      | RETURN_ .
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    $default  reduce using rule 28 (instr)
+
+    expr  go to state 50
+
+
+State 22
+
+   35 instr: IF_ . expr THEN_ instr m
+   36      | IF_ . expr THEN_ instr ELSE_ m instr m
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 51
+
+
+State 23
+
+   37 instr: WHILE_ . m expr DO_ instr m
+
+    $default  reduce using rule 68 (m)
+
+    m  go to state 52
+
+
+State 24
+
+    1 program: PROGRAM_ IDENT_ vardecllist fundecllist instr .
+
+    $default  reduce using rule 1 (program)
+
+
+State 25
+
+   26 instr: lvalue . AFFEC_ expr
+
+    AFFEC_  shift, and go to state 53
+
+
+State 26
+
+   17 fundecllist: fundecl DOTCOMMA_ . fundecllist
+
+    FUNCTION_  shift, and go to state 10
+
+    $default  reduce using rule 16 (fundecllist)
+
+    fundecllist  go to state 54
+    fundecl      go to state 12
+
+
+State 27
+
+    4 vardecllist: varsdecl DOTCOMMA_ vardecllist .
+
+    $default  reduce using rule 4 (vardecllist)
+
+
+State 28
+
+    7 identlist: IDENT_ COMMA_ identlist .
+
+    $default  reduce using rule 7 (identlist)
+
+
+State 29
+
+   13 arraytype: ARRAY_ . BRALEFT_ rangelist BRARIGHT_ OF_ atomictype
+
+    BRALEFT_  shift, and go to state 55
+
+
+State 30
+
+   12 atomictype: INT_ .
+
+    $default  reduce using rule 12 (atomictype)
+
+
+State 31
+
+   11 atomictype: BOOL_ .
+
+    $default  reduce using rule 11 (atomictype)
+
+
+State 32
+
+   10 atomictype: UNIT_ .
+
+    $default  reduce using rule 10 (atomictype)
+
+
+State 33
+
+    5 varsdecl: VAR_ identlist DPOINT_ typename .
+
+    $default  reduce using rule 5 (varsdecl)
+
+
+State 34
+
+    8 typename: atomictype .
+
+    $default  reduce using rule 8 (typename)
+
+
+State 35
+
+    9 typename: arraytype .
+
+    $default  reduce using rule 9 (typename)
+
+
+State 36
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ . $@1 parlist PARRIGHT_ DPOINT_ atomictype vardecllist $@2 instr
+
+    $default  reduce using rule 18 ($@1)
+
+    $@1  go to state 56
+
+
+State 37
+
+   29 instr: IDENT_ PARLEFT_ . exprlist PARRIGHT_
+   30      | IDENT_ PARLEFT_ . PARRIGHT_
+
+    IDENT_     shift, and go to state 39
+    CTE_       shift, and go to state 40
+    PARLEFT_   shift, and go to state 41
+    PARRIGHT_  shift, and go to state 57
+    MINUS_     shift, and go to state 42
+    NOT_       shift, and go to state 43
+
+    exprlist  go to state 58
+    expr      go to state 59
+
+
+State 38
+
+   42 lvalue: IDENT_ BRALEFT_ . exprlist BRARIGHT_
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    exprlist  go to state 60
+    expr      go to state 59
+
+
+State 39
+
+   62 expr: IDENT_ . PARLEFT_ exprlist PARRIGHT_
+   63     | IDENT_ . PARLEFT_ PARRIGHT_
+   64     | IDENT_ . BRALEFT_ exprlist BRARIGHT_
+   65     | IDENT_ .
+
+    PARLEFT_  shift, and go to state 61
+    BRALEFT_  shift, and go to state 62
+
+    $default  reduce using rule 65 (expr)
+
+
+State 40
+
+   66 expr: CTE_ .
+
+    $default  reduce using rule 66 (expr)
+
+
+State 41
+
+   67 expr: PARLEFT_ . expr PARRIGHT_
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 63
+
+
+State 42
+
+   47 expr: MINUS_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 64
+
+
+State 43
+
+   61 expr: NOT_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 65
+
+
+State 44
+
+   34 instr: WRITE_ expr .
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    OR_      shift, and go to state 78
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    $default  reduce using rule 34 (instr)
+
+
+State 45
+
+   32 instr: BEGIN_ END_ .
+
+    $default  reduce using rule 32 (instr)
+
+
+State 46
+
+   38 sequence: instr . DOTCOMMA_ sequence
+   39         | instr . DOTCOMMA_
+   40         | instr .
+
+    DOTCOMMA_  shift, and go to state 81
+
+    $default  reduce using rule 40 (sequence)
+
+
+State 47
+
+   31 instr: BEGIN_ sequence . END_
+
+    END_  shift, and go to state 82
+
+
+State 48
+
+   41 lvalue: IDENT_ .
+   42       | IDENT_ . BRALEFT_ exprlist BRARIGHT_
+
+    BRALEFT_  shift, and go to state 38
+
+    $default  reduce using rule 41 (lvalue)
+
+
+State 49
+
+   33 instr: READ_ lvalue .
+
+    $default  reduce using rule 33 (instr)
+
+
+State 50
+
+   27 instr: RETURN_ expr .
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    OR_      shift, and go to state 78
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    $default  reduce using rule 27 (instr)
+
+
+State 51
+
+   35 instr: IF_ expr . THEN_ instr m
+   36      | IF_ expr . THEN_ instr ELSE_ m instr m
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    THEN_    shift, and go to state 83
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    OR_      shift, and go to state 78
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+
+State 52
+
+   37 instr: WHILE_ m . expr DO_ instr m
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 84
+
+
+State 53
+
+   26 instr: lvalue AFFEC_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 85
+
+
+State 54
+
+   17 fundecllist: fundecl DOTCOMMA_ fundecllist .
+
+    $default  reduce using rule 17 (fundecllist)
+
+
+State 55
+
+   13 arraytype: ARRAY_ BRALEFT_ . rangelist BRARIGHT_ OF_ atomictype
+
+    CTE_  shift, and go to state 86
+
+    rangelist  go to state 87
+
+
+State 56
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 . parlist PARRIGHT_ DPOINT_ atomictype vardecllist $@2 instr
+
+    IDENT_  shift, and go to state 88
+    REF_    shift, and go to state 89
+
+    $default  reduce using rule 21 (parlist)
+
+    parlist  go to state 90
+    par      go to state 91
+
+
+State 57
+
+   30 instr: IDENT_ PARLEFT_ PARRIGHT_ .
+
+    $default  reduce using rule 30 (instr)
+
+
+State 58
+
+   29 instr: IDENT_ PARLEFT_ exprlist . PARRIGHT_
+
+    PARRIGHT_  shift, and go to state 92
+
+
+State 59
+
+   43 exprlist: expr .
+   44         | expr . COMMA_ exprlist
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    COMMA_   shift, and go to state 93
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    OR_      shift, and go to state 78
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    $default  reduce using rule 43 (exprlist)
+
+
+State 60
+
+   42 lvalue: IDENT_ BRALEFT_ exprlist . BRARIGHT_
+
+    BRARIGHT_  shift, and go to state 94
+
+
+State 61
+
+   62 expr: IDENT_ PARLEFT_ . exprlist PARRIGHT_
+   63     | IDENT_ PARLEFT_ . PARRIGHT_
+
+    IDENT_     shift, and go to state 39
+    CTE_       shift, and go to state 40
+    PARLEFT_   shift, and go to state 41
+    PARRIGHT_  shift, and go to state 95
+    MINUS_     shift, and go to state 42
+    NOT_       shift, and go to state 43
+
+    exprlist  go to state 96
+    expr      go to state 59
+
+
+State 62
+
+   64 expr: IDENT_ BRALEFT_ . exprlist BRARIGHT_
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    exprlist  go to state 97
+    expr      go to state 59
+
+
+State 63
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+   67     | PARLEFT_ expr . PARRIGHT_
+
+    PARRIGHT_  shift, and go to state 98
+    MULT_      shift, and go to state 66
+    DIV_       shift, and go to state 67
+    PLUS_      shift, and go to state 68
+    MINUS_     shift, and go to state 69
+    EXP_       shift, and go to state 70
+    INF_       shift, and go to state 71
+    INF_EQ_    shift, and go to state 72
+    SUP_       shift, and go to state 73
+    SUP_EQ_    shift, and go to state 74
+    EQUAL_     shift, and go to state 75
+    DIFF_      shift, and go to state 76
+    AND_       shift, and go to state 77
+    OR_        shift, and go to state 78
+    XOR_       shift, and go to state 79
+    MOD_       shift, and go to state 80
+
+
+State 64
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   47     | MINUS_ expr .
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    EXP_  shift, and go to state 70
+    XOR_  shift, and go to state 79
+
+    XOR_      [reduce using rule 47 (expr)]
+    $default  reduce using rule 47 (expr)
+
+
+State 65
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+   61     | NOT_ expr .
+
+    EXP_  shift, and go to state 70
+    XOR_  shift, and go to state 79
+
+    XOR_      [reduce using rule 61 (expr)]
+    $default  reduce using rule 61 (expr)
+
+
+State 66
+
+   48 expr: expr MULT_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 99
+
+
+State 67
+
+   49 expr: expr DIV_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 100
+
+
+State 68
+
+   45 expr: expr PLUS_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 101
+
+
+State 69
+
+   46 expr: expr MINUS_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 102
+
+
+State 70
+
+   51 expr: expr EXP_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 103
+
+
+State 71
+
+   57 expr: expr INF_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 104
+
+
+State 72
+
+   58 expr: expr INF_EQ_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 105
+
+
+State 73
+
+   55 expr: expr SUP_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 106
+
+
+State 74
+
+   56 expr: expr SUP_EQ_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 107
+
+
+State 75
+
+   59 expr: expr EQUAL_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 108
+
+
+State 76
+
+   60 expr: expr DIFF_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 109
+
+
+State 77
+
+   53 expr: expr AND_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 110
+
+
+State 78
+
+   52 expr: expr OR_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 111
+
+
+State 79
+
+   54 expr: expr XOR_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 112
+
+
+State 80
+
+   50 expr: expr MOD_ . expr
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    expr  go to state 113
+
+
+State 81
+
+   38 sequence: instr DOTCOMMA_ . sequence
+   39         | instr DOTCOMMA_ .
+
+    IDENT_   shift, and go to state 17
+    WRITE_   shift, and go to state 18
+    BEGIN_   shift, and go to state 19
+    READ_    shift, and go to state 20
+    RETURN_  shift, and go to state 21
+    IF_      shift, and go to state 22
+    WHILE_   shift, and go to state 23
+
+    $default  reduce using rule 39 (sequence)
+
+    instr     go to state 46
+    sequence  go to state 114
+    lvalue    go to state 25
+
+
+State 82
+
+   31 instr: BEGIN_ sequence END_ .
+
+    $default  reduce using rule 31 (instr)
+
+
+State 83
+
+   35 instr: IF_ expr THEN_ . instr m
+   36      | IF_ expr THEN_ . instr ELSE_ m instr m
+
+    IDENT_   shift, and go to state 17
+    WRITE_   shift, and go to state 18
+    BEGIN_   shift, and go to state 19
+    READ_    shift, and go to state 20
+    RETURN_  shift, and go to state 21
+    IF_      shift, and go to state 22
+    WHILE_   shift, and go to state 23
+
+    instr   go to state 115
+    lvalue  go to state 25
+
+
+State 84
+
+   37 instr: WHILE_ m expr . DO_ instr m
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    DO_      shift, and go to state 116
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    OR_      shift, and go to state 78
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+
+State 85
+
+   26 instr: lvalue AFFEC_ expr .
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    OR_      shift, and go to state 78
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    $default  reduce using rule 26 (instr)
+
+
+State 86
+
+   14 rangelist: CTE_ . TWO_POINTS_ CTE_
+   15          | CTE_ . TWO_POINTS_ CTE_ COMMA_ rangelist
+
+    TWO_POINTS_  shift, and go to state 117
+
+
+State 87
+
+   13 arraytype: ARRAY_ BRALEFT_ rangelist . BRARIGHT_ OF_ atomictype
+
+    BRARIGHT_  shift, and go to state 118
+
+
+State 88
+
+   24 par: IDENT_ . DPOINT_ typename
+
+    DPOINT_  shift, and go to state 119
+
+
+State 89
+
+   25 par: REF_ . IDENT_ DPOINT_ typename
+
+    IDENT_  shift, and go to state 120
+
+
+State 90
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist . PARRIGHT_ DPOINT_ atomictype vardecllist $@2 instr
+
+    PARRIGHT_  shift, and go to state 121
+
+
+State 91
+
+   22 parlist: par .
+   23        | par . COMMA_ parlist
+
+    COMMA_  shift, and go to state 122
+
+    $default  reduce using rule 22 (parlist)
+
+
+State 92
+
+   29 instr: IDENT_ PARLEFT_ exprlist PARRIGHT_ .
+
+    $default  reduce using rule 29 (instr)
+
+
+State 93
+
+   44 exprlist: expr COMMA_ . exprlist
+
+    IDENT_    shift, and go to state 39
+    CTE_      shift, and go to state 40
+    PARLEFT_  shift, and go to state 41
+    MINUS_    shift, and go to state 42
+    NOT_      shift, and go to state 43
+
+    exprlist  go to state 123
+    expr      go to state 59
+
+
+State 94
+
+   42 lvalue: IDENT_ BRALEFT_ exprlist BRARIGHT_ .
+
+    $default  reduce using rule 42 (lvalue)
+
+
+State 95
+
+   63 expr: IDENT_ PARLEFT_ PARRIGHT_ .
+
+    $default  reduce using rule 63 (expr)
+
+
+State 96
+
+   62 expr: IDENT_ PARLEFT_ exprlist . PARRIGHT_
+
+    PARRIGHT_  shift, and go to state 124
+
+
+State 97
+
+   64 expr: IDENT_ BRALEFT_ exprlist . BRARIGHT_
+
+    BRARIGHT_  shift, and go to state 125
+
+
+State 98
+
+   67 expr: PARLEFT_ expr PARRIGHT_ .
+
+    $default  reduce using rule 67 (expr)
+
+
+State 99
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   48     | expr MULT_ expr .
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    EXP_  shift, and go to state 70
+    XOR_  shift, and go to state 79
+
+    XOR_      [reduce using rule 48 (expr)]
+    $default  reduce using rule 48 (expr)
+
+
+State 100
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   49     | expr DIV_ expr .
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    EXP_  shift, and go to state 70
+    XOR_  shift, and go to state 79
+
+    XOR_      [reduce using rule 49 (expr)]
+    $default  reduce using rule 49 (expr)
+
+
+State 101
+
+   45 expr: expr . PLUS_ expr
+   45     | expr PLUS_ expr .
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_  shift, and go to state 66
+    DIV_   shift, and go to state 67
+    EXP_   shift, and go to state 70
+    XOR_   shift, and go to state 79
+    MOD_   shift, and go to state 80
+
+    XOR_      [reduce using rule 45 (expr)]
+    $default  reduce using rule 45 (expr)
+
+
+State 102
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   46     | expr MINUS_ expr .
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_  shift, and go to state 66
+    DIV_   shift, and go to state 67
+    EXP_   shift, and go to state 70
+    XOR_   shift, and go to state 79
+    MOD_   shift, and go to state 80
+
+    XOR_      [reduce using rule 46 (expr)]
+    $default  reduce using rule 46 (expr)
+
+
+State 103
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   51     | expr EXP_ expr .
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    EXP_  shift, and go to state 70
+    XOR_  shift, and go to state 79
+
+    XOR_      [reduce using rule 51 (expr)]
+    $default  reduce using rule 51 (expr)
+
+
+State 104
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   57     | expr INF_ expr .
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_   shift, and go to state 66
+    DIV_    shift, and go to state 67
+    PLUS_   shift, and go to state 68
+    MINUS_  shift, and go to state 69
+    EXP_    shift, and go to state 70
+    XOR_    shift, and go to state 79
+    MOD_    shift, and go to state 80
+
+    XOR_      [reduce using rule 57 (expr)]
+    $default  reduce using rule 57 (expr)
+
+
+State 105
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   58     | expr INF_EQ_ expr .
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_   shift, and go to state 66
+    DIV_    shift, and go to state 67
+    PLUS_   shift, and go to state 68
+    MINUS_  shift, and go to state 69
+    EXP_    shift, and go to state 70
+    XOR_    shift, and go to state 79
+    MOD_    shift, and go to state 80
+
+    XOR_      [reduce using rule 58 (expr)]
+    $default  reduce using rule 58 (expr)
+
+
+State 106
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   55     | expr SUP_ expr .
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_   shift, and go to state 66
+    DIV_    shift, and go to state 67
+    PLUS_   shift, and go to state 68
+    MINUS_  shift, and go to state 69
+    EXP_    shift, and go to state 70
+    XOR_    shift, and go to state 79
+    MOD_    shift, and go to state 80
+
+    XOR_      [reduce using rule 55 (expr)]
+    $default  reduce using rule 55 (expr)
+
+
+State 107
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   56     | expr SUP_EQ_ expr .
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_   shift, and go to state 66
+    DIV_    shift, and go to state 67
+    PLUS_   shift, and go to state 68
+    MINUS_  shift, and go to state 69
+    EXP_    shift, and go to state 70
+    XOR_    shift, and go to state 79
+    MOD_    shift, and go to state 80
+
+    XOR_      [reduce using rule 56 (expr)]
+    $default  reduce using rule 56 (expr)
+
+
+State 108
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   59     | expr EQUAL_ expr .
+   60     | expr . DIFF_ expr
+
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    DIFF_    shift, and go to state 76
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    XOR_      [reduce using rule 59 (expr)]
+    $default  reduce using rule 59 (expr)
+
+
+State 109
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+   60     | expr DIFF_ expr .
+
+    MULT_   shift, and go to state 66
+    DIV_    shift, and go to state 67
+    PLUS_   shift, and go to state 68
+    MINUS_  shift, and go to state 69
+    EXP_    shift, and go to state 70
+    XOR_    shift, and go to state 79
+    MOD_    shift, and go to state 80
+
+    XOR_      [reduce using rule 60 (expr)]
+    $default  reduce using rule 60 (expr)
+
+
+State 110
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   53     | expr AND_ expr .
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    XOR_      [reduce using rule 53 (expr)]
+    $default  reduce using rule 53 (expr)
+
+
+State 111
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   52     | expr OR_ expr .
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    XOR_      [reduce using rule 52 (expr)]
+    $default  reduce using rule 52 (expr)
+
+
+State 112
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   54     | expr XOR_ expr .
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    MULT_    shift, and go to state 66
+    DIV_     shift, and go to state 67
+    PLUS_    shift, and go to state 68
+    MINUS_   shift, and go to state 69
+    EXP_     shift, and go to state 70
+    INF_     shift, and go to state 71
+    INF_EQ_  shift, and go to state 72
+    SUP_     shift, and go to state 73
+    SUP_EQ_  shift, and go to state 74
+    EQUAL_   shift, and go to state 75
+    DIFF_    shift, and go to state 76
+    AND_     shift, and go to state 77
+    OR_      shift, and go to state 78
+    XOR_     shift, and go to state 79
+    MOD_     shift, and go to state 80
+
+    MULT_     [reduce using rule 54 (expr)]
+    DIV_      [reduce using rule 54 (expr)]
+    PLUS_     [reduce using rule 54 (expr)]
+    MINUS_    [reduce using rule 54 (expr)]
+    EXP_      [reduce using rule 54 (expr)]
+    INF_      [reduce using rule 54 (expr)]
+    INF_EQ_   [reduce using rule 54 (expr)]
+    SUP_      [reduce using rule 54 (expr)]
+    SUP_EQ_   [reduce using rule 54 (expr)]
+    EQUAL_    [reduce using rule 54 (expr)]
+    DIFF_     [reduce using rule 54 (expr)]
+    AND_      [reduce using rule 54 (expr)]
+    OR_       [reduce using rule 54 (expr)]
+    XOR_      [reduce using rule 54 (expr)]
+    MOD_      [reduce using rule 54 (expr)]
+    $default  reduce using rule 54 (expr)
+
+
+State 113
+
+   45 expr: expr . PLUS_ expr
+   46     | expr . MINUS_ expr
+   48     | expr . MULT_ expr
+   49     | expr . DIV_ expr
+   50     | expr . MOD_ expr
+   50     | expr MOD_ expr .
+   51     | expr . EXP_ expr
+   52     | expr . OR_ expr
+   53     | expr . AND_ expr
+   54     | expr . XOR_ expr
+   55     | expr . SUP_ expr
+   56     | expr . SUP_EQ_ expr
+   57     | expr . INF_ expr
+   58     | expr . INF_EQ_ expr
+   59     | expr . EQUAL_ expr
+   60     | expr . DIFF_ expr
+
+    EXP_  shift, and go to state 70
+    XOR_  shift, and go to state 79
+
+    XOR_      [reduce using rule 50 (expr)]
+    $default  reduce using rule 50 (expr)
+
+
+State 114
+
+   38 sequence: instr DOTCOMMA_ sequence .
+
+    $default  reduce using rule 38 (sequence)
+
+
+State 115
+
+   35 instr: IF_ expr THEN_ instr . m
+   36      | IF_ expr THEN_ instr . ELSE_ m instr m
+
+    ELSE_  shift, and go to state 126
+
+    ELSE_     [reduce using rule 68 (m)]
+    $default  reduce using rule 68 (m)
+
+    m  go to state 127
+
+
+State 116
+
+   37 instr: WHILE_ m expr DO_ . instr m
+
+    IDENT_   shift, and go to state 17
+    WRITE_   shift, and go to state 18
+    BEGIN_   shift, and go to state 19
+    READ_    shift, and go to state 20
+    RETURN_  shift, and go to state 21
+    IF_      shift, and go to state 22
+    WHILE_   shift, and go to state 23
+
+    instr   go to state 128
+    lvalue  go to state 25
+
+
+State 117
+
+   14 rangelist: CTE_ TWO_POINTS_ . CTE_
+   15          | CTE_ TWO_POINTS_ . CTE_ COMMA_ rangelist
+
+    CTE_  shift, and go to state 129
+
+
+State 118
+
+   13 arraytype: ARRAY_ BRALEFT_ rangelist BRARIGHT_ . OF_ atomictype
+
+    OF_  shift, and go to state 130
+
+
+State 119
+
+   24 par: IDENT_ DPOINT_ . typename
+
+    ARRAY_  shift, and go to state 29
+    INT_    shift, and go to state 30
+    BOOL_   shift, and go to state 31
+    UNIT_   shift, and go to state 32
+
+    typename    go to state 131
+    atomictype  go to state 34
+    arraytype   go to state 35
+
+
+State 120
+
+   25 par: REF_ IDENT_ . DPOINT_ typename
+
+    DPOINT_  shift, and go to state 132
+
+
+State 121
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ . DPOINT_ atomictype vardecllist $@2 instr
+
+    DPOINT_  shift, and go to state 133
+
+
+State 122
+
+   23 parlist: par COMMA_ . parlist
+
+    IDENT_  shift, and go to state 88
+    REF_    shift, and go to state 89
+
+    $default  reduce using rule 21 (parlist)
+
+    parlist  go to state 134
+    par      go to state 91
+
+
+State 123
+
+   44 exprlist: expr COMMA_ exprlist .
+
+    $default  reduce using rule 44 (exprlist)
+
+
+State 124
+
+   62 expr: IDENT_ PARLEFT_ exprlist PARRIGHT_ .
+
+    $default  reduce using rule 62 (expr)
+
+
+State 125
+
+   64 expr: IDENT_ BRALEFT_ exprlist BRARIGHT_ .
+
+    $default  reduce using rule 64 (expr)
+
+
+State 126
+
+   36 instr: IF_ expr THEN_ instr ELSE_ . m instr m
+
+    $default  reduce using rule 68 (m)
+
+    m  go to state 135
+
+
+State 127
+
+   35 instr: IF_ expr THEN_ instr m .
+
+    $default  reduce using rule 35 (instr)
+
+
+State 128
+
+   37 instr: WHILE_ m expr DO_ instr . m
+
+    $default  reduce using rule 68 (m)
+
+    m  go to state 136
+
+
+State 129
+
+   14 rangelist: CTE_ TWO_POINTS_ CTE_ .
+   15          | CTE_ TWO_POINTS_ CTE_ . COMMA_ rangelist
+
+    COMMA_  shift, and go to state 137
+
+    $default  reduce using rule 14 (rangelist)
+
+
+State 130
+
+   13 arraytype: ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ . atomictype
+
+    INT_   shift, and go to state 30
+    BOOL_  shift, and go to state 31
+    UNIT_  shift, and go to state 32
+
+    atomictype  go to state 138
+
+
+State 131
+
+   24 par: IDENT_ DPOINT_ typename .
+
+    $default  reduce using rule 24 (par)
+
+
+State 132
+
+   25 par: REF_ IDENT_ DPOINT_ . typename
+
+    ARRAY_  shift, and go to state 29
+    INT_    shift, and go to state 30
+    BOOL_   shift, and go to state 31
+    UNIT_   shift, and go to state 32
+
+    typename    go to state 139
+    atomictype  go to state 34
+    arraytype   go to state 35
+
+
+State 133
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ . atomictype vardecllist $@2 instr
+
+    INT_   shift, and go to state 30
+    BOOL_  shift, and go to state 31
+    UNIT_  shift, and go to state 32
+
+    atomictype  go to state 140
+
+
+State 134
+
+   23 parlist: par COMMA_ parlist .
+
+    $default  reduce using rule 23 (parlist)
+
+
+State 135
+
+   36 instr: IF_ expr THEN_ instr ELSE_ m . instr m
+
+    IDENT_   shift, and go to state 17
+    WRITE_   shift, and go to state 18
+    BEGIN_   shift, and go to state 19
+    READ_    shift, and go to state 20
+    RETURN_  shift, and go to state 21
+    IF_      shift, and go to state 22
+    WHILE_   shift, and go to state 23
+
+    instr   go to state 141
+    lvalue  go to state 25
+
+
+State 136
+
+   37 instr: WHILE_ m expr DO_ instr m .
+
+    $default  reduce using rule 37 (instr)
+
+
+State 137
+
+   15 rangelist: CTE_ TWO_POINTS_ CTE_ COMMA_ . rangelist
+
+    CTE_  shift, and go to state 86
+
+    rangelist  go to state 142
+
+
+State 138
+
+   13 arraytype: ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype .
+
+    $default  reduce using rule 13 (arraytype)
+
+
+State 139
+
+   25 par: REF_ IDENT_ DPOINT_ typename .
+
+    $default  reduce using rule 25 (par)
+
+
+State 140
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ atomictype . vardecllist $@2 instr
+
+    VAR_  shift, and go to state 5
+
+    $default  reduce using rule 2 (vardecllist)
+
+    vardecllist  go to state 143
+    varsdecl     go to state 7
+
+
+State 141
+
+   36 instr: IF_ expr THEN_ instr ELSE_ m instr . m
+
+    $default  reduce using rule 68 (m)
+
+    m  go to state 144
+
+
+State 142
+
+   15 rangelist: CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist .
+
+    $default  reduce using rule 15 (rangelist)
+
+
+State 143
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ atomictype vardecllist . $@2 instr
+
+    $default  reduce using rule 19 ($@2)
+
+    $@2  go to state 145
+
+
+State 144
+
+   36 instr: IF_ expr THEN_ instr ELSE_ m instr m .
+
+    $default  reduce using rule 36 (instr)
+
+
+State 145
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ atomictype vardecllist $@2 . instr
+
+    IDENT_   shift, and go to state 17
+    WRITE_   shift, and go to state 18
+    BEGIN_   shift, and go to state 19
+    READ_    shift, and go to state 20
+    RETURN_  shift, and go to state 21
+    IF_      shift, and go to state 22
+    WHILE_   shift, and go to state 23
+
+    instr   go to state 146
+    lvalue  go to state 25
+
+
+State 146
+
+   20 fundecl: FUNCTION_ IDENT_ PARLEFT_ $@1 parlist PARRIGHT_ DPOINT_ atomictype vardecllist $@2 instr .
+
+    $default  reduce using rule 20 (fundecl)
