@@ -381,7 +381,7 @@ void getText (FILE *f, quad *q) {
 
 void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
     // argv2 only for array = for index calculation
-
+    printf("res: %d et argv1: %d\n", res->type, argv1->type);
     if (res->type == S_ARRAY) {
         arrComputeIndex(f, res, argv2);
         // index in $t8

@@ -145,7 +145,7 @@
     } ctype;
 }
 
-%token PROGRAM_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ CTE_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
+%token PROGRAM_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ MOD_// operators (binary or unary)
 
 %token <sval>     IDENT_
@@ -370,7 +370,6 @@ instr: lvalue AFFEC_ expr {
                     sargs = newTmpInt(curtos(), 0);
                     sargs->args = $3.ptr->arr->args;
                 }
-
                 quad *q    = qGen(Q_AFFEC, $1.ptr, $3.ptr, sargs);
                 quad *quad = qConcat($3.quad, q);
                 $$.quad    = quad;
@@ -417,16 +416,10 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = qConcat($2.quad, q);
             }
         | WRITE_ expr {
-                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING && $2.ptr->type != S_ARRAY)
+                if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_STRING)
                     yferr("instr : WRITE_ expr - Type cannot be write");
 
-                symbol *sargs = NULL;
-                if ($2.ptr->type == S_ARRAY) {
-                    sargs = newTmpInt(curtos(), 0);
-                    sargs->args = $2.ptr->arr->args;
-                }
-
-                quad *q = qGen(Q_WRITE, NULL, $2.ptr, sargs);
+                quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
                 $$.quad = qConcat($2.quad, q);
 
             }

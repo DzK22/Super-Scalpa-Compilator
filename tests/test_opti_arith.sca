@@ -5,18 +5,10 @@ function test (tab : array [1..10] of int) : int
 begin
     tab[1] := 10;
     tab[2] := tab[1];
-    return tab[2];
+    (*write tab[2];
+    return tab[2];*)
 end;
 begin
-    b := 15;
-    c := 6;
-    i := 1;
-    write b + c;
-    write "\n";
-    write c * i;
-    write "\n";
-    write b + j;
-    write "\n";
     write test(tab);
     write "\n";
 end
