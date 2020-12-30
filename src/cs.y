@@ -324,6 +324,7 @@ parlist : %empty {
         | par COMMA_ parlist {
                 $$.al = listConcat($1.al, $3.al);
             }
+        | UNIT_ { $$.al = NULL; }
         ;
 
 par : IDENT_ DPOINT_ typename {

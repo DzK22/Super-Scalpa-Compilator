@@ -1,14 +1,18 @@
 program optiTest
 var a, b, c, i, j : int;
 var tab : array [1..10] of int;
-function test (tab : array [1..10] of int) : int
+function test () : int
+var a : int;
 begin
-    tab[1] := 10;
-    tab[2] := tab[1];
-    (*write tab[2];
+    (* tab[1] := 10;
+    a := 2;
+    tab[a] := tab[1];
+    write tab[2];
+    write "\n";
     return tab[2];*)
+    return 45;
 end;
 begin
-    write test(tab);
+    write test();
     write "\n";
 end
