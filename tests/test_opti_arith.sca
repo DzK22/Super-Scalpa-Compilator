@@ -1,8 +1,8 @@
 program optiTest
 var a, b, c, i, j : int;
 var tab : array [1..10] of int;
-function test () : int
-var a : int;
+function test (t : bool, s: bool) : bool
+var a, b, c : bool;
 begin
     (* tab[1] := 10;
     a := 2;
@@ -10,9 +10,10 @@ begin
     write tab[2];
     write "\n";
     return tab[2];*)
-    return 45;
+    return t and s;
 end;
 begin
-    write test();
+    write test(true, true);
+    (* write true and true xor false; *)
     write "\n";
 end
