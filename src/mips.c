@@ -48,6 +48,12 @@
     } else \
         pins3(tbuf, reg, sym->id);
 
+// bytes to load instruction
+#define btli(bytes) bytes == 1 ? "lb" : "lw"
+
+// bytes to store instruction
+#define btsi(bytes) bytes == 1 ? "sb" : "sw"
+
 static char tbuf[LEN], tbuf2[LEN], tbuf3[LEN], tbuf4[LEN];
 static symbol *curfun = NULL;
 static quad *curquad  = NULL;
@@ -80,16 +86,18 @@ void getMips (FILE *f, symbol *s, quad *q) {
     // tos global
     pdir("");
     pcom("TOS Global");
-    getData(f, s);
+    getData(f, s, 0);
+    getData(f, s, 1);
+    getData(f, s, 4);
 
     // tos of each function
     while (s != NULL) {
         if (s->type == S_FUNCTION) {
-            fundata *fdata = (fundata *) s->fdata;
-
             snpt(snprintf(tbuf, LEN, "TOS of function %s", s->id));
             pcom(tbuf);
-            getData(f, fdata->tos);
+            getData(f, s->fdata->tos, 0);
+            getData(f, s->fdata->tos, 1);
+            getData(f, s->fdata->tos, 4);
         }
 
         s = s->next;
@@ -100,8 +108,8 @@ void getMips (FILE *f, symbol *s, quad *q) {
     pdir(".globl main");
 
     pdir("");
-    pcom("Internal functions")
-        getMipsInternalFunctions(f);
+    pcom("Internal functions");
+    getMipsInternalFunctions(f);
 
     pdir("");
     pcom("User functions");
@@ -155,43 +163,51 @@ void getMipsFunctionCompind (FILE *f) {
     pins2("jr", "$ra");
 }
 
-void getData (FILE *f, symbol *s) {
-    int i;
+// only symbol which needs "bytes" bytes are written
+// bytes == 0 => only write strings
+void getData (FILE *f, symbol *s, int bytes) {
     while (s != NULL) {
-        if (s->ref) {
-            pdat(s->id, ".word 0");
-        } else {
-            switch (s->type) {
-                case S_INT:
-                    snpt(snprintf(tbuf, LEN, ".word %d", s->ival));
-                    pdat(s->id, tbuf);
-                    break;
-                case S_BOOL:
-                    snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));
-                    pdat(s->id, tbuf);
-                    break;
-                case S_STRING:
+        switch (bytes) {
+            case 0:
+                if (s->type == S_STRING) {
                     snpt(snprintf(tbuf, LEN, ".asciiz %s", s->sval));
                     pdat(s->id, tbuf);
-                    break;
-                case S_ARRAY:
-                    fprintf(f, "\t%s:\t.%s ", s->id, s->arr->type == S_INT ? "word" : "byte");
+                }
+                break;
 
-                    for (i = 0; i < s->arr->size; i++) {
-                        if (i != s->arr->size - 1)
-                            fprintf(f, "0, ");
-                        else
-                            fprintf(f, "0\n");
-                    }
 
-                    break;
-                default:
-                    //TO AVOID WARNINGS
-                    break;
-            }
+            case 1:
+                if (s->type == S_BOOL) {
+                    snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));
+                    pdat(s->id, tbuf);
+                } else if (!s->ref && s->type == S_ARRAY && s->arr->type == S_BOOL)
+                    getDataArray(f, s);
+                break;
+
+            case 4:
+                if (s->ref || s->type == S_INT) {
+                    snpt(snprintf(tbuf, LEN, ".word %d", s->ival));
+                    pdat(s->id, tbuf);
+                } else if (!s->ref && s->type == S_ARRAY && s->arr->type == S_INT)
+                    getDataArray(f, s);
+                break;
+
+            default: ferr("getData wrong bytes arg value");
         }
 
         s = s->next;
+    }
+}
+
+void getDataArray (FILE *f, symbol *s) {
+    fprintf(f, "\t%s:\t.%s ", s->id, s->arr->type == S_BOOL ? "byte" : "word");
+
+    int i;
+    for (i = 0; i < s->arr->size; i++) {
+        if (i != s->arr->size - 1)
+            fprintf(f, "0, ");
+        else
+            fprintf(f, "0\n");
     }
 }
 
@@ -382,6 +398,7 @@ void getText (FILE *f, quad *q) {
 void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
     // argv2 only for array = for index calculation
     printf("res: %d et argv1: %d\n", res->type, argv1->type);
+
     if (res->type == S_ARRAY) {
         arrComputeIndex(f, res, argv2);
         // index in $t8
@@ -389,7 +406,7 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
         pcom(tbuf);
 
         if (res->ref) {
-            pins3("lw", "$t3", res->id);
+            pins3(btli(funSymTypeSize(res)), "$t3", res->id);
         } else {
             pins3("la", "$t3", res->id);
         }
@@ -401,7 +418,7 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
             pins4("add", "$t1", "$t8", "$t3");
 
         pload("$t5", argv1);
-        pins3(argv1->type == S_BOOL ? "sb" : "sw", "$t5", "($t1)");
+        pins3(btsi(funSymTypeSize(argv1)), "$t5", "($t1)");
 
     } else if (argv1->type == S_ARRAY) {
         arrComputeIndex(f, argv1, argv2);
@@ -421,7 +438,7 @@ void qAffect (FILE *f, symbol *res, symbol *argv1, symbol *argv2) {
         } else
             pins4("add", "$t1", "$t8", "$t3");
 
-        pins3(res->type == S_BOOL ? "lb" : "lw", "$t5", "($t1)");
+        pins3(btli(funSymTypeSize(res)), "$t5", "($t1)");
         pstore("$t5", res);
 
     } else {
@@ -701,25 +718,31 @@ void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
 
 void fundec (FILE *f, symbol *fun) {
     plab(fun->id);
+    pcom("load and pop each arg from the stack and finally push $ra");
+
+    /* Stack now:
+       0 -> arg 1
+       4 -> arg 2
+       etc ...
+    */
+
+    // load args from stack
+    funStackLoadArgs(f, fun);
+
+    // pop args from stack
+    snpt(snprintf(tbuf, LEN, "%d", funArgsStackSize(fun)));
+    pins4("addi", "$sp", "$sp", tbuf);
 
     // sauvegardage du ra
-    pcom("push $ra to stack and load each arg from stack");
-
     pins4("sub", "$sp", "$sp", "4");
     pins3("sw", "$ra", "0($sp)");
-
-    // load args from stack offset 4
-    funStackLoadArgs(f, fun, 4);
 
     snpt(snprintf(tbuf, LEN, "body of function %s", fun->id));
     pcom(tbuf);
 
     /* Stack now:
        0 -> ra
-       4 -> arg 1
-       8 -> arg 2
-       etc ...
-       */
+    */
 
     curfun = fun;
 }
@@ -727,10 +750,7 @@ void fundec (FILE *f, symbol *fun) {
 void funend (FILE *f, symbol *fun) {
     /* Stack now:
        0 -> ra
-       4 -> arg 1
-       8 -> arg 2
-       etc ...
-       */
+    */
 
     // label to jump to after a return
     snpt(snprintf(tbuf, LEN, "end_%s", fun->id));
@@ -741,10 +761,8 @@ void funend (FILE *f, symbol *fun) {
     // load saved ra to $ra
     pins3("lw", "$ra", "0($sp)");
 
-    int offset = 4 + funArgsSize(fun);
-    // pop ra and args from the stack
-    snpt(snprintf(tbuf, LEN, "%d", offset));
-    pins4("addi", "$sp", "$sp", tbuf);
+    // pop ra from the stack
+    pins4("addi", "$sp", "$sp", "4");
 
     // jump to $ra
     pins2("jr", "$ra");
@@ -761,7 +779,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
     if (curfun != NULL) {
         pcom("push usefull local vars to the stack for funcall");
         // make space for local var save in the stack
-        size = curfunVarSize();
+        size = curfunVarStackSize();
         snpt(snprintf(tbuf, LEN, "%d", size));
         pins4("sub", "$sp", "$sp", tbuf);
 
@@ -771,7 +789,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
 
     pcom("push funcall args to the stack");
     // make space for args in the stack
-    size = funArgsSize(fun);
+    size = funArgsStackSize(fun);
     snpt(snprintf(tbuf, LEN, "%d", size));
     pins4("sub", "$sp", "$sp", tbuf);
 
@@ -812,7 +830,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
         pcom("load usefull local vars from the stack");
         // load local vars from stack
         curfunStackLoadVars(f);
-        size = curfunVarSize();
+        size = curfunVarStackSize();
 
         // pop local vars from stack
         snpt(snprintf(tbuf, LEN, "%d", size));
@@ -821,7 +839,7 @@ void funcall (FILE *f, symbol *fun, symbol *args, symbol *res) {
 
     // store result ($v0) in res->id
     if (res)
-        pins3("sw", "$v0", res->id);
+        pins3(btsi(funSymTypeSize(res)), "$v0", res->id);
 
 }
 
@@ -829,7 +847,7 @@ void funreturn (FILE *f, symbol *fun, symbol *ret) {
     if (ret) {
         snpt(snprintf(tbuf, LEN, "funreturn %s", ret->id));
         pcom(tbuf);
-        pins3("lw", "$v0", ret->id);
+        pins3(btli(funSymTypeSize(ret)), "$v0", ret->id);
     } else
         pcom("funreturn (void)");
 
@@ -842,19 +860,6 @@ void funreturn (FILE *f, symbol *fun, symbol *ret) {
 // FUNCTION HELPERS //
 //////////////////////
 
-int funArgsSize (symbol *fun) {
-    int size = 0, bytes;
-    list *al = ((fundata *) fun->fdata)->al;
-
-    while (al != NULL) {
-        bytes = funSymTypeSize(al->sym);
-        size += bytes;
-        al    = al->next;
-    }
-
-    return size;
-}
-
 int funSymTypeSize (symbol *sym) {
     int bytes;
 
@@ -864,34 +869,56 @@ int funSymTypeSize (symbol *sym) {
         switch (sym->type) {
             case S_INT    : bytes = 4 ; break ;
             case S_BOOL   : bytes = 1 ; break ;
-            case S_ARRAY  : bytes = 4;   break ;
+            case S_ARRAY  : bytes = 4 ; break ;
             default       : ferr("funSymTypeSize arg wrong type");
-
         }
     }
 
     return bytes;
 }
 
+// args stack size with correct alignment
+int funArgsStackSize (symbol *fun) {
+    int size = 0, bytes;
+    list *al = fun->fdata->al;
+
+    while (al != NULL) {
+        bytes = funSymTypeSize(al->sym);
+        if (size % bytes != 0)
+            size += bytes - size % bytes; // fix alignment
+
+        size += bytes;
+        al = al->next;
+    }
+
+    if (size % 4 != 0)
+        size += 4 - size % 4; // => stack always aligned in 4 bytes boundary
+
+    return size;
+}
+
 /**
  * @param offset Starting offset (= after saved ra)
  */
-void funStackLoadArgs (FILE *f, symbol *fun, int offset) {
-    int bytes;
-    list *al = ((fundata *) fun->fdata)->al;
+void funStackLoadArgs (FILE *f, symbol *fun) {
+    int bytes, offset = 0;
+    list *al = fun->fdata->al;
 
     while (al != NULL) {
+        bytes = funSymTypeSize(al->sym);
+        if (offset % bytes != 0)
+            offset += bytes - offset % bytes; // fix alignment
+
         snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pins3("lw", "$t0", tbuf);
+        pins3(btli(bytes), "$t0", tbuf);
 
         if (al->sym->type == S_ARRAY && !al->sym->ref) {
             // copy original array to function local array
             funCopyArray(f, al->sym);
         } else {
-            pins3("sw", "$t0", al->sym->id);
+            pins3(btsi(bytes), "$t0", al->sym->id);
         }
 
-        bytes   = funSymTypeSize(al->sym);
         offset += bytes;
         al      = al->next;
     }
@@ -910,12 +937,13 @@ void funCopyArray (FILE *f, symbol *destSym) {
     pins3("la", "$t1", destSym->id);
 
     char lins[3], sins[3];
+
     if (destSym->arr->type == S_INT) {
-        sprintf(lins, "lw");
-        sprintf(sins, "sw");
+        sprintf(lins, btli(sizeof(destSym->ival)));
+        sprintf(sins, btsi(sizeof(destSym->ival)));
     } else {
-        sprintf(lins, "lb");
-        sprintf(sins, "sb");
+        sprintf(lins, btli(sizeof(destSym->bval)));
+        sprintf(sins, btsi(sizeof(destSym->bval)));
     }
 
     for (i = 0; i < destSym->arr->size; i ++) {
@@ -947,16 +975,19 @@ void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
                 ferr("funStackPushArgs type array but array size differ");
         }
 
+        bytes = funSymTypeSize(args);
+        if (offset % bytes != 0)
+            offset += bytes - offset % bytes; // fix alignment
+
         if (al->sym->ref || al->sym->type == S_ARRAY) {
             pins3("la", "$t0", args->id);
         } else {
-            pins3("lw", "$t0", args->id);
+            pins3(btli(bytes), "$t0", args->id);
         }
 
         snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pins3("sw", "$t0", tbuf);
+        pins3(btsi(bytes), "$t0", tbuf);
 
-        bytes   = funSymTypeSize(args);
         offset += bytes;
         args    = args->next;
         al      = al->next;
@@ -992,18 +1023,25 @@ void funArgsDebugString (symbol *fun, symbol *args, char *dstring, int maxlen) {
 
 // curfun functions (only for function calls inside a function)
 
-int curfunVarSize (void) {
+// curfun usefull local vars stack size with correct alignment
+int curfunVarStackSize (void) {
     if (curfun == NULL)
-        ferr("curfunVarSize - curfun is NULL");
+        ferr("curfunVarStackSize - curfun is NULL");
 
     int size = 0, bytes;
-    symbol *tos = ((fundata *) curfun->fdata)->tos;
+    symbol *tos = curfun->fdata->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
         bytes = funSymTypeSize(tos);
+        if (size % bytes != 0)
+            size += bytes - size % bytes; // fix alignment
+
         size += bytes;
         tos   = tos->next;
     }
+
+    if (size % 4 != 0)
+        size += 4 - size % 4; // => stack always aligned in 4 bytes boundary
 
     return size;
 }
@@ -1013,14 +1051,17 @@ void curfunStackPushVars (FILE *f) {
         ferr("curfunStackPushVars - curfun is NULL");
 
     int offset = 0, bytes;
-    symbol *tos = ((fundata *) curfun->fdata)->tos;
+    symbol *tos = curfun->fdata->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
-        pins3("lw", "$t0", tos->id);
-        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pins3("sw", "$t0", tbuf);
+        bytes = funSymTypeSize(tos);
+        if (offset % bytes != 0)
+            offset += bytes - offset % bytes; // fix alignment
 
-        bytes   = funSymTypeSize(tos);
+        pins3(btli(bytes), "$t0", tos->id);
+        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+        pins3(btsi(bytes), "$t0", tbuf);
+
         offset += bytes;
         tos     = tos->next;
     }
@@ -1031,14 +1072,17 @@ void curfunStackLoadVars (FILE *f) {
         ferr("curfunStackLoadVars - curfun is NULL");
 
     int offset = 0, bytes;
-    symbol *tos = ((fundata *) curfun->fdata)->tos;
+    symbol *tos = curfun->fdata->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
-        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pins3("lw", "$t0", tbuf);
-        pins3("sw", "$t0", tos->id);
+        bytes = funSymTypeSize(tos);
+        if (offset % bytes != 0)
+            offset += bytes - offset % bytes; // fix alignment
 
-        bytes   = funSymTypeSize(tos);
+        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+        pins3(btli(bytes), "$t0", tbuf);
+        pins3(btsi(bytes), "$t0", tos->id);
+
         offset += bytes;
         tos     = tos->next;
     }
@@ -1060,7 +1104,7 @@ symbol * curfunNextUsefullLocalVar (symbol *tos) {
     quad *q;
 
     while (tos != NULL) {
-        if (tos->type != S_INT && tos->type != S_BOOL) {
+        if (tos->type != S_INT && tos->type != S_BOOL && tos->type != S_ARRAY) {
             tos = tos->next;
             continue;
         }
@@ -1086,15 +1130,15 @@ symbol * curfunNextUsefullLocalVar (symbol *tos) {
  * ###### AIDE GESTION DU STACK ######
  * -----------------------------------
  * - l'appelant empile les arguments de l'appel de fonction (1er argument en sommet de pile) et jump sur la fonction
- * - l'appelé empile par dessus l'adresse de retour depuis $ra
- * - l'appelé charge les arguments de l'appel de fonction dans les symboles de sa table des symboles
+ * - l'appelé charge les arguments de l'appel de fonction dans les symboles de sa table des symboles et les dépiles
+ * - l'appelé empile l'adresse de retour depuis $ra
  * - A la fin de la fonction, l'appelé place le résultat (si fonction type != unit) dans $v0, que l'appelant récupère ensuite)
- * - l'appelé charge ensuite l'adresse de retour sauvegardée (en sommet de pile) du stack vers son registre $ra, puis la dépile du stack ainsi que les arguments initiaux de l'appel de fonction
+ * - l'appelé charge ensuite l'adresse de retour sauvegardée (en sommet de pile) du stack vers son registre $ra, puis la dépile du stack
  *   l'appelé jump sur $ra, pour revenir juste après l'appel de fonction initial
  *
  *  -----------------------
  *  Si l'appel de fonction se déroule à l'intérieur d'une fonction (= ailleur que dans le main), cela se rajoute:
- *  - l'appelant sauvegarde (empile) toutes les variables INT ou BOOL utiles (= utilisées après l'appel de fonction) de sa table des symboles (tos) dans le stack (juste en-dessous des arguments de l'appel de fonction, avec la 1ere var locale utile juste après le dernier argument)
+ *  - l'appelant sauvegarde (empile) toutes les variables INT ou BOOL ou ARRAY utiles (= utilisées après l'appel de fonction) de sa table des symboles (tos) dans le stack (juste en-dessous des arguments de l'appel de fonction, avec la 1ere var locale utile juste après le dernier argument)
  *  - l'appelé ne touchera pas à ces variables locales sauvegardées
  *  - Une fois de retour juste après l'appel de fonction, l'appelant restaure ses variables locales utiles depuis le stack et les dépiles de celui-ci.
  */

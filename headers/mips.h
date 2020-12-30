@@ -5,9 +5,10 @@
 #include "array.h"
 
 void getMips (FILE *, symbol *, quad *);
-void getData (FILE *f, symbol *s);
+void getData (FILE *f, symbol *s, int bytes);
 void getText (FILE *f, quad *s);
 
+void getDataArray (FILE *f, symbol *s);
 void getMipsFunctionCompind   (FILE *f);
 void getMipsInternalFunctions (FILE *f);
 
@@ -30,14 +31,15 @@ void funcall   (FILE *f, symbol *fun, symbol *args, symbol *res);
 void funreturn (FILE *f, symbol *fun, symbol *ret);
 
 // function helpers
-int  funArgsSize         (symbol *fun);
 int  funSymTypeSize      (symbol *s);
-void funStackLoadArgs    (FILE *f, symbol *fun, int offset);
+int  funArgsStackSize    (symbol *fun);
+
+void funStackLoadArgs    (FILE *f, symbol *fun);
 void funStackPushArgs    (FILE *f, symbol *fun, symbol *args);
 void funCopyArray        (FILE *f, symbol *destSym);
 void funArgsDebugString  (symbol *fun, symbol *args, char *dstring, int maxlen);
 
-int  curfunVarSize       (void);
+int  curfunVarStackSize  (void);
 void curfunStackPushVars (FILE *f);
 void curfunStackLoadVars (FILE *f);
 symbol * curfunNextUsefullLocalVar (symbol *tos);

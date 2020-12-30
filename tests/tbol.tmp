@@ -1,0 +1,13 @@
+program tbol
+
+    function inv (a : bool, b : int, c : bool) : unit
+    begin
+        write a;
+        write b;
+        write c;
+    end;
+
+begin
+    inv(true, 2, false);
+end
+
