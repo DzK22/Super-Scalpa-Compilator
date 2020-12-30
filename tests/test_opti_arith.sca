@@ -10,7 +10,7 @@ begin
     write tab[2];
     write "\n";
     return tab[2];*)
-    return t and s;
+    return t and s xor false;
 end;
 begin
     write test(true, true);

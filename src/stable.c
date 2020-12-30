@@ -176,11 +176,11 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
     switch (type) {
         case S_INT:
             if (!ref)
-                nt->ival = *((int *) data);
+                nt->ival = *((int32_t *) data);
             break;
         case S_BOOL:
             if (!ref)
-                nt->bval = *((bool *) data);
+                nt->bval = *((int8_t *) data);
             break;
         case S_STRING:
             if ((nt->sval = strdup((char *) data)) == NULL)
@@ -207,7 +207,7 @@ symbol *newVar (symbol **tos, stype type, char *id, void *data, symbol *curfun, 
 
 // Helpers functions which call newVar
 
-symbol *newTmpInt (symbol **tos, int val) {
+symbol *newTmpInt (symbol **tos, int32_t val) {
     return newVar(tos, S_INT, NULL, &val, NULL, false);
 }
 
@@ -215,7 +215,7 @@ symbol *newTmpStr (symbol **tos, char *str) {
     return newVar(tos, S_STRING, NULL, str, NULL, false);
 }
 
-symbol *newTmpBool (symbol **tos, bool bol) {
+symbol *newTmpBool (symbol **tos, int8_t bol) {
     return newVar(tos, S_BOOL, NULL, &bol, NULL, false);
 }
 
@@ -223,7 +223,7 @@ symbol *newTmpLabel (symbol **tos) {
     return newVar(tos, S_LABEL, NULL, NULL, NULL, false);
 }
 
-symbol *newVarInt (symbol **tos, char *id, int val, symbol *curfun, bool ref) {
+symbol *newVarInt (symbol **tos, char *id, int32_t val, symbol *curfun, bool ref) {
     return newVar(tos, S_INT, id, &val, curfun, ref);
 }
 
@@ -231,7 +231,7 @@ symbol *newVarStr (symbol **tos, char *id, char *str, symbol *curfun) {
     return newVar(tos, S_STRING, id, str, curfun, false);
 }
 
-symbol *newVarBool (symbol **tos, char *id, bool bol, symbol *curfun, bool ref) {
+symbol *newVarBool (symbol **tos, char *id, int8_t bol, symbol *curfun, bool ref) {
     return newVar(tos, S_BOOL, id, &bol, curfun, ref);
 }
 

@@ -85,7 +85,7 @@
 
         switch (fdata->rtype) {
             case S_INT  : res = newTmpInt(curtos(), 0)      ; break ;
-            case S_BOOL : res = newTmpBool(curtos(), false) ; break ;
+            case S_BOOL : res = newTmpBool(curtos(), 0) ; break ;
             case S_UNIT : res = NULL                        ; break ;
             default: yferr("funcallExpression wrong return type");
         }
@@ -213,7 +213,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
               while (al != NULL) {
                   switch ($4.type) {
                       case S_BOOL:
-                          newVarBool(curtos(), al->id, false, curfun, false);
+                          newVarBool(curtos(), al->id, 0, curfun, false);
                           break;
                       case S_INT:
                           newVarInt(curtos(), al->id, 0, curfun, false);
@@ -332,7 +332,7 @@ par : IDENT_ DPOINT_ typename {
 
             switch ($3.type) {
                 case S_INT   : s = newVarInt(curtos(), $1, 0, curfun, false)           ; break ;
-                case S_BOOL  : s = newVarBool(curtos(), $1, false, curfun, false)      ; break ;
+                case S_BOOL  : s = newVarBool(curtos(), $1, 0, curfun, false)      ; break ;
                 case S_ARRAY : s = newVarArray(curtos(), $1, $3.sarray, curfun, false) ; break ;
                 default: yferr("par : IDENT_ DPOINT_ typename Incorrect typename");
             }
@@ -344,7 +344,7 @@ par : IDENT_ DPOINT_ typename {
             symbol *s;
             switch ($4.type) {
                 case S_INT   : s = newVarInt(curtos(), $2, 0, curfun, true)              ; break ;
-                case S_BOOL  : s = newVarBool(curtos(), $2, false, curfun, true)         ; break ;
+                case S_BOOL  : s = newVarBool(curtos(), $2, 0, curfun, true)         ; break ;
                 case S_ARRAY : s = newVarArray(curtos(), $2, $4.sarray, curfun, true)    ; break ;
                 default: yferr("par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
             }
@@ -570,7 +570,7 @@ expr :  expr PLUS_ expr {
             if ($1.ptr->type != S_BOOL || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr OR expr - Type error");
 
-            symbol *ptr = newTmpBool(curtos(), false);
+            symbol *ptr = newTmpBool(curtos(), 0);
             $$.ptr      = ptr;
 
             quad *q   = qGen(Q_OR, ptr, $1.ptr, $3.ptr);
@@ -581,7 +581,7 @@ expr :  expr PLUS_ expr {
       | expr AND_ expr {
             if ($1.ptr->type != S_BOOL || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr AND expr - Type error");
-            symbol *ptr = newTmpBool(curtos(), false);
+            symbol *ptr = newTmpBool(curtos(), 0);
             $$.ptr      = ptr;
 
             quad *q = qGen(Q_AND, ptr, $1.ptr, $3.ptr);
@@ -593,7 +593,7 @@ expr :  expr PLUS_ expr {
             if ($1.ptr->type != S_BOOL || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr XOR expr - Type error");
 
-            symbol *ptr = newTmpBool(curtos(), false);
+            symbol *ptr = newTmpBool(curtos(), 0);
             $$.ptr      = ptr;
 
             quad *q = qGen(Q_XOR, ptr, $1.ptr, $3.ptr);
@@ -643,7 +643,7 @@ expr :  expr PLUS_ expr {
            if ($2.ptr->type != S_BOOL)
                yferr("expr : expr NOT - Type error");
 
-           symbol *ptr = newTmpBool(curtos(), false);
+           symbol *ptr = newTmpBool(curtos(), 0);
            $$.ptr      = ptr;
 
            quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
@@ -672,7 +672,7 @@ expr :  expr PLUS_ expr {
 
           switch (ptr->arr->type) {
               case S_INT  : arrVal = newTmpInt(curtos(), 0)      ; break;
-              case S_BOOL : arrVal = newTmpBool(curtos(), false) ; break;
+              case S_BOOL : arrVal = newTmpBool(curtos(), 0) ; break;
               default: yferr("expr : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Array wrong type");
           }
 

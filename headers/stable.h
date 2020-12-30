@@ -45,13 +45,13 @@ symbol *searchTable (symbol *, char *, symbol *);
 symbol *search      (symbol *, symbol *, char *);
 
 symbol *newVar      (symbol **, stype, char *, void *, symbol *, bool);
-symbol *newTmpInt   (symbol **, int);
+symbol *newTmpInt   (symbol **, int32_t);
 symbol *newTmpStr   (symbol **, char *);
-symbol *newTmpBool  (symbol **, bool);
+symbol *newTmpBool  (symbol **, int8_t);
 symbol *newTmpLabel (symbol **);
-symbol *newVarInt   (symbol **, char *, int, symbol *, bool);
+symbol *newVarInt   (symbol **, char *, int32_t, symbol *, bool);
 symbol *newVarStr   (symbol **, char *, char *, symbol *);
-symbol *newVarBool  (symbol **, char *, bool, symbol *, bool);
+symbol *newVarBool  (symbol **, char *, int8_t, symbol *, bool);
 symbol *newVarFun   (symbol **, char *);
 symbol *newProg     (symbol **, char *);
 symbol *newVarArray (symbol **, char *, struct s_array *, symbol *, bool);

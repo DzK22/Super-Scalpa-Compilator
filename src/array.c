@@ -9,6 +9,8 @@ rlist *rlistNew (list *al, dimProp *dp) {
 
 	while (al != NULL || dp != NULL) {
 		rl       = malloc(sizeof(rlist));
+		if (rl == NULL)
+			ferr("rlistNew - malloc error");
 		rl->next = last;
 		last     = rl;
 
