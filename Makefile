@@ -9,7 +9,7 @@ CFLAGS= -Wall -Werror -Wextra
 
 all:
 	mkdir -p $(TMP)
-	bison -d -t $(SRC)$(NAME).y -v
+	bison --warnings=none -d -t $(SRC)$(NAME).y -v
 	mv $(NAME).tab.c $(TMP)
 	mv $(NAME).tab.h $(TMP)
 
