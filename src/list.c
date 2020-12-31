@@ -53,8 +53,9 @@ symbol *listToSymlist (list *al) {
 				if (cur->id == NULL)
 						ferr("listToSymlist strdup");
 
-				cur->tmp   = al->sym->tmp;
-				cur->type  = al->sym->type;
+				cur->tmp  = al->sym->tmp;
+				cur->type = al->sym->type;
+				cur->ref  = al->sym->ref;
 
 				switch (cur->type) {
 						case S_INT   : cur->ival = al->sym->ival ; break;
