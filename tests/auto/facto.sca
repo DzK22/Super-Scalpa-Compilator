@@ -29,4 +29,5 @@ program facto
         write ") = ";
         write fact(d);
         write "\n";
+
     end
