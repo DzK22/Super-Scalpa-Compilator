@@ -1,14 +1,5 @@
 program debug
-var tab : array [1..10, 1..10,1..10] of bool;
-function power (x : int, y : int) : int
-begin
-    if y = 0 then
-        return 1
-    else if y mod 2 = 0 then
-        return power(x, y/2) * power(x, y/2)
-    else
-        return x * power(x, y/2) * power(x, y/2);
-end;
+    var tab : array [1..10, 1..10,1..10] of bool;
 begin
     tab[1,1,1] := true;
     tab[2,2,2] := false;

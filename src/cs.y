@@ -60,7 +60,7 @@
 
     void booleanExpression (qop op, symbol **res, quad **quadRes, quad *quad1, symbol *arg1, quad *quad2, symbol *arg2) {
         // OK
-        symbol *ptr  = newTmpInt(curtos(), 0);
+        symbol *ptr  = newTmpBool(curtos(), 0);
         quad *q      = qGen(op, ptr, arg1, arg2);
 
         *res         = ptr;
@@ -161,8 +161,8 @@
 %token PROGRAM_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ MOD_// operators (binary or unary)
 
-%token <sval>     IDENT_
-%token <cte>      CTE_
+%token <sval>    IDENT_
+%token <cte>     CTE_
 %type <gencode>  expr instr program sequence lvalue m fundecllist  fundecl
 %type <type>     atomictype
 %type <argl>     identlist varsdecl parlist par
@@ -171,15 +171,12 @@
 %type <dimprop>  rangelist
 %type <ctype>    typename
 
-%left   OR_
-%left   AND_
-%left   EQUAL_
-%left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
-%left   PLUS_ MINUS_
-%left   MULT_ DIV_ MOD_
-%right  NEG_ NOT_
+%left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_ EQUAL_
+%left   PLUS_ MINUS_ OR_ XOR_
 %right  AFFEC_
+%left   AND_ DIV_ MULT_  MOD_
 %right  EXP_
+%right  NEG_ NOT_
 %nonassoc IFX
 %nonassoc ELSE_
 
@@ -437,6 +434,7 @@ instr: lvalue AFFEC_ expr {
 
                 quad *q = qGen(Q_WRITE, NULL, $2.ptr, NULL);
                 $$.quad = qConcat($2.quad, q);
+                $$.args = NULL;
 
             }
         | IF_ expr THEN_ instr m %prec IFX {
@@ -451,6 +449,9 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = qConcat($2.quad, qif);
                 $$.quad = qConcat($$.quad, $4.quad);
                 $$.quad = qConcat($$.quad, $5.quad);
+
+                $$.ptr  = NULL;
+                $$.args = NULL;
             }
         | IF_ expr THEN_ instr ELSE_ m instr m {
                 transIfArray(&($2.quad), &($2.ptr), $2.args);
@@ -468,6 +469,9 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = qConcat($$.quad, $6.quad);
                 $$.quad = qConcat($$.quad, $7.quad);
                 $$.quad = qConcat($$.quad, $8.quad);
+
+                $$.ptr  = NULL;
+                $$.args = NULL;
             }
         | WHILE_ m expr DO_ instr m {
                 transIfArray(&($3.quad), &($3.ptr), $3.args);
@@ -484,22 +488,25 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = qConcat($$.quad, $5.quad);
                 $$.quad = qConcat($$.quad, gnext);
                 $$.quad = qConcat($$.quad, $6.quad);
+
+                $$.ptr  = NULL;
+                $$.args = NULL;
             }
       ;
 
 sequence : instr DOTCOMMA_ sequence  {
                 $$.quad = qConcat($1.quad, $3.quad);
-                $$.ptr  = $1.ptr;
+                $$.ptr  = NULL;
                 $$.args = NULL;
              }
              | instr DOTCOMMA_ {
-                 $$.ptr  = $1.ptr;
                  $$.quad = $1.quad;
+                 $$.ptr  = NULL;
                  $$.args = NULL;
              }
              | instr  {
-                 $$.ptr  = $1.ptr;
                  $$.quad = $1.quad;
+                 $$.ptr  = NULL;
                  $$.args = NULL;
              }
         ;
@@ -632,7 +639,7 @@ expr :  expr PLUS_ expr {
             $$.ptr      = ptr;
 
             quad *q   = qGen(Q_OR, ptr, $1.ptr, $3.ptr);
-            $$.quad   = qConcat($$.quad, $3.quad);
+            $$.quad   = qConcat($1.quad, $3.quad);
             $$.quad   = qConcat($$.quad, q);
 
             $$.args = NULL;
@@ -649,7 +656,7 @@ expr :  expr PLUS_ expr {
             $$.ptr      = ptr;
 
             quad *q = qGen(Q_AND, ptr, $1.ptr, $3.ptr);
-            $$.quad = qConcat($$.quad, $3.quad);
+            $$.quad = qConcat($1.quad, $3.quad);
             $$.quad = qConcat($$.quad, q);
 
             $$.args = NULL;
@@ -666,7 +673,7 @@ expr :  expr PLUS_ expr {
             $$.ptr      = ptr;
 
             quad *q = qGen(Q_XOR, ptr, $1.ptr, $3.ptr);
-            $$.quad = qConcat($$.quad, $3.quad);
+            $$.quad = qConcat($1.quad, $3.quad);
             $$.quad = qConcat($$.quad, q);
 
             $$.args = NULL;
