@@ -30,11 +30,16 @@ reset=`tput sgr0`
  mkdir -p mips
  mv *.s mips/
 
+ i=1
+ total=12 # total number of tests 
+
  for file in `ls mips`; do
    echo "----------  SPIM -f $file  ----------"
    spim -f mips/$file | tail -n +6 > tmp_res
    if cmp -s tmp_res tests/results/$file.res; then
-        echo  "${green}>>>>>>>>>>> Test mips/$file passed ${reset} "
+        echo  "${green}>>>>>>>>>>> Test $i/$total mips/$file  passed ${reset} "
+        i=$((i+1))
+
 
    else
         echo "We are waiting results like :  "
