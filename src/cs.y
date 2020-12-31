@@ -373,6 +373,7 @@ par : IDENT_ DPOINT_ typename {
     ;
 
 instr: lvalue AFFEC_ expr {
+                symbol *prout = $3.ptr;
                 transIfArray(&($3.quad), &($3.ptr));
 
                 if ($1.ptr->type == S_ARRAY) {

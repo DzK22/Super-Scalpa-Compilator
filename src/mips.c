@@ -179,8 +179,9 @@ void getData (FILE *f, symbol *s, int bytes) {
                 if (s->type == S_BOOL) {
                     snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));
                     pdat(s->id, tbuf);
-                } else if (!s->ref && s->type == S_ARRAY && s->arr->type == S_BOOL)
+                } else if (!s->ref && s->type == S_ARRAY && s->arr->type == S_BOOL) {
                     getDataArray(f, s);
+                }
                 break;
 
             case 4:
@@ -199,7 +200,7 @@ void getData (FILE *f, symbol *s, int bytes) {
 }
 
 void getDataArray (FILE *f, symbol *s) {
-    fprintf(f, "\t%s:\t.%s ", s->id, s->arr->type == S_BOOL ? "byte" : "word");
+    fprintf(f, "\t%-16s :  .%s ", s->id, s->arr->type == S_BOOL ? "byte" : "word");
 
     int i;
     for (i = 0; i < s->arr->size; i++) {
