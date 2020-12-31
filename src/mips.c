@@ -184,9 +184,11 @@ void getData (FILE *f, symbol *s, int bytes) {
                 break;
 
             case 4:
-                if (s->ref || s->type == S_INT) {
+                if (s->type == S_INT) {
                     snpt(snprintf(tbuf, LEN, ".word %d", s->ival));
                     pdat(s->id, tbuf);
+                } else if (s->ref) {
+                    pdat(s->id, ".word 0");
                 } else if (!s->ref && s->type == S_ARRAY && s->arr->type == S_INT)
                     getDataArray(f, s);
                 break;
@@ -974,7 +976,9 @@ void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
         if (offset % bytes != 0)
             offset += bytes - offset % bytes; // fix alignment
 
-        if (al->sym->ref || al->sym->type == S_ARRAY) {
+        if (al->sym->ref && args->ref) {
+            pins3(btli(bytes), "$t0", args->id);
+        } else if (al->sym->ref || al->sym->type == S_ARRAY) {
             pins3("la", "$t0", args->id);
         } else {
             pins3(btli(bytes), "$t0", args->id);
@@ -1027,9 +1031,20 @@ int curfunVarStackSize (void) {
     symbol *tos = curfun->fdata->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
-        bytes = funSymTypeSize(tos);
-        if (size % bytes != 0)
-            size += bytes - size % bytes; // fix alignment
+        if (!tos->ref && tos->type == S_ARRAY) {
+            // to save array in stack
+            bytes = tos->arr->size;
+            if (tos->arr->type != S_BOOL)
+                bytes *= 4;
+
+            if (tos->arr->type != S_BOOL && size % 4 != 0)
+                size += 4 - size % 4; // fix alignment
+
+        } else {
+            bytes = funSymTypeSize(tos);
+            if (size % bytes != 0)
+                size += bytes - size % bytes; // fix alignment
+        }
 
         size += bytes;
         tos   = tos->next;
@@ -1045,20 +1060,41 @@ void curfunStackPushVars (FILE *f) {
     if (curfun == NULL)
         ferr("curfunStackPushVars - curfun is NULL");
 
-    int offset = 0, bytes;
+    int offset = 0, bytes, i, toff;
     symbol *tos = curfun->fdata->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
-        bytes = funSymTypeSize(tos);
-        if (offset % bytes != 0)
-            offset += bytes - offset % bytes; // fix alignment
+        if (!tos->ref && tos->type == S_ARRAY) {
+            // save array in stack
+            bytes = tos->arr->type == S_BOOL ? 1 : 4;
+            if (offset % bytes != 0)
+                offset += bytes - offset % bytes; // fix alignment
 
-        pins3(btli(bytes), "$t0", tos->id);
-        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pins3(btsi(bytes), "$t0", tbuf);
+            pins3("la", "$t1", tos->id);
+            toff = 0;
 
-        offset += bytes;
-        tos     = tos->next;
+            for (i = 0; i < tos->arr->size; i ++) {
+                snpt(snprintf(tbuf, LEN, "%d($t1)", toff));
+                pins3(btli(bytes), "$t0", tbuf);
+                snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+                pins3(btsi(bytes), "$t0", tbuf);
+
+                offset += bytes;
+                toff   += bytes;
+            }
+
+        } else {
+            bytes = funSymTypeSize(tos);
+            if (offset % bytes != 0)
+                offset += bytes - offset % bytes; // fix alignment
+
+            pins3(btli(bytes), "$t0", tos->id);
+            snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+            pins3(btsi(bytes), "$t0", tbuf);
+            offset += bytes;
+        }
+
+        tos = tos->next;
     }
 }
 
@@ -1066,20 +1102,42 @@ void curfunStackLoadVars (FILE *f) {
     if (curfun == NULL)
         ferr("curfunStackLoadVars - curfun is NULL");
 
-    int offset = 0, bytes;
+    int offset = 0, bytes, i, toff;
     symbol *tos = curfun->fdata->tos;
 
     while ((tos = curfunNextUsefullLocalVar(tos)) != NULL) {
-        bytes = funSymTypeSize(tos);
-        if (offset % bytes != 0)
-            offset += bytes - offset % bytes; // fix alignment
+        if (!tos->ref && tos->type == S_ARRAY) {
+            // load array from stack
+            bytes = tos->arr->type == S_BOOL ? 1 : 4;
+            if (offset % bytes != 0)
+                offset += bytes - offset % bytes; // fix alignment
 
-        snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
-        pins3(btli(bytes), "$t0", tbuf);
-        pins3(btsi(bytes), "$t0", tos->id);
+            pins3("la", "$t1", tos->id);
+            toff = 0;
 
-        offset += bytes;
-        tos     = tos->next;
+            for (i = 0; i < tos->arr->size; i ++) {
+                snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+                pins3(btli(bytes), "$t0", tbuf);
+                snpt(snprintf(tbuf, LEN, "%d($t1)", toff));
+                pins3(btsi(bytes), "$t0", tbuf);
+
+                offset += bytes;
+                toff   += bytes;
+            }
+
+        } else {
+            bytes = funSymTypeSize(tos);
+            if (offset % bytes != 0)
+                offset += bytes - offset % bytes; // fix alignment
+
+            snpt(snprintf(tbuf, LEN, "%d($sp)", offset));
+            pins3(btli(bytes), "$t0", tbuf);
+            pins3(btsi(bytes), "$t0", tos->id);
+
+            offset += bytes;
+        }
+
+        tos = tos->next;
     }
 }
 
@@ -1095,8 +1153,13 @@ void curfunStackLoadVars (FILE *f) {
 symbol * curfunNextUsefullLocalVar (symbol *tos) {
     if (curfun == NULL)
         ferr("curfunNextUsefullLocalVar - curfun is NULL");
+    if (curquad == NULL || curquad->op != Q_FUNCALL)
+        ferr("curfunNextUsefullLocalVar - wrong curquad");
 
-    quad *q;
+    quad   *q;
+    symbol *s;
+    list   *l;
+    bool skip;
 
     while (tos != NULL) {
         if (tos->type != S_INT && tos->type != S_BOOL && tos->type != S_ARRAY) {
@@ -1104,12 +1167,52 @@ symbol * curfunNextUsefullLocalVar (symbol *tos) {
             continue;
         }
 
-        q = curquad;
+        // if this symbol is used in current funcall and is ref, skip it
+        s = curquad->argv2; // current funcall args
+        l = curquad->argv1->fdata->al; // current called fun params descr
+        skip = false;
+
+        while (s != NULL && l != NULL) {
+            if (s->type == l->sym->type && l->sym->ref) {
+                if (strcmp(s->id, tos->id) == 0) {
+                    skip = true;
+                    break;
+                }
+            }
+
+            s = s->next;
+            l = l->next;
+        }
+
+        if (skip) {
+            tos = tos->next;
+            continue;
+        }
+
         // check if this symbol is used in an operation after the funcall
+        q = curquad;
 
         while (q->op != Q_FUNEND) {
+            // search in quad args
             if (q->argv1 == tos || q->argv2 == tos)
                 return tos;
+
+            // if quad is a funcall, search in funcall args
+            // check if IDs are the same AND check if that param is NOT a reference in the called function parameters
+            if (q->op == Q_FUNCALL) {
+                s = q->argv2; // funcall args
+                l = q->argv1->fdata->al; // called fun params descr
+
+                while (s != NULL && l != NULL) {
+                    if (s->type == l->sym->type && !l->sym->ref) {
+                        if (strcmp(s->id, tos->id) == 0)
+                            return tos;
+                    }
+
+                    s = s->next;
+                    l = l->next;
+                }
+            }
 
             q = q->next;
         }
@@ -1134,6 +1237,7 @@ symbol * curfunNextUsefullLocalVar (symbol *tos) {
  *  -----------------------
  *  Si l'appel de fonction se déroule à l'intérieur d'une fonction (= ailleur que dans le main), cela se rajoute:
  *  - l'appelant sauvegarde (empile) toutes les variables INT ou BOOL ou ARRAY utiles (= utilisées après l'appel de fonction) de sa table des symboles (tos) dans le stack (juste en-dessous des arguments de l'appel de fonction, avec la 1ere var locale utile juste après le dernier argument)
+ *  - les vars locales qui sont utilisées en tant que référence dans le funcall courrant ne sont pas sauvegardées
  *  - l'appelé ne touchera pas à ces variables locales sauvegardées
  *  - Une fois de retour juste après l'appel de fonction, l'appelant restaure ses variables locales utiles depuis le stack et les dépiles de celui-ci.
  */

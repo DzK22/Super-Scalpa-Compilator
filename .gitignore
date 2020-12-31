@@ -3,3 +3,4 @@ tmp/*
 tags
 vgcore.*
 *.s
+tmp_res
