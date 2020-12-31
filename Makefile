@@ -24,13 +24,92 @@ all: bison
 
 	$(CC) -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)list.o $(TMP)array.o $(TMP)mips.o $(TMP)opti.o $(TMP)util.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
 
-.SILENT: bison
-bison:
-	bison --warnings=none -d -t $(SRC)$(NAME).y -v
-	echo "bison -d -t $(SRC)$(NAME).y -v"
-
 test:
 	./run.sh
 
 clean:
 	rm -rf $(TMP) scalpa $(MIPS) *.s tmp_res *.output
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.SILENT: bison
+bison:
+	bison --warnings=none -d -t $(SRC)$(NAME).y -v
+	echo "bison -d -t $(SRC)$(NAME).y -v"
+
