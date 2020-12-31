@@ -16,7 +16,6 @@ typedef struct arr_range {
 typedef struct s_array {
 	int     ndims;
 	int     size;
-	struct  list *args; // only for array index calculation tmp
 	dimProp *dims;         // pointeur sur la première dimension
 	stype   type;
 } s_array;

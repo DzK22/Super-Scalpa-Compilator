@@ -26,5 +26,6 @@ list * listNew    (char *, struct symbol *);
 list * listConcat (list *, list *);
 void listPrint    (list *);
 struct symbol  * listToSymlist (list *);
+list * symListToList (struct symbol *sl);
 
 #endif
