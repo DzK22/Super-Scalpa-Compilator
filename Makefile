@@ -27,6 +27,7 @@ all: bison
 .SILENT: bison
 bison:
 	bison --warnings=none -d -t $(SRC)$(NAME).y -v
+	echo "bison -d -t $(SRC)$(NAME).y -v"
 
 test:
 	./run.sh
