@@ -24,8 +24,6 @@ typedef struct symbol {
         struct fundata *fdata; // function data ( = struct fundata)
         struct s_array *arr;   // array
     };
-
-    struct list *args; // only for array index calculation
 } symbol;
 
 typedef struct hash_item {

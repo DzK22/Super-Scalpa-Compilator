@@ -57,9 +57,9 @@ symbol *listToSymlist (list *al) {
 				cur->type  = al->sym->type;
 
 				switch (cur->type) {
-						case S_INT  : cur->ival = al->sym->ival; break;
-						case S_BOOL : cur->bval = al->sym->bval; break;
-						case S_ARRAY : cur->arr = al->sym->arr;  break;
+						case S_INT   : cur->ival = al->sym->ival ; break;
+						case S_BOOL  : cur->bval = al->sym->bval ; break;
+						case S_ARRAY : cur->arr  = al->sym->arr  ; break;
 						default: ferr("listToSymlist wrong type");
 				}
 
@@ -68,4 +68,16 @@ symbol *listToSymlist (list *al) {
 		}
 
 		return slist;
+}
+
+list *symListToList (symbol *sl) {
+	list *res = NULL, *l;
+
+	while (sl != NULL) {
+		l   = listNew(sl->id, sl);
+		res = listConcat(res, l);
+		sl  = sl->next;
+	}
+
+	return res;
 }

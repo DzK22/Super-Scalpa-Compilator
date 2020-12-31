@@ -361,7 +361,7 @@ void getText (FILE *f, quad *q) {
                 break;
 
             case Q_FUNCALL:
-                // res   = where to put function return value (can be null = fun type S_UNIT)
+                // res  = where to put function return value (can be null = fun type S_UNIT)
                 // arvg1 = function symbol
                 // argv2 = funcall args: list of symbol = symbol * (can be null = no args)
                 if (!argv1)
@@ -677,14 +677,14 @@ void qNot (FILE *f, symbol *res, symbol *argv1) {
 }
 
 /**
- * Compute array index from sargs->args and sarr->arr->dims
+ * Compute array index from args and sarr->arr->dims
  * The index is put in register $t8
  */
-void arrComputeIndex (FILE *f, symbol *sarr, symbol *sargs) {
+void arrComputeIndex (FILE *f, symbol *sarr, symbol *args) {
     snpt(snprintf(tbuf, LEN, "Compute array index of %s", sarr->id));
     pcom(tbuf);
 
-    list *lal    = sargs->args;
+    list *lal    = symListToList(args);
     dimProp *ldp = sarr->arr->dims;
 
     rlist *rlal = rlistNew(lal, NULL);
