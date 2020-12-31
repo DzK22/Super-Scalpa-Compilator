@@ -175,7 +175,6 @@ void getData (FILE *f, symbol *s, int bytes) {
                 }
                 break;
 
-
             case 1:
                 if (s->type == S_BOOL) {
                     snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));

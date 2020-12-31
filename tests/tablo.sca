@@ -1,0 +1,11 @@
+program tablo
+    var t : array[1..6] of int;
+begin
+    t[3] := 4;
+    t[4] := t[3];
+
+    write " ";
+    write t[3];
+    write " ";
+    write t[4];
+end
