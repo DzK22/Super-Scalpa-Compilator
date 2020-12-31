@@ -179,9 +179,8 @@ void getData (FILE *f, symbol *s, int bytes) {
                 if (s->type == S_BOOL) {
                     snpt(snprintf(tbuf, LEN, ".byte %d", s->bval));
                     pdat(s->id, tbuf);
-                } else if (!s->ref && s->type == S_ARRAY && s->arr->type == S_BOOL) {
+                } else if (!s->ref && s->type == S_ARRAY && s->arr->type == S_BOOL)
                     getDataArray(f, s);
-                }
                 break;
 
             case 4:
@@ -500,7 +499,7 @@ void qRead (FILE *f, symbol *res, symbol *argv1) {
             pins3("sw", "$v0", "($t1)");
             break;
 
-        default: // TO AVOID WARNIGS
+        default:
             break;
     }
 }
@@ -546,7 +545,6 @@ void qWrite (FILE *f, symbol *argv1) {
             pins3("li", "$v0", "4");
             break;
         default:
-            //TO AVOID WARNINGS
             break;
     }
 
@@ -587,7 +585,6 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
                        break;
 
         default:
-                       //TO AVOID WARNING
                        break;
     }
 
@@ -622,7 +619,6 @@ void qComp (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
             break;
         case Q_SUPEQ:
             pins4("blt", "$t0", "$t1", label);
-            pins4("beq", "$t2", "$zero", label);
             break;
         case Q_OR:
             pins4("or", "$t2", "$t0", "$t1");
