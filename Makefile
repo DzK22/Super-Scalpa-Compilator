@@ -6,10 +6,8 @@ MIPS=mips/
 CC= gcc -g
 CFLAGS= -Wall -Werror -Wextra
 
-
-all:
+all: bison
 	mkdir -p $(TMP)
-	bison --warnings=none -d -t $(SRC)$(NAME).y -v
 	mv $(NAME).tab.c $(TMP)
 	mv $(NAME).tab.h $(TMP)
 
@@ -25,6 +23,10 @@ all:
 	mv *.o $(TMP)
 
 	$(CC) -o scalpa $(TMP)stable.o $(TMP)quad.o $(TMP)list.o $(TMP)array.o $(TMP)mips.o $(TMP)opti.o $(TMP)util.o $(TMP)$(NAME).tab.c $(TMP)$(NAME).yy.c -lm -Werror -Wextra -g
+
+.SILENT: bison
+bison:
+	bison --warnings=none -d -t $(SRC)$(NAME).y -v
 
 test:
 	./run.sh
