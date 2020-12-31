@@ -533,14 +533,10 @@ lvalue: IDENT_ {
       ;
 
 exprlist : expr {
-                transIfArray(&($1.quad), &($1.ptr), $1.args);
-
                 $$.al   = listNew(NULL, $1.ptr);
                 $$.quad = $1.quad;
              }
         |  expr COMMA_ exprlist {
-                transIfArray(&($1.quad), &($1.ptr), $1.args);
-
                 list *al = listNew(NULL, $1.ptr);
                 $$.al    = listConcat(al, $3.al);
                 $$.quad  = qConcat($1.quad, $3.quad);
