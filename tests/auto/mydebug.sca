@@ -1,9 +1,15 @@
 program debug
-    var tab : array [1..4] of bool;
+    var tab : array [1..10, 1..10,1..10] of bool;
 begin
-    tab[1] := true;
-    tab[2] := true;
-
-    write tab[1] and tab[2];
+    tab[1,1,1] := true;
+    tab[2,2,2] := false;
+    tab[3,3,3] := true;
+    write tab[1,1,1] ;
+    write "\n";
+    write tab[2,2,2];
+    write "\n";
+    write tab[3,3,3];
+    write "\n";
+    write tab[1,1,1] or tab[2,2,2] and tab[3,3,3];
     write "\n";
 end

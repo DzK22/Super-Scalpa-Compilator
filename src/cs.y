@@ -171,15 +171,12 @@
 %type <dimprop>  rangelist
 %type <ctype>    typename
 
-%left   OR_
-%left   AND_
-%left   EQUAL_
-%left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_
-%left   PLUS_ MINUS_
-%left   MULT_ DIV_ MOD_
-%right  NEG_ NOT_
+%left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_ EQUAL_
+%left   PLUS_ MINUS_ OR_ XOR_
 %right  AFFEC_
+%left   AND_ DIV_ MULT_  MOD_
 %right  EXP_
+%right  NEG_ NOT_
 %nonassoc IFX
 %nonassoc ELSE_
 
