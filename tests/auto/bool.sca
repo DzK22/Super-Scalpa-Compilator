@@ -1,16 +1,30 @@
 (* Test des opérations booléènnes  *)
 
 program boolTest
-   var a, b, c : int; var test : bool
+   var a, b, c : bool
    begin
-     a := 1;
-     c := 100;
-     test := false;
-     while not test do
-     begin
-        write a;
-        a := a * 2;
-        if a >= c then test := true;
-        write "\n";
-     end;
+     a := false;
+     b := true;
+
+     c := not a ;
+     write c ;
+     write "\n" ;
+
+     c := a and b ;
+     write c ;
+     write "\n" ;
+
+     c := a or b ;
+     write c ;
+     write "\n" ;
+
+     c := not ( a xor b ) ;
+     write c ;
+     write "\n" ;
+
+     c := not c or a and not a ; (* priority *)
+     write c ;
+     write "\n" ;
+
+
    end
