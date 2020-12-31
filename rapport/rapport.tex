@@ -126,11 +126,15 @@ Le programme écrit en SCALPA peut donc supporter :
 - Des opérations sur les variables booleennes ou des constantes booleennes (OR, AND, XOR, NOT)
 - Les opérations de comparaisons sur les entiers sont également implémentés et peuvent être utilisés comme conditions (<, >, <=, >=, =, ><)
 
-Ces opérations de comparaisons permettent de créer des conditions de type \textit{if cond then instr else instr } ou \textit{while cond do instr}. Les conditions sont implémentées et permettent de réaliser toutes sortes de boucles. Nous pouvons également imbriquer les conditions pour vérifier plusieurs assertions par exemple et distinguer des cas.
+Ces opérations de comparaisons permettent de créer des conditions de type \textit{if cond then instr else instr } ou \textit{while cond do instr}. Les conditions sont implémentées et permettent de réaliser toutes sortes de boucles. Les conditions peuvent être des comparaisons sur des entiers, ou des opérations sur des booleens par exemple.
+Nous pouvons également imbriquer les conditions pour vérifier plusieurs assertions par exemple et distinguer des cas.
+Il est possible de simuler une boucle for avec un while, mais il aurait cependant été possible de l'implémenter directement.
 
-Les tableaux sont fonctionnels et permettent de faire des affectations ou des opérations sur des éléments du tableau en fonction du type de varaibles du tableau. Les tableaux à multidimensions sont également fonctionnels avec des intervales pour les indices. Ces intervales permettent d'indexer les cases du tableau avec ces valeurs.
-Le contenu d'une case du tableau est interprété comme une variable de ce même type et permet donc de faire de formuler des conditions et des opérations sur un contenu du tableau.
+En ce qui concerne les tableaux, ils sont entièrement fonctionnels et permettent de faire des affectations ou des opérations sur des éléments du tableau en fonction du type de varaible du tableau. Les tableaux peuvent contenir des booleens ou des entiers et sont déclarés avec des intervales, ces intervales corresspondent aux index du tableau sur les dimensions.
 
-Pour finir, les fonctions peuvent être définies et utilisées dans le programme tout en prenant des arguments en entrée et en retournant des valeurs. Ces valeurs peuvent être entières ou booléennes. Les fonctions récursives sont suportées et complètement fonctionelles.
+Les tableaux à multidimensions sont également fonctionnels à condition d'avoir le même type dans toutes les cases. Le contenu d'une case du tableau est interprété comme une variable de ce même type et permet donc de formuler des conditions et des opérations sur un contenu du tableau.
+
+Pour finir, les fonctions peuvent être définies et utilisées dans le programme tout en prenant des arguments en entrée et en retournant des valeurs.
+Les arguemnts des fonctions peuvent être des entiers, des booleens ou des tableaux. Les tableaux peuvent être passés en copie ou en référence. Si le tableau est passé en argument par référence, la fonction modifiera le tableau par effet de bord sur le tableau inital. Les fonctions récursives sont également suportées et complètement fonctionelles.
 
 \end{document}
