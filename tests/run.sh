@@ -35,7 +35,7 @@ reset=`tput sgr0`
 
  for file in `ls mips`; do
    echo "----------  SPIM -f $file  ----------"
-   spim -f mips/$file | grep "Loaded: /usr/share/spim/exceptions.s" --after-context=10000 | tail -n +2 > tmp_res
+   spim -f mips/$file | grep "Loaded: /usr" --after-context=10000 | tail -n +2 > tmp_res
    if cmp -s tmp_res tests/results/$file.res; then
         echo  "${green}>>>>>>>>>>> Test $i/$total mips/$file  PASSED ${reset} "
         ((i++))
