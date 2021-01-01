@@ -158,7 +158,7 @@
     } ctype;
 }
 
-%token PROGRAM_ NEWLINE_ END_ THEN_ TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ WHILE_ DO_ DOTCOMMA_ COMMA_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
+%token PROGRAM_ NEWLINE_ END_ THEN_ TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ MOD_// operators (binary or unary)
 
 %token <sval>    IDENT_
@@ -179,9 +179,6 @@
 %left   MULT_ DIV_ MOD_
 %right  EXP_
 %precedence  NEG_ NOT_
-%nonassoc  IFX
-%nonassoc  ELSE_
-
 
 %start  program
 
@@ -440,7 +437,7 @@ instr: lvalue AFFEC_ expr {
                 $$.args = NULL;
 
             }
-        | IF_ expr THEN_ instr m %prec IFX {
+        | IF_ expr THEN_ instr m {
                 transIfArray(&($2.quad), &($2.ptr), $2.args);
 
                 if ($2.ptr->type != S_BOOL)
