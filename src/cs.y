@@ -171,14 +171,15 @@
 %type <dimprop>  rangelist
 %type <ctype>    typename
 
-%left   PLUS_ MINUS_ OR_ XOR_
-%left   INF_EQ_ INF_ SUP_EQ_ SUP_ DIFF_ EQUAL_
-%right  AFFEC_
-%left   AND_ DIV_ MULT_  MOD_
+%left   OR_ XOR_
+%left   AND_
+%left   EQUAL_ DIFF_
+%left   INF_EQ_ INF_ SUP_EQ_ SUP_
+%left   PLUS_ MINUS_
+%left   MULT_ DIV_ MOD_
 %right  EXP_
 %right  NEG_ NOT_
-%nonassoc IFX
-%nonassoc ELSE_
+%right THEN_ ELSE_
 
 %start  program
 
@@ -437,7 +438,7 @@ instr: lvalue AFFEC_ expr {
                 $$.args = NULL;
 
             }
-        | IF_ expr THEN_ instr m %prec IFX {
+        | IF_ expr THEN_ instr m {
                 transIfArray(&($2.quad), &($2.ptr), $2.args);
 
                 if ($2.ptr->type != S_BOOL)
