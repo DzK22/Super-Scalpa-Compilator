@@ -324,7 +324,12 @@ void stablePrint (symbol *tos) {
                         //Others todo
                         break;
                 }
-                printf("NbDims %d\n",tos->arr->ndims) ;
+                printf("NbDims %d\t",tos->arr->ndims) ;
+                while (tos->arr->dims != NULL){
+                    printf("[%d .. %d]",tos->arr->dims->min,tos->arr->dims->max );
+                    tos->arr->dims = tos->arr->dims->next ;
+                }
+                printf("\n");
 
                 break;
             case S_STRING:
