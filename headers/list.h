@@ -23,9 +23,10 @@ typedef struct exprlist {
 } exprlist;
 
 list * listNew    (char *, struct symbol *);
+void listFree     (list *);
 list * listConcat (list *, list *);
 void listPrint    (list *);
 struct symbol  * listToSymlist (list *);
-list * symListToList (struct symbol *sl);
+list * symListToList (struct symbol *);
 
 #endif

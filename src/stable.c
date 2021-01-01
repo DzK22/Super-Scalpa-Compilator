@@ -80,10 +80,8 @@ symbol *sAlloc (void) {
     ns->id   = NULL;
     ns->tmp  = false;
     ns->type = S_NONE;
-
-    ns->ival = 0;
+    ns->next = NULL;
     ns->sval = NULL;
-    ns->bval = false;
 
     return ns;
 }
@@ -111,10 +109,27 @@ void sFree (symbol *s) {
     while (cur != NULL) {
         prev = cur;
         cur = cur->next;
-        free(prev->id);
 
-        if (prev->type == S_STRING)
+        if (prev->id != NULL) {
+            free(prev->id);
+            prev->id = NULL;
+        }
+
+        if (prev->type == S_STRING && prev->sval != NULL) {
             free(prev->sval);
+            prev->sval = NULL;
+        } else if (prev->type == S_ARRAY && prev->arr != NULL) {
+            if (prev->arr->dims != NULL) {
+                freeDimProp(prev->arr->dims);
+                prev->arr->dims = NULL;
+            }
+            prev->arr = NULL;
+        } else if (prev->type == S_FUNCTION && prev->fdata != NULL) {
+            listFree(prev->fdata->al);
+            sFree(prev->fdata->tos);
+            free(prev->fdata);
+            prev->fdata = NULL;
+        }
 
         free(prev);
     }

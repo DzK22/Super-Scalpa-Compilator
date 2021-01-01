@@ -8,11 +8,15 @@ rlist *rlistNew (list *al, dimProp *dp) {
 	rlist *rl = NULL, *last = NULL;
 
 	while (al != NULL || dp != NULL) {
-		rl       = malloc(sizeof(rlist));
+		rl = malloc(sizeof(rlist));
 		if (rl == NULL)
 			ferr("rlistNew - malloc error");
+
 		rl->next = last;
 		last     = rl;
+
+		rl->al = NULL;
+		rl->dp = NULL;
 
 		if (al)
 			rl->al = al;
@@ -26,6 +30,22 @@ rlist *rlistNew (list *al, dimProp *dp) {
 	}
 
 	return rl;
+}
+
+void rlistFree (rlist *rl){
+	rlist *prec;
+
+	while (rl != NULL) {
+		prec = rl;
+		rl = rl->next;
+
+		if (prec->al != NULL)
+			listFree(prec->al);
+		if (prec->dp != NULL)
+			freeDimProp(prec->dp);
+			
+		free(prec);
+	}
 }
 
 dimProp *initDimProp (int min, int max, dimProp *dp) {
@@ -44,6 +64,16 @@ dimProp *initDimProp (int min, int max, dimProp *dp) {
 	nDp->min = min;
 	nDp->max = max;
 	return nDp;
+}
+
+void freeDimProp (dimProp *dp) {
+	dimProp *prec;
+
+	while (dp != NULL) {
+		prec = dp;
+		dp = dp->next;
+		free(prec);
+	}
 }
 
 s_array *initArray (dimProp *rangelist, stype type) {

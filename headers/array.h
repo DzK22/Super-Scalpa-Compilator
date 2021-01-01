@@ -22,15 +22,16 @@ typedef struct s_array {
 
 typedef struct rlist {
 	struct rlist *next;
-	union {
-		struct list *al;
-		dimProp *dp;
-	};
+	struct list *al;
+	dimProp *dp;
 } rlist;
 
-rlist *rlistNew      (struct list *al, dimProp *dp);
-s_array *initArray   (dimProp *rangelist, stype type);
-dimProp *initDimProp (int min, int max, dimProp *dp);
+rlist *rlistNew       (struct list *al, dimProp *dp);
+void rlistFree        (struct rlist *rl);
+
+s_array *initArray    (dimProp *rangelist, stype type);
+dimProp *initDimProp  (int min, int max, dimProp *dp);
+void freeDimProp      (dimProp *dp);
 bool testArrayIndices (dimProp *dp, struct list *al);
 
 #endif

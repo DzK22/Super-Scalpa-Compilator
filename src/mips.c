@@ -285,6 +285,7 @@ void getText (FILE *f, quad *q) {
 
                 // argv1 only for array = for index calculation
                 qRead(f, res, argv1);
+                sFree(argv1);
                 break;
 
             case Q_AFFEC:
@@ -293,6 +294,7 @@ void getText (FILE *f, quad *q) {
 
                 // argv2 only for array = for index calculation
                 qAffect(f, res, argv1, argv2);
+                sFree(argv2);
                 break;
 
             case Q_LABEL:
@@ -369,6 +371,7 @@ void getText (FILE *f, quad *q) {
                     ferr("getText Q_FUNCALL quad error");
 
                 funcall(f, argv1, argv2, res);
+                sFree(argv2);
                 break;
 
             case Q_FUNRETURN:
@@ -702,6 +705,10 @@ void arrComputeIndex (FILE *f, symbol *sarr, symbol *args) {
         rlal = rlal->next;
         rldp = rldp->next;
     }
+
+    listFree(lal);
+    rlistFree(rlal);
+    rlistFree(rldp);
 
     snpt(snprintf(tbuf, LEN, "%d", sarr->arr->size));
     pins3("li", "$t9", tbuf);

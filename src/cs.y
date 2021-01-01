@@ -92,6 +92,7 @@
 
         quad *q  = qGen(Q_FUNCALL, res, fs, listToSymlist(al));
         *quadRes = NULL;
+        listFree(al);
 
         if (qd)
             *quadRes = qConcat(*quadRes, qd);
@@ -111,9 +112,10 @@
             default: yferr("transIfArray - Array wrong type");
         }
 
-        quad *q       = qGen(Q_AFFEC, arrVal, *sar, listToSymlist(args));
-        *qar          = qConcat(*qar, q);
-        *sar          = arrVal;
+        quad *q = qGen(Q_AFFEC, arrVal, *sar, listToSymlist(args));
+        *qar    = qConcat(*qar, q);
+        *sar    = arrVal;
+        listFree(args);
     }
 %}
 
@@ -382,6 +384,7 @@ instr: lvalue AFFEC_ expr {
                 quad *q = qGen(Q_AFFEC, $1.ptr, $3.ptr, listToSymlist($$.args));
                 $$.quad = qConcat($3.quad, q);
                 $$.ptr  = $1.ptr;
+                listFree($$.args);
             }
         | RETURN_ expr {
                 if (curfun == NULL)
@@ -425,6 +428,7 @@ instr: lvalue AFFEC_ expr {
 
                 quad *q = qGen(Q_READ, $2.ptr, listToSymlist($$.args), NULL);
                 $$.quad = qConcat($2.quad, q);
+                listFree($$.args);
             }
         | WRITE_ expr {
                 transIfArray(&($2.quad), &($2.ptr), $2.args);
@@ -791,6 +795,7 @@ expr :  expr PLUS_ expr {
                   case S_BOOL   : ptr = newTmpBool(curtos(), $1.bval);
                                   break;
                   case S_STRING : ptr = newTmpStr (curtos(), $1.sval);
+                                  free($1.sval);
                                   break;
                   default: yferr("expr : CTE_ - Unknow cte type");
               }
@@ -901,6 +906,7 @@ int main (int argc, char **argv) {
 
     freeLex();
     qFree(all_code);
+
     sFree(stable);
 
     return EXIT_SUCCESS;
