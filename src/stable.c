@@ -304,16 +304,33 @@ void stablePrint (symbol *tos) {
         printf("%s: ", tos->id);
         switch (tos->type) {
             case S_INT:
-                printf("INTEGER\n");
+                printf("INTEGER\t");
+                printf("%d\n",tos->ival) ;
                 break;
             case S_BOOL:
-                printf("BOOLEAN\n");
+                printf("BOOLEAN\t");
+                printf("%d\n",tos->bval) ;
                 break;
             case S_ARRAY:
-                printf("ARRAY\n"); // ajouter type de valeurs quand tableaux seront faits
+                printf("ARRAY\t"); // ajouter type de valeurs quand tableaux seront faits
+                switch (tos->arr->type) {
+                    case S_INT:
+                        printf("INTEGER\t");
+                        break;
+                    case S_BOOL:
+                        printf("BOOLEAN\t");
+                        break;
+                    default:
+                        //Others todo
+                        break;
+                }
+                printf("NbDims %d\n",tos->arr->ndims) ;
+
                 break;
             case S_STRING:
-                printf("STRING\n");
+                printf("STRING\t");
+                printf("%s\n",tos->sval) ;
+
                 break;
             case S_PROG:
                 printf("PROGRAM NAME\n");
