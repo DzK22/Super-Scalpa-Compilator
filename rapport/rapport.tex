@@ -121,10 +121,12 @@ C'est ansi que s'est déroulé le developpement de ce compilateur en enchainant 
 
 Le compilateur est donc capable de générer un programme MIPS R2000 (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
 Le programme écrit en SCALPA peut donc supporter :
-- Des affectations sur les entiers, les booleens et les chaines de caractères
-- Des opérations sur les entiers ou des variables entières (additions, multiplications, soustraction, division, puissance) tout en respectant les priorités de calcul.
-- Des opérations sur les variables booleennes ou des constantes booleennes (OR, AND, XOR, NOT)
-- Les opérations de comparaisons sur les entiers sont également implémentés et peuvent être utilisés comme conditions (<, >, <=, >=, =, ><)
+\begin{itemize}
+    \item Des affectations sur les entiers, les booleens et les chaines de caractères
+    \item Des opérations sur les entiers ou des variables entières (additions, multiplications, soustraction, division, puissance) tout en respectant les priorités de calcul.
+    \item Des opérations sur les variables booleennes ou des constantes booleennes (OR, AND, XOR, NOT)
+    \item Les opérations de comparaisons sur les entiers sont également implémentés et peuvent être utilisés comme conditions (<, >, <=, >=, =, <>)
+\end{itemize}
 
 Ces opérations de comparaisons permettent de créer des conditions de type \textit{if cond then instr else instr } ou \textit{while cond do instr}. Les conditions sont implémentées et permettent de réaliser toutes sortes de boucles. Les conditions peuvent être des comparaisons sur des entiers, ou des opérations sur des booleens par exemple.
 Nous pouvons également imbriquer les conditions pour vérifier plusieurs assertions par exemple et distinguer des cas.
@@ -133,6 +135,8 @@ Il est possible de simuler une boucle for avec un while, mais il aurait cependan
 En ce qui concerne les tableaux, ils sont entièrement fonctionnels et permettent de faire des affectations ou des opérations sur des éléments du tableau en fonction du type de varaible du tableau. Les tableaux peuvent contenir des booleens ou des entiers et sont déclarés avec des intervales, ces intervales corresspondent aux index du tableau sur les dimensions.
 
 Les tableaux à multidimensions sont également fonctionnels à condition d'avoir le même type dans toutes les cases. Le contenu d'une case du tableau est interprété comme une variable de ce même type et permet donc de formuler des conditions et des opérations sur un contenu du tableau.
+
+De plus l'analyse lexicale de notre compilateur se fait sans sensibilité à la casse, ce qui laisse une "marge d'erreur" au programmeur, s'il se trompe et écrit While, wHile ou whiLE...etc ce n'est pas grave notre compilateur saura comprendre son code.
 
 Pour finir, les fonctions peuvent être définies et utilisées dans le programme tout en prenant des arguments en entrée et en retournant des valeurs.
 Les arguemnts des fonctions peuvent être des entiers, des booleens ou des tableaux. Les tableaux peuvent être passés en copie ou en référence. Si le tableau est passé en argument par référence, la fonction modifiera le tableau par effet de bord sur le tableau inital. Les fonctions récursives sont également suportées et complètement fonctionelles.
