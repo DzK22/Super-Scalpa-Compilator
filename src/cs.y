@@ -158,7 +158,7 @@
     } ctype;
 }
 
-%token PROGRAM_ NEWLINE_ END_  TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ THEN_ ELSE_ WHILE_ DO_ DOTCOMMA_ COMMA_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
+%token PROGRAM_ NEWLINE_ END_ THEN_ TWO_POINTS_ ARRAY_ OF_ WRITE_ BEGIN_ READ_ AFFEC_ INT_ BOOL_ STRING_ UNIT_ VAR_ RETURN_ REF_ IF_ WHILE_ DO_ DOTCOMMA_ COMMA_ PARLEFT_ PARRIGHT_ BRALEFT_ BRARIGHT_ DPOINT_ FUNCTION_ // common tokens
 %token MULT_ DIV_ PLUS_ MINUS_ EXP_ INF_ INF_EQ_ SUP_ SUP_EQ_ EQUAL_ DIFF_ AND_ OR_ XOR_ NOT_ MOD_// operators (binary or unary)
 
 %token <sval>    IDENT_
@@ -179,7 +179,9 @@
 %left   MULT_ DIV_ MOD_
 %right  EXP_
 %right  NEG_ NOT_
-%right THEN_ ELSE_
+%nonassoc  IFX
+%nonassoc  ELSE_
+
 
 %start  program
 
@@ -414,7 +416,7 @@ instr: lvalue AFFEC_ expr {
                 $$.quad = $2.quad;
                 $$.args = NULL;
             }
-        | BEGIN_ END_ {}
+        | BEGIN_ END_ { $$.ptr = NULL; $$.quad = NULL; $$.args = NULL;}
         | READ_ lvalue {
                 if ($2.ptr->type != S_INT && $2.ptr->type != S_BOOL && $2.ptr->type != S_ARRAY)
                     yferr("instr : READ_ lvalue - Type cannot be read");
@@ -438,7 +440,7 @@ instr: lvalue AFFEC_ expr {
                 $$.args = NULL;
 
             }
-        | IF_ expr THEN_ instr m {
+        | IF_ expr THEN_ instr m %prec IFX {
                 transIfArray(&($2.quad), &($2.ptr), $2.args);
 
                 if ($2.ptr->type != S_BOOL)

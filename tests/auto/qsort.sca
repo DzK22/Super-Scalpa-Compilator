@@ -1,0 +1,62 @@
+program qsort
+var tab : array [1..10] of int;
+var i : int;
+    function quicksort (ref tab : array [1..10] of int, left : int, right : int) : unit
+    var pivot, l_ptr, r_ptr : int;
+    begin
+        l_ptr := left;
+        r_ptr := right;
+        pivot := tab[left];
+        while (left < right) do
+        begin
+            while ((tab[right] >= pivot) and (left < right)) do
+                right := right - 1;
+            if (left <> right) then
+            begin
+                tab[left] := tab[right];
+                left := left + 1;
+            end;
+
+            while ((tab[left] <= pivot) and (left < right)) do
+                left := left + 1;
+            if (left <> right) then
+            begin
+                tab[right] := tab[left];
+                right := right - 1;
+            end;
+        end;
+        tab[left] := pivot;
+        pivot := left;
+        left := l_ptr;
+        right := r_ptr;
+        if (left < pivot) then
+            quicksort(tab, left, pivot - 1);
+        if (right > pivot) then
+            quicksort(tab, pivot + 1, right);
+    end;
+
+    function mainQsort (ref tab : array [1..10] of int, size : int) : unit
+    begin
+        quicksort(tab, 1, size);
+    end;
+
+begin
+    tab[1] := 25;
+    tab[2] := 13;
+    tab[3] := 17;
+    tab[4] := 09;
+    tab[5] := 10;
+    tab[6] := 29;
+    tab[7] := 12;
+    tab[8] := 6;
+    tab[9] := 1;
+    tab[10] := 0;
+    mainQsort(tab, 10);
+    i := 1;
+    while i <= 10 do
+    begin
+        write tab[i];
+        write "\n";
+        i := i + 1;
+    end;
+end
