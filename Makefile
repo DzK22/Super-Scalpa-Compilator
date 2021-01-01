@@ -7,7 +7,7 @@ CC= gcc -g
 CFLAGS= -Wall -Werror -Wextra
 
 all:
-	bison -d -t $(SRC)$(NAME).y -v
+	bison --warnings=all -d -t $(SRC)$(NAME).y -v
 	mkdir -p $(TMP)
 	mv $(NAME).tab.c $(TMP)
 	mv $(NAME).tab.h $(TMP)

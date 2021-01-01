@@ -6,19 +6,19 @@
 
 // print instr 2 args
 #define pins2(s1, s2) \
-    fprintf(f, "\t%-5s %s\n", s1, s2);
+    fprintf(f, "\t%-6s %s\n", s1, s2);
 
 // print instr 3 args
 #define pins3(s1, s2, s3) \
-    fprintf(f, "\t%-5s %-5s %s\n", s1, s2, s3);
+    fprintf(f, "\t%-6s %-6s %s\n", s1, s2, s3);
 
 // print instr 4 args
 #define pins4(s1, s2, s3, s4) \
-    fprintf(f, "\t%-5s %-5s %-5s %s\n", s1, s2, s3, s4);
+    fprintf(f, "\t%-6s %-6s %-6s %s\n", s1, s2, s3, s4);
 
 // print data
 #define pdat(s1, s2) \
-    fprintf(f, "\t%-16s :  %s\n", s1, s2);
+    fprintf(f, "\t%-20s :  %s\n", s1, s2);
 
 // print label
 #define plab(s) \
@@ -201,7 +201,7 @@ void getData (FILE *f, symbol *s, int bytes) {
 }
 
 void getDataArray (FILE *f, symbol *s) {
-    fprintf(f, "\t%-16s :  .%s ", s->id, s->arr->type == S_BOOL ? "byte" : "word");
+    fprintf(f, "\t%-20s :  .%s ", s->id, s->arr->type == S_BOOL ? "byte" : "word");
 
     int i;
     for (i = 0; i < s->arr->size; i++) {
@@ -240,7 +240,7 @@ char * opstr (qop op) {
 char * nextTmpLabel (void) {
     static int nlabel = 0;
     char tmplab[LEN];
-    sprintf(tmplab, "tmplab_%d", nlabel ++);
+    sprintf(tmplab, "tlabel_%d", nlabel ++);
 
     char *res = strdup(tmplab);
     if (res == NULL)
@@ -976,10 +976,11 @@ void funStackPushArgs (FILE *f, symbol *fun, symbol *args) {
         if (offset % bytes != 0)
             offset += bytes - offset % bytes; // fix alignment
 
-        if (al->sym->ref && args->ref) {
-            pins3(btli(bytes), "$t0", args->id);
-        } else if (al->sym->ref || al->sym->type == S_ARRAY) {
+        if (!args->ref && (al->sym->ref || al->sym->type == S_ARRAY)) {
             pins3("la", "$t0", args->id);
+        } else if (args->ref && (!al->sym->ref && al->sym->type != S_ARRAY)) {
+            snpt(snprintf(tbuf, LEN, "0(%s)", args->id));
+            pins3(btli(bytes), "$t0", tbuf);
         } else {
             pins3(btli(bytes), "$t0", args->id);
         }
