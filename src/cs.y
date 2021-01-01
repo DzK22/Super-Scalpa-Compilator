@@ -178,7 +178,7 @@
 %left   PLUS_ MINUS_
 %left   MULT_ DIV_ MOD_
 %right  EXP_
-%right  NEG_ NOT_
+%precedence  NEG_ NOT_
 %nonassoc  IFX
 %nonassoc  ELSE_
 
