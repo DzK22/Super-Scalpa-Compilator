@@ -300,6 +300,8 @@ void getText (FILE *f, quad *q) {
                     ferr("getText Q_LABEL quad error");
 
                 plab(res->id);
+                if (res->sval)
+                    free(res->sval);
                 break;
 
             case Q_GOTO:
@@ -369,6 +371,8 @@ void getText (FILE *f, quad *q) {
                     ferr("getText Q_FUNCALL quad error");
 
                 funcall(f, argv1, argv2, res);
+                if (argv2)
+                    free(argv2);
                 break;
 
             case Q_FUNRETURN:
@@ -545,6 +549,8 @@ void qWrite (FILE *f, symbol *argv1) {
 
             plab(label2);
             pins3("li", "$v0", "4");
+            free(label);
+            free(label2);
             break;
         default:
             break;
