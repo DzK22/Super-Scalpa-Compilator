@@ -702,10 +702,10 @@ void arrComputeIndex (FILE *f, symbol *sarr, symbol *args) {
         rlal = rlal->next;
         rldp = rldp->next;
     }
-
     snpt(snprintf(tbuf, LEN, "%d", sarr->arr->size));
     pins3("li", "$t9", tbuf);
     pins4("bgt", "$t8", "$t9", "_segfault");
+    free(lal);
 }
 
 

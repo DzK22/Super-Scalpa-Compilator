@@ -241,6 +241,7 @@ varsdecl: VAR_ identlist DPOINT_ typename {
 
                   al = al->next;
               }
+             listFree($2.al);
           }
           ;
 
@@ -906,8 +907,12 @@ int main (int argc, char **argv) {
 
     freeLex();
     qFree(all_code);
-
+    if (*progName)
+        free(progName);
     sFree(stable);
-
+    if (fclose(output) == EOF)
+        yferr("fclose error");
+    if (fclose(yyin) == EOF)
+        yferr("fclose error");
     return EXIT_SUCCESS;
 }
