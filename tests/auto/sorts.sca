@@ -1,4 +1,4 @@
-program qsort
+program sorts
 var tab : array [1..10] of int;
 var i : int;
     function quicksort (ref tab : array [1..10] of int, left : int, right : int) : unit
@@ -40,6 +40,27 @@ var i : int;
         quicksort(tab, 1, size);
     end;
 
+    function bubblesort (ref tab : array[1..10] of int, size : int) : unit
+    var i, j, tmp : int;
+    begin
+        i := 1;
+        while i <= size do
+        begin
+            j := i + 1;
+            while j <= size do
+            begin
+                if tab[i] > tab[j] then
+                begin
+                    tmp := tab[i];
+                    tab[i] := tab[j];
+                    tab[j] := tmp;
+                end;
+                j := j + 1;
+            end;
+            i := i + 1;
+        end;
+    end;
+
 begin
     tab[1] := 25;
     tab[2] := 13;
@@ -51,7 +72,8 @@ begin
     tab[8] := 6;
     tab[9] := 1;
     tab[10] := 0;
-    mainQsort(tab, 10);
+    (* mainQsort(tab, 10); *)
+    bubblesort(tab, 10);
     i := 1;
     while i <= 10 do
     begin
