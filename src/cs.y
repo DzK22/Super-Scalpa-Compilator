@@ -386,7 +386,8 @@ instr: lvalue AFFEC_ expr {
                     $$.args = NULL;
 
                 quad *q = qGen(Q_AFFEC, $1.ptr, $3.ptr, listToSymlist($$.args));
-                $$.quad = qConcat($3.quad, q);
+                $$.quad = qConcat($1.quad, $3.quad);
+                $$.quad = qConcat($$.quad, q);
                 $$.ptr  = $1.ptr;
                 listFree($$.args);
             }
@@ -556,7 +557,6 @@ lvalue: IDENT_ {
 
 exprlist : expr {
                 transIfArray(&($1.quad), &($1.ptr), $1.args);
-
 
                 $$.al   = listNew(NULL, $1.ptr);
                 $$.quad = $1.quad;
