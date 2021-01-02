@@ -99,33 +99,21 @@
 \tableofcontents
 \newpage
 
-\csection{Introduction}
+\csection{Résumé}
 
-L'objectif de ce rapport est de résumer les capacités de notre compilateur SCALPA. Le compilateur génère du code MIPS à partir d'un code SCALPA. Nous avons réalisé ce projet de manière incrémentale, en implémentant les différentes fonctions au fur et à mesure.
+L'objectif de ce rapport est de résumer les capacités de notre compilateur SCALPA. Le compilateur génère du code MIPS à partir d'un pseudo code Pascal appellé SCALPA. Nous avons réalisé ce projet de manière incrémentale, en implémentant les différentes fonctions au fur et à mesure.
 
-Le projet a donc été séparé en sous taches :
-- Analyse lexicale
-- Implémentation des affectations et opérations arithmétiques
-- Implémentation des conditions
-- Implémentation des boucles
-- Implémentation des tableaux
-- Implémentation des fonctions
-
-Chaque sous partie peut être représentée comme un sprint dans une méthode de travail agile.
-En effet, nous avons commencé à développer le compilateur pour qu'il se limite aux affectations de variables ainsi que sur les opérations sur les entiers. Cette étape cruciale nous a permis de nous familiariser avec les mécanismes de génération de code par exemple.
-Après avoir implémenté les affectations et opérations arithmétiques, nous avons testé le compiateur via un jeu de test. Dès que la sous partie fut finie, nous avons pu passer à la prochaine phase du projet avec l'Implémentation des conditions.
-
-C'est ansi que s'est déroulé le developpement de ce compilateur en enchainant systématiquement les phases d'analyses lexicale, syntaxique, de génération de code et de test pour chaque sous partie.
-
-\csection{Capacités de notre compilateur}
+\csection{Spécification complète de notre compilateur SCALPA}
 
 Le compilateur est donc capable de générer un programme MIPS R2000 (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
 Le programme écrit en SCALPA peut donc supporter :
 \begin{itemize}
-    \item Des affectations sur les entiers, les booleens et les chaines de caractères
-    \item Des opérations sur les entiers ou des variables entières (additions, multiplications, soustraction, division, puissance) tout en respectant les priorités de calcul.
-    \item Des opérations sur les variables booleennes ou des constantes booleennes (OR, AND, XOR, NOT)
-    \item Les opérations de comparaisons sur les entiers sont également implémentés et peuvent être utilisés comme conditions (<, >, <=, >=, =, <>)
+    \item Des affectations d'entiers et booléens sur des variables ou des cases de tableaux.
+    \item Des opérations sur les entiers ou des variables entières (additions, multiplications, soustraction, division, modulo, puissance) tout en respectant les priorités de calcul. (opérations fonctionnelles avec les tableaux comme par exemple tab$[i]$ + tab$[j]$ ou encore tab[i,j,k] * tab[l,m,n] (tableaux multidimensionnels))
+    \item Des opérations sur les variables booleennes ou des constantes booleennes (OR, AND, XOR, NOT, opérations fonctionnelles avec les tableaux comme par exemple tab$[i]$ xor tab$[j]$)
+    \item Les opérations de comparaisons sur les entiers sont également implémentés et peuvent être utilisés comme conditions (<, >, <=, >=, =, <>, opérations fonctionnelles avec les tableaux comme par exemple tab$[i]$ xor tab$[j]$)
+    \item Des opérations sur des fonctions, fonctions récursives avec un passage de paramètres par valeur et par référence.
+
 \end{itemize}
 
 Ces opérations de comparaisons permettent de créer des conditions de type \textit{if cond then instr else instr } ou \textit{while cond do instr}. Les conditions sont implémentées et permettent de réaliser toutes sortes de boucles. Les conditions peuvent être des comparaisons sur des entiers, ou des opérations sur des booleens par exemple.
