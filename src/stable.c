@@ -331,15 +331,19 @@ void stablePrintAll (symbol *tos) {
 
 void stablePrint (symbol *tos) {
     while (tos != NULL) {
-        printf("%s: ", tos->id);
+        printf("%s\t ", tos->id);
+
         switch (tos->type) {
             case S_INT:
                 printf("INTEGER\t");
-                printf("%d\n",tos->ival) ;
+                printf("%d\t",tos->ival) ;
+                printf("used?%d\n ", tos->is_used);
+
                 break;
             case S_BOOL:
                 printf("BOOLEAN\t");
-                printf("%d\n",tos->bval) ;
+                printf("%d\t",tos->bval) ;
+                printf("used?%d\n ", tos->is_used);
                 break;
             case S_ARRAY:
                 printf("ARRAY\t"); // ajouter type de valeurs quand tableaux seront faits
@@ -359,6 +363,8 @@ void stablePrint (symbol *tos) {
                     printf("[%d .. %d]",tos->arr->dims->min,tos->arr->dims->max );
                     tos->arr->dims = tos->arr->dims->next ;
                 }
+                printf("used?%d\t", tos->is_used);
+
                 printf("\n");
 
                 break;
@@ -374,18 +380,20 @@ void stablePrint (symbol *tos) {
                 printf("Function : returns => ");
                 switch (tos->fdata->rtype) {
                     case S_INT:
-                        printf("INTEGER\n");
+                        printf("INTEGER\t");
                         break;
                     case S_BOOL:
-                        printf("BOOLEAN\n");
+                        printf("BOOLEAN\t");
                         break;
                     case S_UNIT:
-                        printf("UNIT\n");
+                        printf("UNIT\t");
                         break;
                     default:
                         //Others todo
                         break;
                 }
+                printf("used?%d\n", tos->is_used);
+
                 break;
             default:
                 break;

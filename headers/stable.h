@@ -15,7 +15,7 @@ typedef struct symbol {
     stype  type;
     bool   ref;
     struct symbol *next;
-
+    bool is_used ;
     union {
         int32_t ival;   // integer
         int8_t  bval;   // boolean

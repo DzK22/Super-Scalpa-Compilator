@@ -8,7 +8,7 @@
 
 
 program arith
-   var a, b, c, i, j, k : int;
+   var a, b, c, i, j, k,u : int;
    begin
      a := 10;
      b := a * 5 - 20;
