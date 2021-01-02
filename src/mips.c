@@ -371,8 +371,14 @@ void getText (FILE *f, quad *q) {
                     ferr("getText Q_FUNCALL quad error");
 
                 funcall(f, argv1, argv2, res);
-                if (argv2)
-                    free(argv2);
+                if (argv2) {
+                    symbol *cur = argv2, *prev;
+                    while (cur != NULL) {
+                        prev = cur;
+                        cur = cur->next;
+                        free(prev);
+                    }
+                }
                 break;
 
             case Q_FUNRETURN:
