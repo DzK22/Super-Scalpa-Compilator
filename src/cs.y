@@ -123,7 +123,6 @@
     int   ival;
     bool  bval;
     char  *sval;
-    char  signe;
     stype type;
     qop   op;
     struct arr_range *dimprop;
