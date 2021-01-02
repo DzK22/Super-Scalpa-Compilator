@@ -41,6 +41,27 @@ quad *qConcat (quad *q1, quad *q2) {
     return res;
 }
 
+// retourne le quad après celui supprimé
+quad * qDel (quad *qPrev, quad *q) {
+    if (qPrev == NULL || q == NULL)
+        ferr("qDel qPrev or q is NULL");
+
+    qPrev->next = q->next;
+    free(q);
+    return qPrev->next;
+}
+
+// retourne le quad inséré
+quad * qIns (quad *qAfter, quad *q) {
+    if (qAfter == NULL || q == NULL)
+        ferr("qIns qAfter or q is NULL");
+
+    quad *tmp    = qAfter->next;
+    qAfter->next = q;
+    q->next      = tmp;
+    return q;
+}
+
 void qPrint (quad *q) {
     quad *cur = q;
     if (cur == NULL)

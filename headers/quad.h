@@ -19,5 +19,7 @@ quad *qGen    (qop, struct symbol *, struct symbol *, struct symbol *);
 void  qFree   (quad *);
 quad *qConcat (quad *, quad *);
 void  qPrint  (quad *);
+quad *qDel    (quad *, quad *);
+quad *qIns    (quad *, quad *);
 
 #endif
