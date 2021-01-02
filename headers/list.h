@@ -22,11 +22,12 @@ typedef struct exprlist {
 	struct list *al;
 } exprlist;
 
-list * listNew    (char *, struct symbol *);
-void listFree     (list *);
-list * listConcat (list *, list *);
-void listPrint    (list *);
-struct symbol  * listToSymlist (list *);
+list * listNew       (char *, struct symbol *);
+void   listFree      (list *);
+list * listConcat    (list *, list *);
+void   listPrint     (list *);
 list * symListToList (struct symbol *);
+void   symListFree   (struct symbol *);
+struct symbol  * listToSymlist (list *);
 
 #endif

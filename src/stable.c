@@ -110,25 +110,17 @@ void sFree (symbol *s) {
         prev = cur;
         cur = cur->next;
 
-        if (prev->id != NULL) {
-            free(prev->id);
-            prev->id = NULL;
-        }
+        free(prev->id);
 
-        if (prev->type == S_STRING && prev->sval != NULL) {
+        if (prev->type == S_STRING)
             free(prev->sval);
-            prev->sval = NULL;
-        } else if (prev->type == S_ARRAY && prev->arr != NULL) {
-            if (prev->arr->dims != NULL) {
-                freeDimProp(prev->arr->dims);
-                prev->arr->dims = NULL;
-            }
-            prev->arr = NULL;
-        } else if (prev->type == S_FUNCTION && prev->fdata != NULL) {
+        else if (prev->type == S_ARRAY) {
+            freeDimProp(prev->arr->dims);
+            free(prev->arr);
+        } else if (prev->type == S_FUNCTION) {
             listFree(prev->fdata->al);
             sFree(prev->fdata->tos);
             free(prev->fdata);
-            prev->fdata = NULL;
         }
 
         free(prev);

@@ -285,6 +285,7 @@ void getText (FILE *f, quad *q) {
 
                 // argv1 only for array = for index calculation
                 qRead(f, res, argv1);
+                symListFree(argv1);
                 break;
 
             case Q_AFFEC:
@@ -293,6 +294,7 @@ void getText (FILE *f, quad *q) {
 
                 // argv2 only for array = for index calculation
                 qAffect(f, res, argv1, argv2);
+                symListFree(argv2);
                 break;
 
             case Q_LABEL:
@@ -371,14 +373,7 @@ void getText (FILE *f, quad *q) {
                     ferr("getText Q_FUNCALL quad error");
 
                 funcall(f, argv1, argv2, res);
-                if (argv2) {
-                    symbol *cur = argv2, *prev;
-                    while (cur != NULL) {
-                        prev = cur;
-                        cur = cur->next;
-                        free(prev);
-                    }
-                }
+                symListFree(argv2);
                 break;
 
             case Q_FUNRETURN:
@@ -703,21 +698,28 @@ void arrComputeIndex (FILE *f, symbol *sarr, symbol *args) {
     pins3("li", "$t8", "0"); // $t8 = index
     pins3("li", "$t7", "1"); // $t7 = factor
 
-    while (rlal && rldp) {
-        pins3("lw", "$t0", rlal->al->sym->id); // $t0 cur ind
-        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->min));
+    rlist *rlalcur = rlal;
+    rlist *rldpcur = rldp;
+
+    while (rlalcur && rldpcur) {
+        pins3("lw", "$t0", rlalcur->al->sym->id); // $t0 cur ind
+        snpt(snprintf(tbuf, LEN, "%d", rldpcur->dp->min));
         pins3("li", "$t1", tbuf); // $t1 min
-        snpt(snprintf(tbuf, LEN, "%d", rldp->dp->max));
+        snpt(snprintf(tbuf, LEN, "%d", rldpcur->dp->max));
         pins3("li", "$t2", tbuf); // $t2 max
         pins2("jal", "_compind");
 
-        rlal = rlal->next;
-        rldp = rldp->next;
+        rlalcur = rlalcur->next;
+        rldpcur = rldpcur->next;
     }
+
     snpt(snprintf(tbuf, LEN, "%d", sarr->arr->size));
     pins3("li", "$t9", tbuf);
     pins4("bgt", "$t8", "$t9", "_segfault");
-    free(lal);
+
+    rlistFree(rlal);
+    rlistFree(rldp);
+    listFree(lal);
 }
 
 

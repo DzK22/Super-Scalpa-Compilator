@@ -20,7 +20,8 @@ void listFree (list *l) {
 		prec = l;
 		l = l->next;
 
-		free(prec->id);
+		if (prec->id != NULL)
+			free(prec->id);
 		free(prec);
 	}
 }
@@ -53,7 +54,7 @@ void listPrint (list *la) {
 }
 
 // Utile pour convertir les list de function call en liste de symbol * pour passer en param de qGen
-symbol *listToSymlist (list *al) {
+symbol * listToSymlist (list *al) {
 		symbol *slist = NULL, *slast = NULL, *cur;
 
 		while (al) {
@@ -81,11 +82,25 @@ symbol *listToSymlist (list *al) {
 		return slist;
 }
 
-list *symListToList (symbol *sl) {
-	list *res = NULL, *l;
+void symListFree (symbol *sl) {
+	symbol *last;
 
 	while (sl != NULL) {
-		l   = listNew(sl->id, sl);
+		last = sl;
+		sl = sl->next;
+		free(last);
+	}
+}
+
+list *symListToList (symbol *sl) {
+	list *res = NULL, *l;
+	char *id;
+
+	while (sl != NULL) {
+		if ((id = strdup(sl->id)) == NULL)
+			ferr("symListToList strdup id");
+
+		l   = listNew(id, sl);
 		res = listConcat(res, l);
 		sl  = sl->next;
 	}

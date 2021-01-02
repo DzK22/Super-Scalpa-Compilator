@@ -4,6 +4,8 @@
 rlist *rlistNew (list *al, dimProp *dp) {
 	if (al && dp)
 		ferr("rlistNew - only one of al or dp should be set");
+	if (!al && !dp)
+		ferr("rlistNew - one of al or dp should be set");
 
 	rlist *rl = NULL, *last = NULL;
 
@@ -15,35 +17,27 @@ rlist *rlistNew (list *al, dimProp *dp) {
 		rl->next = last;
 		last     = rl;
 
-		rl->al = NULL;
-		rl->dp = NULL;
 
-		if (al)
+		if (al) {
+			rl->dp = NULL;
 			rl->al = al;
-		else
+			al     = al->next;
+		} else {
+			rl->al = NULL;
 			rl->dp = dp;
-
-		if (al)
-			al = al->next;
-		else
-			dp = dp->next;
+			dp     = dp->next;
+		}
 	}
 
 	return rl;
 }
 
-void rlistFree (rlist *rl){
+void rlistFree (rlist *rl) {
 	rlist *prec;
 
 	while (rl != NULL) {
 		prec = rl;
-		rl = rl->next;
-
-		if (prec->al != NULL)
-			listFree(prec->al);
-		if (prec->dp != NULL)
-			freeDimProp(prec->dp);
-			
+		rl   = rl->next;
 		free(prec);
 	}
 }

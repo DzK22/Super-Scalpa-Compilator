@@ -910,9 +910,11 @@ int main (int argc, char **argv) {
     if (*progName)
         free(progName);
     sFree(stable);
+
     if (fclose(output) == EOF)
         yferr("fclose error");
     if (fclose(yyin) == EOF)
         yferr("fclose error");
+
     return EXIT_SUCCESS;
 }
