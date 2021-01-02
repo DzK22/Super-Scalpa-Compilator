@@ -104,7 +104,7 @@
      }
 
     void transIfArray (quad **qar, symbol **sar, list *args) {
-        if ((*sar)->type != S_ARRAY)
+        if ((*sar)->type != S_ARRAY || args == NULL)
             return;
 
         symbol *arrVal;
@@ -549,23 +549,20 @@ lvalue: IDENT_ {
                     yferr("lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Indices doesnt match");
 
                 $$.ptr  = ptr;
-                $$.quad = NULL ;
+                $$.quad = $3.quad;
                 $$.args = $3.al;
             }
       ;
 
 exprlist : expr {
-                printf("tatata\n");
-                if ($1.ptr->type == S_ARRAY)
-                    transIfArray(&($1.quad), &($1.ptr), $1.args);
+                transIfArray(&($1.quad), &($1.ptr), $1.args);
+
 
                 $$.al   = listNew(NULL, $1.ptr);
                 $$.quad = $1.quad;
              }
         |  expr COMMA_ exprlist {
-                printf("tototot\n");
-                if ($1.ptr->type == S_ARRAY)
-                    transIfArray(&($1.quad), &($1.ptr), $1.args);
+                transIfArray(&($1.quad), &($1.ptr), $1.args);
 
                 list *al = listNew(NULL, $1.ptr);
                 $$.al    = listConcat(al, $3.al);
@@ -846,7 +843,7 @@ expr :  expr PLUS_ expr {
               yferr("lvalue : IDENT_ BRALEFT_ exprlist BRARIGHT_ - Indices doesnt match");
 
           $$.ptr  = ptr;
-          $$.quad = NULL;
+          $$.quad = $3.quad;
           $$.args = $3.al;
          }
       | IDENT_ {

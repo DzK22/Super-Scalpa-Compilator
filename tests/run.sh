@@ -31,7 +31,7 @@ reset=`tput sgr0`
  mv *.s mips/
 
  i=1
- total=17 # total number of tests
+ total=`ls mips | wc -l` # total number of tests
 
  for file in `ls mips`; do
    echo "----------  SPIM -f $file  ----------"
