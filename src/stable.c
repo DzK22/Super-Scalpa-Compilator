@@ -104,27 +104,35 @@ symbol *sAdd (symbol **tos) {
 //Juste Free l'id et sval (si string) quand hashTable sera prête
 void sFree (symbol *s) {
     symbol *cur = s;
-    symbol *prev;
+    symbol *prev = NULL;
 
     while (cur != NULL) {
+        sDel(prev, cur);
         prev = cur;
-        cur = cur->next;
-
-        free(prev->id);
-
-        if (prev->type == S_STRING)
-            free(prev->sval);
-        else if (prev->type == S_ARRAY) {
-            freeDimProp(prev->arr->dims);
-            free(prev->arr);
-        } else if (prev->type == S_FUNCTION) {
-            listFree(prev->fdata->al);
-            sFree(prev->fdata->tos);
-            free(prev->fdata);
-        }
-
-        free(prev);
+        cur  = cur->next;
     }
+}
+
+void sDel (symbol *sPrev, symbol *s) {
+    if (s == NULL)
+        ferr("sDel s is NULL");
+
+    if (sPrev != NULL)
+        sPrev->next = s->next;
+
+    if (s->type == S_STRING)
+        free(s->sval);
+    else if (s->type == S_ARRAY) {
+        freeDimProp(s->arr->dims);
+        free(s->arr);
+    } else if (s->type == S_FUNCTION) {
+        listFree(s->fdata->al);
+        sFree(s->fdata->tos);
+        free(s->fdata);
+    }
+
+    free(s->id);
+    free(s);
 }
 
 /**
@@ -304,6 +312,21 @@ symbol *search (symbol *gtos, symbol *curfun, char *id) {
         return s;
 
     return searchTable(gtos, id, curfun);
+}
+
+void stablePrintAll (symbol *tos) {
+    printf("\n ### TOS GLOBAL ###\n");
+    stablePrint(tos);
+
+    while (tos != NULL) {
+        if (tos->type == S_FUNCTION) {
+            printf("\n ### TOS OF FUNCTION %s ###\n", tos->id);
+            stablePrint(tos->fdata->tos);
+        }
+        tos = tos->next;
+    }
+
+    printf("\n");
 }
 
 void stablePrint (symbol *tos) {

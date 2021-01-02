@@ -7,7 +7,7 @@
 #include "list.h"
 
 void optiLoop        (quad **code, symbol **gtos);
-int optiDeadCode     (quad **code);
-int optiVarDuplicate (quad **code);
+int optiDeadCode     (quad **code, symbol **tos);
+int optiDuplicateCst (quad **code, symbol **tos);
 
 #endif

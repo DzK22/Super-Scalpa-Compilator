@@ -40,6 +40,7 @@ typedef struct h_table {
 void   sFree        (symbol *);
 symbol *sAlloc      (void);
 symbol *sAdd        (symbol **);
+void    sDel        (symbol *, symbol *);
 symbol *searchTable (symbol *, char *, symbol *);
 symbol *search      (symbol *, symbol *, char *);
 
@@ -56,6 +57,7 @@ symbol *newProg     (symbol **, char *);
 symbol *newVarArray (symbol **, char *, struct s_array *, symbol *, bool);
 
 void   stablePrint  (symbol *);
+void   stablePrintAll (symbol *);
 
 /************************/
 /*                      */

@@ -41,8 +41,7 @@
 
     void testID (symbol *s, char *name) {
         if(s == NULL) {
-            fundata *fdata = curfun->fdata;
-            stablePrint(fdata->tos);
+            stablePrintAll(stable);
             snpt(snprintf(tbuf, LEN, "ID \"%s\" not exists", name));
             yferr(tbuf);
         }
@@ -544,10 +543,18 @@ lvalue: IDENT_ {
       ;
 
 exprlist : expr {
+                printf("tatata\n");
+                if ($1.ptr->type == S_ARRAY)
+                    transIfArray(&($1.quad), &($1.ptr), $1.args);
+
                 $$.al   = listNew(NULL, $1.ptr);
                 $$.quad = $1.quad;
              }
         |  expr COMMA_ exprlist {
+                printf("tototot\n");
+                if ($1.ptr->type == S_ARRAY)
+                    transIfArray(&($1.quad), &($1.ptr), $1.args);
+
                 list *al = listNew(NULL, $1.ptr);
                 $$.al    = listConcat(al, $3.al);
                 $$.quad  = qConcat($1.quad, $3.quad);
@@ -902,7 +909,7 @@ int main (int argc, char **argv) {
     getMips(output, stable, all_code);
 
     if (tos)
-        stablePrint(stable);
+        stablePrintAll(stable);
 
     freeLex();
     qFree(all_code);

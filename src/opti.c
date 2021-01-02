@@ -14,8 +14,8 @@ void optiLoop (quad **code, symbol **gtos) {
 		loops ++;
 		cnt = 0;
 
-		cnt += optiDeadCode(code);
-		cnt += optiVarDuplicate(code);
+		cnt += optiDeadCode(code, gtos);
+		cnt += optiDuplicateCst(code, gtos);
 
 		res = snprintf(tbuf, LEN, "LOOP [%d] => %2d changes", loops, cnt);
 		if (res < 0 || res >= LEN)
@@ -25,9 +25,10 @@ void optiLoop (quad **code, symbol **gtos) {
 	}
 }
 
-int optiDeadCode (quad **code) {
+int optiDeadCode (quad **code, symbol **tos) {
 	int cnt = 0;
 	quad *q = *code;
+	(void) tos;
 
 	while (q != NULL) {
 		// sup code mort
@@ -37,12 +38,12 @@ int optiDeadCode (quad **code) {
 	return cnt;
 }
 
-int optiVarDuplicate (quad **code) {
+int optiDuplicateCst (quad **code, symbol **tos) {
 	int cnt = 0;
 	quad *q = *code;
+	(void) tos;
 
 	while (q != NULL) {
-		// sup variables dupliquées
 		q = q->next;
 	}
 

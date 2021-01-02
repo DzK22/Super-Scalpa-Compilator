@@ -1,0 +1,17 @@
+program tabindind
+    var t : array[1..10] of int;
+
+    function toto (a : int, b : int) : unit
+    begin
+        write "a = ";
+        write a;
+        write ", b = ";
+        write b;
+    end;
+
+begin
+    t[1] := 3;
+    t[3] := 7;
+    toto(t[1], t[t[1]]);
+    write "\n";
+end
