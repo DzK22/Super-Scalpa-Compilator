@@ -125,6 +125,55 @@ Le compilateur est donc capable de générer un programme MIPS R2000 (utilisable
 
 Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
 
+\begin{tabular}{c}
+  \hline
+  Expressions arithmétiques et affectations \\
+  \hline
+  Affectations et opérations sur les entiers \\
+  Opérateur & Support & Commentaire \\
+  := & X & Affectation entière\\
+  + & X & Addition entière \\
+  - & X & Soustraction entière \\
+  -(unaire) & X & Moins unaire \\
+  * & X & Multiplication \\
+  / & X & Division \\
+  ^ & X & Opérateur exponentiel \\
+  \% & X & Modulo \\
+  < ou > & X & Comparaisons entières strictes \\
+  <= ou >= & X & Comparaisons entières \\
+  = & X & Egalité entières \\
+  <> & X & Différence entière \\
+  Affectations et opérations sur les booleens \\
+  := & X & Affectation booléenne \\
+  and & X & Opération AND \\
+  or & X & Opération OR \\
+  xor & X & Opération XOR \\
+  not & X & Opération NOT \\
+  \hline
+\end{tabular}
+
+\begin{tabular}{c}
+  \hline
+  Structures de controles\\
+  \hline
+  Structure & Support & Commentaire \\
+  if expr then instr & X & Conditionnelle simple \\
+  if expr then instr else instr & X & Conditionnelle avec else \\
+  while expr do instr & X & Conditionnelle while \\
+  \hline
+\end{tabular}
+
+
+\begin{tabular}{c}
+  \hline
+  Fonctionnalités des tableaux multidimensionnels \\
+  \hline
+  Instruction & Support & Commentaire \\
+  array[-x1..y1, x2..y2] of type & X & Définition avec index et intervales \\
+  tabe[i,j]:=x & X & Affectation à une case d'un tableau \\
+  \hline
+\end{tabular}
+
 Le programme écrit en SCALPA peut donc supporter :
 \begin{itemize}
     \item Des affectations d'entiers et booléens sur des variables ou des cases de tableaux.
