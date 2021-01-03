@@ -1,0 +1,46 @@
+program bubblesort
+var tab : array [1..10] of int;
+var i, size : int;
+
+    function bsort (ref tab : array[1..10] of int, size : int) : unit
+    var i, j, tmp : int;
+    begin
+        i := 1;
+        while i <= size do
+        begin
+            j := i + 1;
+            while j <= size do
+            begin
+                if tab[i] > tab[j] then
+                begin
+                    tmp := tab[i];
+                    tab[i] := tab[j];
+                    tab[j] := tmp;
+                end;
+                j := j + 1;
+            end;
+            i := i + 1;
+        end;
+    end;
+
+begin
+    tab[1] := 25;
+    tab[2] := 13;
+    tab[3] := 17;
+    tab[4] := 09;
+    tab[5] := 10;
+    tab[6] := 29;
+    tab[7] := 12;
+    tab[8] := 6;
+    tab[9] := 1;
+    tab[10] := 0;
+    size := 10;
+    bsort(tab, size);
+    i := 1;
+    while i <= size do
+    begin
+        write tab[i];
+        write "\n";
+        i := i + 1;
+    end;
+end

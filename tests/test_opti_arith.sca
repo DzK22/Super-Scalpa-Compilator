@@ -14,12 +14,16 @@ begin
 end;
 begin
     write test(true, true);
+    write "\n";
     (* write true and true xor false; *)
     a := 5;
     b := 3;
     tab[1] := 5;
-    write tab[1];
-    tab[tab[1]] := 22;
+    tab[3] := 10;
+    tab[10] := 50;
+    tab[tab[1]] := tab[tab[b]];
     write tab[5];
+    write "\n";
+    write 09;
     write "\n";
 end
