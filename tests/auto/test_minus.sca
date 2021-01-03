@@ -1,8 +1,0 @@
-program test_minus
-var i, j : int
-begin
-    i := -10;
-    j := 2;
-    write i * j;
-    write "\n";
-end

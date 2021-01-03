@@ -7,6 +7,7 @@ reset=`tput sgr0`
 
 mkdir -p tests/compil
 rm tests/compil/* 2> /dev/null
+rm tests/mips/* 2> /dev/null
 
 # Update files
 # make
@@ -60,7 +61,7 @@ echo ""
          else
              echo "We are waiting results like :  "
              cat tests/results/$file.res
-             echo "We got this  :  "
+             echo -e "\nWe got this :  "
              cat tests/tmp_res
              echo  "${red}>>>>>>>>>>> Test $i/$total tests/mips/$file FAILED ${reset}"
          fi

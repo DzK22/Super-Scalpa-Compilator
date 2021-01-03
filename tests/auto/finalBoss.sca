@@ -1,0 +1,94 @@
+(* BOSS FINAL SSC => Mélange de toutes les fonctionnalités *)
+
+program finalBoss
+var i, j, a : int;
+var t, s : array [-2..2, 4..8, -6..-2] of bool;
+var arr, arr2 : array [40..80] of int;
+var b : bool;
+
+    function pif (a : int, ref t : array[-2..2, 4..8, -6..-2] of bool, b : bool) : bool
+        var p, d : int;
+    begin
+        if a < 0 then
+        begin
+            p := a * 2;
+            d := p - 3;
+        end else
+        begin
+            p := a * 10;
+            d := -p;
+        end;
+
+        t[-2, 4, -6] := true;
+        t[1, 7, -2] := true;
+        t[-1, 5, -6] := p < d xor true;
+
+        if b then return false else return true;
+    end;
+
+    function paf (
+        ref t : array [40..80] of int,
+        t2 : array [40..80] of int)
+    : unit
+        var inf, sup, i : int;
+    begin
+        inf     := 40;
+        sup     := 80;
+        i       := inf;
+
+        while i <= sup do
+        begin
+            t[i] := t[i] + t2[i];
+            i := i + 1;
+        end;
+    end;
+
+    function tprint (ref t : array[40..80] of int) : unit
+        var k : int;
+    begin
+        k := 40;
+        write "tprint t :\n";
+
+        while k <= 80 do
+        begin
+            write "[";
+            write k;
+            write "] = ";
+            write t[k];
+
+            if k < 80 then write ", ";
+            k := k + 1;
+        end;
+
+        write "\n";
+    end;
+
+begin
+
+    a := 44 ;
+    b := true ;
+    pif(a, t, b) ;
+
+    i := 40;
+    j := 0;
+    while i <= 80 do
+    begin
+        arr[i] := j;
+        j := j + 2;
+        i := i + 1;
+    end;
+
+    write t[-2, 4, -6] ; (* true *)
+    write "\n";
+
+    write t[1, 7, -2] ; (* true *)
+    write "\n";
+
+    write t[-1, 5, -6] ; (* true / false *)
+    write "\n";
+
+    paf(arr2, arr); (*s passé en référence *)
+    write "\n";
+    tprint(arr2);
+    write "\n";
+end
