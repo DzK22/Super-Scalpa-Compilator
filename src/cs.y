@@ -993,7 +993,7 @@ int main (int argc, char **argv) {
     qFree(all_code);
     if (*progName)
         free(progName);
-        
+
     sFree(stable);
 
     if (fclose(output) == EOF)

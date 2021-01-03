@@ -13,7 +13,6 @@ void optiLoop (quad **code, symbol **gtos) {
 		loops ++;
 		cnt = 0;
 
-		cnt += optiDeadCode(code, gtos);
 		cnt += optiDuplicateCst(code, gtos);
 		cnt += optiArithOp(code, gtos);
 
@@ -25,24 +24,11 @@ void optiLoop (quad **code, symbol **gtos) {
 	}
 }
 
-int optiDeadCode (quad **code, symbol **tos) {
-	int cnt = 0;
-	quad *q = *code;
-	(void) tos;
-
-	while (q != NULL) {
-		// sup code mort
-		q = q->next;
-	}
-
-	return cnt;
-}
-
 int optiDuplicateCst (quad **code, symbol **tos) {
 	int cnt = 0;
 	quad *q;
 	symbol *s = *tos;
-	symbol *s1, *s2, *s3, *s4, *s5;
+	symbol *s1, *s2, *s3, *s4, *s5, *s6;
 	list *l, *l1;
 	bool changed; // SECURITY => don't remove the var if no change has been found
 
@@ -54,15 +40,14 @@ int optiDuplicateCst (quad **code, symbol **tos) {
 			while (s1 != NULL) {
 				if (s != s1 && sameTypeValue(s, s1) && !optiCheckModified(*code, s1)) {
 					// replace all quad which use s1 by s and delete s1
-					printf("\n--- optiDuplicateCst --- %s and %s are similar ! change all quads which use %s by %s ...\n", s->id, s1->id, s1->id, s->id);
 					q = *code;
 					changed = false;
 
 					while (q != NULL) {
 
 						if ((q->op == Q_FUNCALL && q->argv2 != NULL)
-						|| (q->op == Q_AFFEC && q->argv2 != NULL)
-						|| (q->op == Q_READ && q->argv1 != NULL)) {
+								|| (q->op == Q_AFFEC && q->argv2 != NULL)
+								|| (q->op == Q_READ && q->argv1 != NULL)) {
 
 							if (q->op == Q_READ) {
 								s2 = q->argv1;
@@ -82,7 +67,6 @@ int optiDuplicateCst (quad **code, symbol **tos) {
 										if (strcmp(s1->id, s3->id) == 0) {
 											l1 = listNew(NULL, s);
 											cnt ++;
-											printf("--- found in arglist");
 										} else
 											l1 = listNew(NULL, s3);
 
@@ -90,12 +74,14 @@ int optiDuplicateCst (quad **code, symbol **tos) {
 										s3 = s3->next;
 									}
 
+									s6 = listToSymlist(l);
+
 									if (q->op == Q_READ) {
 										symListFree(q->argv1);
-										q->argv1 = listToSymlist(l);
+										q->argv1 = s6;
 									} else {
 										symListFree(q->argv2);
-										q->argv2 = listToSymlist(l);
+										q->argv2 = s6;
 									}
 
 									listFree(l);
@@ -107,13 +93,11 @@ int optiDuplicateCst (quad **code, symbol **tos) {
 						}
 
 						if (q->argv1 != NULL && strcmp(s1->id, q->argv1->id) == 0) {
-							printf("--- found argv1\n");
 							q->argv1 = s;
 							changed = true;
 							cnt ++;
 						}
 						if (q->argv2 != NULL && strcmp(s1->id, q->argv2->id) == 0) {
-							printf("--- found argv2\n");
 							q->argv2 = s;
 							changed = true;
 							cnt ++;
@@ -126,13 +110,11 @@ int optiDuplicateCst (quad **code, symbol **tos) {
 						// delete s1
 						s5 = s1;
 						s1 = s1->next;
-						printf("--- <<< DELETED: %s\n", s5->id);
 						sDel(s4, s5);
 
 						cnt ++;
 						continue;
-					} else
-						printf("--- !!!!!!!!! NO CHANGES !!!!!!!!!\n");
+					}
 				}
 
 				s4 = s1;
@@ -143,7 +125,6 @@ int optiDuplicateCst (quad **code, symbol **tos) {
 		s = s->next;
 	}
 
-	printf("\n");
 	return cnt;
 }
 
@@ -206,6 +187,7 @@ int expArith (quad *q) {
 	if (q->op != Q_EXP)
 		return 0;
 	symbol *a1 = q->argv1, *a2 = q->argv2;
+
 	if (a1->is_cst) {
 		if (a1->ival == 0 || a1->ival == 1) {
 			q->op = Q_AFFEC;
@@ -213,19 +195,13 @@ int expArith (quad *q) {
 			return 1;
 		}
 	}
-	if (a2->is_cst) {
-		/*if (a2->ival == 0) {
-			q->op = Q_AFFEC;
-			q->argv1 = //JE SAIS PAS QUOI FAIRE ICI;
-			q->argv2 = NULL;
-			return 1;
-		}*/
-		if (a2->ival == 1) {
-			q->op = Q_AFFEC;
-			q->argv2 = NULL;
-			return 1;
-		}
+
+	if (a2->is_cst && a2->ival == 1) {
+		q->op = Q_AFFEC;
+		q->argv2 = NULL;
+		return 1;
 	}
+
 	return 0;
 }
 
@@ -233,48 +209,25 @@ int optiArithOp (quad **code, symbol **tos) {
 	quad *q = *code;
 	(void)tos;
 	int cnt = 0;
+
 	while (q != NULL) {
 		cnt += zeroAdd(q);
 		cnt += oneMult(q);
 		cnt += expArith(q);
 		q = q->next;
 	}
+
 	return cnt;
 }
 
 bool optiCheckModified (quad *code, symbol *s) {
-	symbol *smtp;
-	/* printf("optiCheckModified pour %s = ", s->id); */
-
 	while (code != NULL) {
-		if (code->res != NULL && strcmp(s->id, code->res->id) == 0) {
-			/* printf("true\n"); */
+		if (code->res != NULL && strcmp(s->id, code->res->id) == 0)
 			return true;
-		}
-
-		if ((code->op == Q_FUNCALL && code->argv2 != NULL)
-		|| (code->op == Q_AFFEC && code->argv2 != NULL)
-		|| (code->op == Q_READ && code->argv1 != NULL)) {
-
-			if (code->op == Q_READ)
-				smtp = code->argv1;
-			else
-				smtp = code->argv2;
-
-			while (smtp != NULL) {
-				if (strcmp(s->id, smtp->id) == 0) {
-					/* printf("true\n"); */
-					return true;
-				}
-
-				smtp = smtp->next;
-			}
-		}
 
 		code = code->next;
 	}
 
-	/* printf("false\n"); */
 	return false;
 }
 
