@@ -1,13 +1,14 @@
 program optiTest
 var a, b, c, i, j : int;
-
+var t : array [1..10] of int;
 begin
     a := 10;
     b := 20;
-    c := b + 0;
+    c := a + 0;
     write c;
     i := 1;
+    t[i] := b;
     write "\n";
-    write b * 1;
+    write 1 * (t[1] * 0);
     write "\n";
 end

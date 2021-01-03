@@ -127,9 +127,7 @@ int zeroAdd (quad *q) {
 		return 0;
 	symbol *argv1 = q->argv1, *argv2 = q->argv2;
 	if (argv1->is_cst) {
-		printf("argv1 = %s, argv2 = %s\n", argv1->id, argv2->id);
 		if (argv1->ival == 0) {
-			printf("YAAA\n");
 			q->op = Q_AFFEC;
 			q->argv1 = argv2;
 			q->argv2 = NULL;
@@ -138,7 +136,6 @@ int zeroAdd (quad *q) {
 	}
 	if (argv2->is_cst) {
 		if (argv2->ival == 0) {
-			printf("YOOO\n");
 			q->op = Q_AFFEC;
 			q->argv2 = NULL;
 			return 1;
@@ -158,10 +155,21 @@ int oneMult (quad *q) {
 			q->argv2 = NULL;
 			return 1;
 		}
+		if ((q->op == Q_MULT || q->op == Q_DIV) && a1->ival == 0) {
+			q->op = Q_AFFEC;
+			q->argv2 = NULL;
+			return 1;
+		}
 	}
 	if (a2->is_cst) {
 		if (a2->ival == 1) {
 			q->op = Q_AFFEC;
+			q->argv2 = NULL;
+			return 1;
+		}
+		if (q->op == Q_MULT && a2->ival == 0) {
+			q->op = Q_AFFEC;
+			q->argv1 = a2;
 			q->argv2 = NULL;
 			return 1;
 		}
