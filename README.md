@@ -52,6 +52,6 @@ L'éxécutable supporte les options suivantes :
 - -version : permet d'obtenir des information sur le compilateur scalpa
 - -tos : permet d'afficher la table des symboles en fin de compilation d'un programme
 - -o <fichier> : permet de rediriger la sortie du compilateur dans le fichier destination
-- -optim  : permet de faire des optimisations sur le programme d'entrée [suppression variables inutiles, code mort ...]
+- -opti  : permet de faire des optimisations sur le programme d'entrée [suppression variables inutiles, code mort ...]
 
 © 2020
