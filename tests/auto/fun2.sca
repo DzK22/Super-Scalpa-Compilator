@@ -1,4 +1,4 @@
-program Fun2
+program fun2
     var d : int;
 
     function f1 (k : int) : int

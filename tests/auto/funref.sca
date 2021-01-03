@@ -1,4 +1,4 @@
-program Funref
+program funref
     var a : int;
 
     function test (ref t : int) : unit

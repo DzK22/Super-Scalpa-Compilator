@@ -1,4 +1,4 @@
-program prime_checker
+program prime_check
     var n, r, i : int;
     begin
         n := 7 ;

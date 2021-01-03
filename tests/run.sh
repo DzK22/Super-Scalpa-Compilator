@@ -5,55 +5,72 @@ green=`tput setaf 2`
 yellow=`tput setaf 3`
 reset=`tput sgr0`
 
+mkdir -p tests/compil
+rm tests/compil/*.sca.res 2> /dev/null
+
 # Update files
-    # make
+# make
 
- echo ""
- echo "#####################################################"
- echo "###########   COMPILING SCALPA FILES    #############"
- echo "#####################################################"
- echo ""
+echo ""
+echo "#####################################################"
+echo "###########   COMPILING SCALPA FILES    #############"
+echo "#####################################################"
+echo ""
 
- for file in `ls tests/auto`; do
-  echo "----------  Compiling $file  ----------"
-  ./scalpa tests/auto/$file
-  echo ""
+for file in `ls tests/auto`; do
+    echo "----------  Compiling $file  ----------"
+    ./scalpa -o tests/mips/${file::-4} tests/auto/$file 2> tests/tmp_res
 
- done
+    if [ $? -eq "0" ]; then
+        echo "" > tests/compil/$file.res
+    else
+        cat tests/tmp_res > tests/compil/$file.res
+    fi
 
- echo ""
- echo "#####################################################"
- echo "#############   RUN MIPS FILES    ###################"
- echo "#####################################################"
- echo ""
+    echo ""
+
+done
+
+echo ""
+echo "#####################################################"
+echo "#############   RUN MIPS FILES    ###################"
+echo "#####################################################"
+echo ""
 
  # move mips files
- mkdir -p mips
- mv *.s mips/
+ mkdir -p tests/mips
 
  i=1
- total=`ls mips | wc -l` # total number of tests
+ total=`ls tests/compil | wc -l` # total number of tests
  success=0
 
- for file in `ls mips`; do
-   echo "----------  SPIM -f $file  ----------"
-   spim -f mips/$file | grep "Loaded: /usr" --after-context=10000 | tail -n +2 > tmp_res
-   if cmp -s tmp_res tests/results/$file.res; then
-        echo  "${green}>>>>>>>>>>> Test $i/$total mips/$file  PASSED ${reset} "
-        ((success++))
-   else
-        echo "We are waiting results like :  "
-        cat tests/results/$file.res
-        echo "We got this  :  "
-        cat tmp_res
-        echo  "${red}>>>>>>>>>>> Test $i/$total mips/$file FAILED ${reset}"
-   fi
+ for compfile in `ls tests/compil`; do
+     file=${compfile::-8}.s
 
-   ((i++))
-   echo ""
+     if [ ! -e tests/compil/$compfile ] || [ $(cat tests/compil/$compfile | wc -c) -gt 1 ]; then
+         cat tests/compil/$compfile
+         echo  "${red}>>>>>>>>>>> Test $i/$total tests/compil/$compfile FAILED ${reset}"
+     else
+         echo "----------  SPIM -f $file  ----------"
+         spim -f tests/mips/$file | grep "Loaded: /usr" --after-context=10000 | tail -n +2 > tests/tmp_res
+
+         if cmp -s tests/tmp_res tests/results/$file.res; then
+             echo  "${green}>>>>>>>>>>> Test $i/$total tests/mips/$file  PASSED ${reset} "
+             ((success++))
+         else
+             echo "We are waiting results like :  "
+             cat tests/results/$file.res
+             echo "We got this  :  "
+             cat tests/tmp_res
+             echo  "${red}>>>>>>>>>>> Test $i/$total tests/mips/$file FAILED ${reset}"
+         fi
+     fi
+
+     ((i++))
+     echo ""
  done
 
- rm tmp_res
+ rm tests/tmp_res
  echo "${yellow}################################################"
  echo "#######  RESULTS: $(printf "%8s" "$success / $total") TESTS PASSED  #######"
  echo "################################################${yellow}"
