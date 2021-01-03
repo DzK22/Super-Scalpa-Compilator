@@ -868,7 +868,7 @@ expr :  expr PLUS_ expr {
                                   break;
                   default: yferr("expr : CTE_ - Unknow cte type");
               }
-
+              ptr->is_cst = true;
               $$.ptr  = ptr;
               $$.quad = NULL;
               $$.args = NULL;

@@ -14,6 +14,7 @@ typedef struct symbol {
     bool   tmp; // is tmp var ? (true = cannot be modified by user)
     stype  type;
     bool   ref;
+    bool   is_cst;
     struct symbol *next;
     bool is_used ;
     union {

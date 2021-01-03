@@ -82,6 +82,7 @@ symbol *sAlloc (void) {
     ns->type = S_NONE;
     ns->next = NULL;
     ns->sval = NULL;
+    ns->is_cst = false;
 
     return ns;
 }

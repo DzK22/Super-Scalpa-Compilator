@@ -15,7 +15,7 @@ void optiLoop (quad **code, symbol **gtos) {
 
 		cnt += optiDeadCode(code, gtos);
 		/* cnt += optiDuplicateCst(code, gtos); */
-
+		cnt += optiArithOp(code, gtos);
 		res = snprintf(tbuf, LEN, "LOOP [%d] => %2d changes", loops, cnt);
 		if (res < 0 || res >= LEN)
 			ferr("optiLoop snprintf");
@@ -119,6 +119,65 @@ int optiDuplicateCst (quad **code, symbol **tos) {
 		s = s->next;
 	}
 
+	return cnt;
+}
+
+int zeroAdd (quad *q) {
+	if (q->op != Q_PLUS && q->op != Q_MINUS)
+		return 0;
+	symbol *argv1 = q->argv1, *argv2 = q->argv2;
+	if (argv1->is_cst) {
+		printf("argv1 = %s, argv2 = %s\n", argv1->id, argv2->id);
+		if (argv1->ival == 0) {
+			printf("YAAA\n");
+			q->op = Q_AFFEC;
+			q->argv1 = argv2;
+			q->argv2 = NULL;
+			return 1;
+		}
+	}
+	if (argv2->is_cst) {
+		if (argv2->ival == 0) {
+			printf("YOOO\n");
+			q->op = Q_AFFEC;
+			q->argv2 = NULL;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int oneMult (quad *q) {
+	if (q->op != Q_MULT && q->op != Q_DIV)
+		return 0;
+	symbol *a1 = q->argv1, *a2 = q->argv2;
+	if (a1->is_cst) {
+		if (a1->ival == 1) {
+			q->op = Q_AFFEC;
+			q->argv1 = a2;
+			q->argv2 = NULL;
+			return 1;
+		}
+	}
+	if (a2->is_cst) {
+		if (a2->ival == 1) {
+			q->op = Q_AFFEC;
+			q->argv2 = NULL;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int optiArithOp (quad **code, symbol **tos) {
+	quad *q = *code;
+	(void)tos;
+	int cnt = 0;
+	while (q != NULL) {
+		cnt += zeroAdd(q);
+		cnt += oneMult(q);
+		q = q->next;
+	}
 	return cnt;
 }
 
