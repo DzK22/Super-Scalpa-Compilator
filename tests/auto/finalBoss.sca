@@ -2,8 +2,10 @@
 
 program finalBoss
 var i, j, a : int;
-var t, s : array [-2..2, 4..8, -6..-2] of bool;
-var arr, arr2 : array [40..80] of int;
+var t : array [-2..2, 4..8, -6..-2] of bool;
+var s : array [-2..2, 4..8, -6..-2] of bool;
+var arr : array [40..80] of int;
+var arr2 : array [40..80] of int;
 var b : bool;
 
     function pif (a : int, ref t : array[-2..2, 4..8, -6..-2] of bool, b : bool) : bool
