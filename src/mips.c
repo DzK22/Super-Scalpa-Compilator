@@ -580,6 +580,10 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
                        pload("$t2", argv1);
                        pins3("li", "$t3", "1");
 
+                       pins4("bgt", "$t1", "0", label);
+                       pins3("li", "$t2", "1");
+                       pins2("j", label2);
+
                        // warning: seulement les puissances > 0 fonctionnent avec ce code
                        plab(label);
                        pins4("ble", "$t1", "$t3", label2);

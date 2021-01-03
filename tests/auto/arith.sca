@@ -15,6 +15,7 @@ program arith
      c := 5 * (a + b);
      i := a + b / 2 * (c - a);
      j := i ^ 2 ;
+     u := j ^ 0 ;
      k := 53 mod 2 ;
 
      write a;       (* 10 *)
@@ -28,5 +29,7 @@ program arith
      write j;       (* 8179600 *)
      write "\n";
      write k;       (* 1 *)
+     write "\n";
+     write u;       (* 1 *)
      write "\n";
    end
