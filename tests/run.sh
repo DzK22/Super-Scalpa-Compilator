@@ -2,6 +2,7 @@
 
 red=`tput setaf 1`
 green=`tput setaf 2`
+yellow=`tput setaf 3`
 reset=`tput sgr0`
 
 # Update files
@@ -32,22 +33,27 @@ reset=`tput sgr0`
 
  i=1
  total=`ls mips | wc -l` # total number of tests
+ success=0
 
  for file in `ls mips`; do
    echo "----------  SPIM -f $file  ----------"
    spim -f mips/$file | grep "Loaded: /usr" --after-context=10000 | tail -n +2 > tmp_res
    if cmp -s tmp_res tests/results/$file.res; then
         echo  "${green}>>>>>>>>>>> Test $i/$total mips/$file  PASSED ${reset} "
-        ((i++))
+        ((success++))
    else
         echo "We are waiting results like :  "
         cat tests/results/$file.res
         echo "We got this  :  "
         cat tmp_res
-        echo  "${red}>>>>>>>>>>> Test mips/$file FAILED ${reset}"
-        exit 1 ;
+        echo  "${red}>>>>>>>>>>> Test $i/$total mips/$file FAILED ${reset}"
    fi
+
+   ((i++))
    echo ""
  done
 
  rm tmp_res
+ echo "${yellow}################################################"
+ echo "#######  RESULTS: $(printf "%8s" "$success / $total") TESTS PASSED  #######"
+ echo "################################################${yellow}"
