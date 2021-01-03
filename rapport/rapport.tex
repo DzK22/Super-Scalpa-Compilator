@@ -101,19 +101,19 @@
 
 \csection{Résumé}
 
-L'objectif de ce rapport est de résumer les capacités de notre compilateur SCALPA. Le compilateur génère du code MIPS à partir d'un pseudo code Pascal appellé SCALPA. Nous avons réalisé ce projet de manière incrémentale, en implémentant les différentes fonctions au fur et à mesure.
+L'objectif de ce rapport est de résumer les capacités de notre compilateur SCALPA. Le compilateur génère du code MIPS à partir d'un \textit{pseudo code Pascal} appellé SCALPA. Nous avons réalisé ce projet de manière incrémentale, en implémentant les différentes fonctions au fur et à mesure.
 
 \csection{Développement du compilateur}
 
 Comme cité précédemment, le développement de ce compilateur s'est fait de manière incrémentale en augmentant petit à petit les capacités du compilateur (en étendant la grammaire).
 
-Dans un premier temps, nous avons réalisé l'analyse lexicale permettant d'analyser un programme SCALPA.
+Dans un premier temps, nous avons réalisé \textit{l'analyse lexicale} permettant d'analyser un programme SCALPA.
 
-Ensuite, nous avons limité le compilateur aux opérations arithmétiques ainsi que les affectations des variables. Cette version minimale de la grammaire nous à permis de générer notre premier code MIPS et de pouvoir partir sur de bonnes bases.
+Ensuite, nous avons limité le compilateur aux \textit{opérations arithmétiques} ainsi que les \textit{affectations des variables}. Cette version minimale de la grammaire nous à permis de générer notre premier code MIPS et de pouvoir partir sur de bonnes bases.
 
-Une fois cette première étape complètement terminée, nous avons pu élaborer un jeu de tests pour les affectations et les opérations arithmétiques pour enfin ajouter de nouvelles fonctionnalités au compilateur en étendant davantage la grammaire.
+Une fois cette première étape complètement terminée, nous avons pu élaborer un \textbf{jeu de tests} pour les affectations et les opérations arithmétiques pour enfin ajouter de nouvelles fonctionnalités au compilateur en étendant davantage la grammaire.
 
-C'est ainsi que nous avons ajouté le support des conditions avec les variables booléennes. L'ajout de ces conditions nous a permis d'ajouter le support des boucles while également.
+C'est ainsi que nous avons ajouté le support des \textit{conditions} avec les variables booléennes. L'ajout de ces conditions nous a permis d'ajouter le support des \textit{boucles} while également.
 
 Par la suite, nous avons étendu la grammaire avec l'ajout du support des tableaux et des fonctions, tout en testant régulièrement nos implémentations.
 
@@ -123,7 +123,7 @@ Après avoir testé le bon fonctionnement du compilateur dans sa plus grande par
 
 \csection{Spécification complète de notre compilateur SCALPA}
 
-Le compilateur est donc capable de générer un programme MIPS R2000 (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
+Le compilateur est donc capable de générer un programme \textit{MIPS R2000} (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
 
 Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
 
@@ -255,9 +255,18 @@ Voici quelques points techniques que nous avons mis en oeuvre dans ce compilateu
 \csection{Tableaux}
 
 La difficultées de la mise en place des tableaux était surtout au niveau du calcul de l'index avec les indices.\\
-Par exemple lors d'une affectation \textit{tab[i, j] := 15;} l'inde
+Par exemple lors d'une affectation \textit{tab[i, j] := 15;} l'index (servant à calculer l'addresse correcte dans le tableau correspondant aux indices i et j) doit être déterminé lors de l'éxecution, en MIPS.
 
 \csection{Fonctions}
+
+Les fonctions fonctionnent comme ceci:
+\begin{enumerate}
+    \item Lors de l'appel de fonction, les arguments sont empilés dans la pile (\textit{\$sp}) à l'envers: le premier argument se trouve en sommet de pile.
+    \item La fonction stocke ensuite les arguments empilés dans ses propres variables (table des symboles de la fonction) et les dépile.
+    \item L'adresse de retour (contenue dans \textit{\$ra}) est empilée au sommet de pile.
+    \item Si un appel de fonction a lieu dans cette même fonction, toutes les variables locales utilisées après l'appel de fonction sont empilées dans la pile et sont restaurées ensuite.
+    \item A la fin de la fonction, le registre \textit{\$v0} contient la valeur de retour si la fonction n'est pas de type \textit{UNIT}, et on retourne vers l'adresse de retour sauvegardée et on la dépile.
+\end{enumerate}
 
 \csection{Optimisation}
 
