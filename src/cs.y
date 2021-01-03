@@ -904,7 +904,7 @@ int main (int argc, char **argv) {
     }
     char filename[LEN];
     char arg;
-    bool tos = false, version = false, o = false;
+    bool tos = false, version = false, o = false, opti = false;
     int opt = 1, res;
 
     while (1) {
@@ -913,6 +913,7 @@ int main (int argc, char **argv) {
           {"version",     no_argument,   0, 'v'},
           {"tos", no_argument, 0, 't'},
           {"o", required_argument, 0, 'o'},
+          {"opti", no_argument, 0, 'p'},
           {0, 0, 0, 0}
         };
 
@@ -934,6 +935,10 @@ int main (int argc, char **argv) {
                 o = true;
                 snpt(snprintf(filename, LEN, "%s", optarg));
                 opt += 2;
+                break;
+            case 'p':
+                opti = true;
+                opt++;
                 break;
             default:
                 fprintf(stderr, "Usage: %s <scalpa_file>\n", argv[0]);
@@ -967,7 +972,8 @@ int main (int argc, char **argv) {
         qPrint(all_code);
     #endif
 
-    optiLoop(&all_code, &stable);
+    if (opti)
+        optiLoop(&all_code, &stable);
     getMips(output, stable, all_code);
 
     if (tos)

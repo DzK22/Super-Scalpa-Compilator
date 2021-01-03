@@ -563,7 +563,6 @@ void qWrite (FILE *f, symbol *argv1) {
 void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
     snpt(snprintf(tbuf, LEN, "%s := %s %s %s", dsymid(res), dsymid(argv1), opstr(op), dsymid(argv2)));
     pcom(tbuf);
-
     pload("$t0", argv1);
     pload("$t1", argv2);
 

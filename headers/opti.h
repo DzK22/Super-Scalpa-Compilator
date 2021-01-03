@@ -14,5 +14,6 @@ bool sameTypeValue     (symbol *s1, symbol *s2);
 int optiArithOp        (quad **code, symbol **tos);
 int zeroAdd            (quad *q);
 int oneMult            (quad *q);
+int expArith           (quad *q);
 
 #endif

@@ -4,11 +4,12 @@ var t : array [1..10] of int;
 begin
     a := 10;
     b := 20;
-    c := a + 0;
+    j := 0;
+    c := a + j;
     write c;
     i := 1;
     t[i] := b;
     write "\n";
-    write 1 * (t[1] * 0);
+    write t[i] + 0 * 1 + 0;
     write "\n";
 end

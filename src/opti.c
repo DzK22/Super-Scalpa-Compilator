@@ -177,6 +177,33 @@ int oneMult (quad *q) {
 	return 0;
 }
 
+int expArith (quad *q) {
+	if (q->op != Q_EXP)
+		return 0;
+	symbol *a1 = q->argv1, *a2 = q->argv2;
+	if (a1->is_cst) {
+		if (a1->ival == 0 || a1->ival == 1) {
+			q->op = Q_AFFEC;
+			q->argv2 = NULL;
+			return 1;
+		}
+	}
+	if (a2->is_cst) {
+		/*if (a2->ival == 0) {
+			q->op = Q_AFFEC;
+			q->argv1 = //JE SAIS PAS QUOI FAIRE ICI;
+			q->argv2 = NULL;
+			return 1;
+		}*/
+		if (a2->ival == 1) {
+			q->op = Q_AFFEC;
+			q->argv2 = NULL;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int optiArithOp (quad **code, symbol **tos) {
 	quad *q = *code;
 	(void)tos;
@@ -184,6 +211,7 @@ int optiArithOp (quad **code, symbol **tos) {
 	while (q != NULL) {
 		cnt += zeroAdd(q);
 		cnt += oneMult(q);
+		cnt += expArith(q);
 		q = q->next;
 	}
 	return cnt;
