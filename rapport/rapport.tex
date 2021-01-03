@@ -101,19 +101,19 @@
 
 \csection{Résumé}
 
-L'objectif de ce rapport est de résumer les capacités de notre compilateur SCALPA. Le compilateur génère du code MIPS à partir d'un pseudo code Pascal appellé SCALPA. Nous avons réalisé ce projet de manière incrémentale, en implémentant les différentes fonctions au fur et à mesure.
+L'objectif de ce rapport est de résumer les capacités de notre compilateur SCALPA. Le compilateur génère du code MIPS à partir d'un \textit{pseudo code Pascal} appellé SCALPA. Nous avons réalisé ce projet de manière incrémentale, en implémentant les différentes fonctions au fur et à mesure.
 
 \csection{Développement du compilateur}
 
 Comme cité précédemment, le développement de ce compilateur s'est fait de manière incrémentale en augmentant petit à petit les capacités du compilateur (en étendant la grammaire).
 
-Dans un premier temps, nous avons réalisé l'analyser lexicale permettant d'analyser un programme SCALPA.
+Dans un premier temps, nous avons réalisé \textit{l'analyse lexicale} permettant d'analyser un programme SCALPA.
 
-Ensuite, nous avons limité le compilateur aux opérations arithmétiques ainsi que les affectations des variables. Cette version minimale de la grammaire nous à permis de générer notre premier code MIPS et de pouvoir partir sur de bonnes bases.
+Ensuite, nous avons limité le compilateur aux \textit{opérations arithmétiques} ainsi que les \textit{affectations des variables}. Cette version minimale de la grammaire nous à permis de générer notre premier code MIPS et de pouvoir partir sur de bonnes bases.
 
-Une fois cette première étape complètement terminée, nous avons pu élaborer un jeu de tests pour les affectations et les opérations arithmétiques pour enfin ajouter de nouvelles fonctionnalités aux compilateur en étendant davantage la grammaire.
+Une fois cette première étape complètement terminée, nous avons pu élaborer un \textbf{jeu de tests} pour les affectations et les opérations arithmétiques pour enfin ajouter de nouvelles fonctionnalités au compilateur en étendant davantage la grammaire.
 
-C'est ainsi que nous avons ajouté le support des conditions avec les variables booléennes. L'ajout de ces conditions nous a permis d'ajouter le support des boucles while également.
+C'est ainsi que nous avons ajouté le support des \textit{conditions} avec les variables booléennes. L'ajout de ces conditions nous a permis d'ajouter le support des \textit{boucles} while également.
 
 Par la suite, nous avons étendu la grammaire avec l'ajout du support des tableaux et des fonctions, tout en testant régulièrement nos implémentations.
 
@@ -123,7 +123,7 @@ Après avoir testé le bon fonctionnement du compilateur dans sa plus grande par
 
 \csection{Spécification complète de notre compilateur SCALPA}
 
-Le compilateur est donc capable de générer un programme MIPS R2000 (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
+Le compilateur est donc capable de générer un programme \textit{MIPS R2000} (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
 
 Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
 
@@ -134,7 +134,7 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   \hline
   Opérateur & Support & Commentaire \\
   \hline
-  \multicolumn{3}{|c|}{Déclartions de variables} \\
+  \multicolumn{3}{|c|}{Déclaration de variables} \\
   \hline
   var a, b: type & X & Déclaration multiple \\
   \hline
@@ -150,7 +150,7 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   \% & X & Modulo \\
   < ou > & X & Comparaisons entières strictes \\
   <= ou >= & X & Comparaisons entières \\
-  = & X & Egalité entières \\
+  = & X & Egalité entière \\
   <> & X & Différence entière \\
   \hline
   \multicolumn{3}{|c|}{Affectations et opérations sur les booleens} \\
@@ -188,8 +188,8 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   array $[$-x1..y1, -x2..y2, -x3..y3 $]$ of type & X & Déclaration multidimensionnelle \\
   tab$[$i,j$]$:=x & X & Affectation à une case d'un tableau \\
   tab$[$i,j$]$:=tab$[$k,l$]$ & X & Affectation à partir d'un tableau \\
-  tab$[$i,j$]$ < tab$[$i,j$]$ & X & Comparaisons sur les éléments de tableaux \\
-  tab$[$i,j$]$ or tab$[$i,j$]$ & X & Opérations booléennes sur les éléments de tableaux \\
+  tab$[$i,j$]$ < tab$[$i,j$]$ & X & Comparaisons sur les éléments entiers d'un tableau \\
+  tab$[$i,j$]$ or tab$[$i,j$]$ & X & Opérations booléennes sur les éléments booléens d'un tableau \\
   \hline
 \end{tabular}
 
@@ -216,7 +216,7 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   Instruction & Support & Commentaire \\
   \hline
   (* *) & X & Commentaires simples \\
-  (* (* *) *) & X & Commentaires imbriqués \\
+  (* (* *) & X & Commentaires imbriqués \\
   \hline
 \end{tabular}
 
@@ -226,10 +226,11 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   \hline
   Instruction & Support & Commentaire \\
   \hline
-  read var & X & Lecture d'une entrée dans une variable \\
-  write var & X & Affichage de la variable dans la console \\
-  write "str" & X & Affichage de constantes dans la console \\
-  write tab[i] ou read tab[i] & X & Opérations prédéfinies sur les tableaux \\
+  read var & X & Lecture d'une entrée stockée dans une variable \\
+  read tab$[$i$]$ & X & Lecture d'une entrée stockée dans une case d'un tableau \\
+  write var & X & Affichage d'une variable dans la console \\
+  write "str" & X & Affichage d'une constantee dans la console \\
+  write tab$[$i$]$ & X & Affichage d'un élément d'un tableau \\
   \hline
 \end{tabular}
 
@@ -237,6 +238,45 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
 
 De plus l'analyse lexicale de notre compilateur se fait sans sensibilité à la casse, ce qui laisse une "marge d'erreur" au programmeur, s'il se trompe et écrit While, wHile ou whiLE...etc ce n'est pas grave notre compilateur saura comprendre son code.
 
-Il est également important de noter que les opérations sur entiers respectent l'ordre de priotités usuel sans avoir besoin de forcer l'ordre avec des parenthèses.
+Il est également important de noter que les opérations sur les entiers respectent l'ordre habituel des priorités sans avoir besoin de forcer l'ordre avec des parenthèses.
+
+\csection{Détails techniques}
+
+\csubsection{Résumé}
+
+Voici quelques points techniques que nous avons mis en oeuvre dans ce compilateur:
+\begin{itemize}
+    \item Les entiers prennent 4 octets en mémoire, et les booléens que 1.
+    \item Le compilateur ne comporte aucune fuite mémoire.
+    \item Nous avons résolu tous les conflits de la grammaire, elle n'est donc pas ambiguë.
+    \item Lors d'un appel de fonction à l'intérieur même d'une fonction, les variables locales utilisées après l'appel de fonction sont sauvegardées dans la pile afin d'êtres restaurées.
+\end{itemize}
+
+\csection{Tableaux}
+
+La difficultées de la mise en place des tableaux était surtout au niveau du calcul de l'index avec les indices.\\
+Par exemple lors d'une affectation \textit{tab[i, j] := 15;} l'index (servant à calculer l'addresse correcte dans le tableau correspondant aux indices i et j) doit être déterminé lors de l'éxecution, en MIPS.
+
+\csection{Fonctions}
+
+Les fonctions fonctionnent comme ceci:
+\begin{enumerate}
+    \item Lors de l'appel de fonction, les arguments sont empilés dans la pile (\textit{\$sp}) à l'envers: le premier argument se trouve en sommet de pile.
+    \item La fonction stocke ensuite les arguments empilés dans ses propres variables (table des symboles de la fonction) et les dépile.
+    \item L'adresse de retour (contenue dans \textit{\$ra}) est empilée au sommet de pile.
+    \item Si un appel de fonction a lieu dans cette même fonction, toutes les variables locales utilisées après l'appel de fonction sont empilées dans la pile et sont restaurées ensuite.
+    \item A la fin de la fonction, le registre \textit{\$v0} contient la valeur de retour si la fonction n'est pas de type \textit{UNIT}, et on retourne vers l'adresse de retour sauvegardée et on la dépile.
+\end{enumerate}
+
+\csection{Optimisation}
+
+Nous avons implémentés quelques fonctionnalités d'optimisation:
+\begin{itemize}
+    \item La suppression des constantes dupliquées afin que le programme soit plus léger, autant sur le disque que dans la mémoire.
+    \item La modification des "arg1 + 0", "arg1 * 1", "arg1 * 0", "arg ^ 1" en simple affectations afin d'optimiser le temps processeur lors de l'éxecution.
+\end{itemize}
+
+Les optimisations sont par défaut désactivées et peuvent êtres activées avec l'option \textbf{--opti}, mais sont automatiquement activées lors des tests (\textif{make text}).
+Lorsque les optimisations sont activées, quelques informations de debug sont affichées dans la sortie (le nombre de modifications (\textit{change}) par tour (\textit{loop}) d'optimisation).
 
 \end{document}
