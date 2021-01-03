@@ -1,4 +1,4 @@
-program tabz
+program tabs
     var i, j, a, b : int;
     var tab : array[1..3,1..3] of int ;
     begin
