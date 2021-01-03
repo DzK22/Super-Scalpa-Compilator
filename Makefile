@@ -2,7 +2,8 @@ NAME=cs
 SRC=src/
 HEADERS=headers/
 TMP=tmp/
-MIPS=mips/
+MIPS=tests/mips/
+COMPIL=tests/compil/
 CC= gcc -g
 CFLAGS= -Wall -Werror -Wextra
 
@@ -29,4 +30,4 @@ test:
 	./tests/run.sh
 
 clean:
-	rm -rf $(TMP) scalpa $(MIPS) *.s tmp_res *.output
+	rm -rf $(TMP) scalpa $(COMPIL) $(MIPS) *.s tmp_res *.output
