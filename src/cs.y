@@ -948,18 +948,18 @@ int main (int argc, char **argv) {
     }
 
     if (version) {
-        fprintf(stdout, YELLOW"Members:\n"COL_RESET);
+        printf(YELLOW "Members:\n"COL_RESET);
         srand(time(NULL));
         arrShuffle(colors, 4);
-        fprintf(stdout, "%s", colors[0]);
-        fprintf(stdout, "Danyl El-kabir\n"COL_RESET);
-        fprintf(stdout, "%s", colors[1]);
-        fprintf(stdout, "François Grabenstaetter\n"COL_RESET);
-        fprintf(stdout, "%s", colors[2]);
-        fprintf(stdout, "Jérémy Bach\n"COL_RESET);
-        fprintf(stdout, "%s", colors[3]);
-        fprintf(stdout, "Nadjib Belaribi\n"COL_RESET);
-        exit(EXIT_FAILURE);
+        printf("%s", colors[0]);
+        printf("Danyl El-kabir\n"COL_RESET);
+        printf("%s", colors[1]);
+        printf("François Grabenstaetter\n"COL_RESET);
+        printf("%s", colors[2]);
+        printf("Jérémy Bach\n"COL_RESET);
+        printf("%s", colors[3]);
+        printf("Nadjib Belaribi\n"COL_RESET);
+        exit(EXIT_SUCCESS);
     }
 
     #if YYDEBUG == 1

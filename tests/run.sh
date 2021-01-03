@@ -6,7 +6,7 @@ yellow=`tput setaf 3`
 reset=`tput sgr0`
 
 mkdir -p tests/compil
-rm tests/compil/*.sca.res 2> /dev/null
+rm tests/compil/* 2> /dev/null
 
 # Update files
 # make
