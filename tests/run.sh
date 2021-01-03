@@ -19,7 +19,7 @@ echo ""
 
 for file in `ls tests/auto`; do
     echo "----------  Compiling $file  ----------"
-    ./scalpa --opti -o tests/mips/${file::-4} tests/auto/$file 2> tests/tmp_res
+    ./scalpa -o tests/mips/${file::-4} tests/auto/$file 2> tests/tmp_res
 
     if [ $? -eq "0" ]; then
         echo "" > tests/compil/$file.res
