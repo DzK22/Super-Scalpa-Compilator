@@ -102,7 +102,7 @@ comment           \((\*([^*]|\*+[^*)]|\n)*)
                                   return CTE_;                      }
 
 {cst_bool}                      { yylval.cte.type = S_BOOL;
-                                  yylval.cte.bval = strcmp(yytext, "true") ? false : true;
+                                  yylval.cte.bval = strcmp(yytext, "true") ? 0 : 1;
                                   return CTE_;                      }
 
 {cst_string}                    { yylval.cte.type = S_STRING;
