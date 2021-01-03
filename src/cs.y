@@ -948,7 +948,12 @@ int main (int argc, char **argv) {
     }
 
     if (version) {
-        printf(YELLOW "Members:\n"COL_RESET);
+        printf(YELLOW);
+        printf("**************************************\n");
+        printf("*   SSC - Super Scalpa Compilator:   *\n");
+        printf("**************************************\n\n");
+        printf("Authors: \n");
+        printf(COL_RESET);
         srand(time(NULL));
         arrShuffle(colors, 4);
         printf("%s", colors[0]);
@@ -965,7 +970,7 @@ int main (int argc, char **argv) {
     #if YYDEBUG == 1
           yydebug = 1;
     #endif
-    // Je sais pas pourquoi les options move l'indice du nom scalpa selon le nombres d'options ptdr
+
     yyin = fopen(argv[opt], "r");
     if (yyin == NULL)
         ferr("fopen");
