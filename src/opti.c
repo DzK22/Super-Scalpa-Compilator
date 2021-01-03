@@ -221,9 +221,26 @@ int optiArithOp (quad **code, symbol **tos) {
 }
 
 bool optiCheckModified (quad *code, symbol *s) {
+	list *al;
+	symbol *args;
+
 	while (code != NULL) {
 		if (code->res != NULL && strcmp(s->id, code->res->id) == 0)
 			return true;
+
+		// if passed in a funcall which take it as a reference, return true
+		if (code->op == Q_FUNCALL) {
+			args = code->argv2;
+			al   = code->argv1->fdata->al;
+
+			while (args != NULL && al != NULL) {
+				if (al->sym->ref && strcmp(args->id, s->id) == 0)
+					return true;
+
+				args = args->next;
+				al = al->next;
+			}
+		}
 
 		code = code->next;
 	}

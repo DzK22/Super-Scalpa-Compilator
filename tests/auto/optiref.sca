@@ -1,0 +1,14 @@
+program optiref
+    var a, b : int;
+
+    function modif (ref c : int) : unit
+    begin
+        c := c + 1;
+    end;
+
+begin
+    modif(a);
+    write a;
+    write "\n";
+    write b;
+end
