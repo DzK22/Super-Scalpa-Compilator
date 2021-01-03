@@ -81,7 +81,7 @@ void getMips (FILE *f, symbol *s, quad *q) {
     pdat("_true", ".asciiz \"true\"");
     pdat("_false", ".asciiz \"false\"");
     pdat("_read_int", ".asciiz \"Enter int: \"");
-    pdat("_segfault_mess", ".asciiz \"Invalid read of size 4\n\"");
+    pdat("_segfault_mess", ".asciiz \"Array Index is out of bounds\n\"");
 
     // tos global
     pdir("");
