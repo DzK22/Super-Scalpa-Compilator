@@ -6,6 +6,8 @@ yellow=`tput setaf 3`
 reset=`tput sgr0`
 
 mkdir -p tests/compil
+mkdir -p tests/mips
+
 rm tests/compil/* 2> /dev/null
 rm tests/mips/* 2> /dev/null
 
@@ -38,8 +40,6 @@ echo "#############   RUN MIPS FILES    ###################"
 echo "#####################################################"
 echo ""
 
- # move mips files
- mkdir -p tests/mips
 
  i=1
  total=`ls tests/compil | wc -l` # total number of tests
