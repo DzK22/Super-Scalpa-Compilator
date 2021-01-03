@@ -2,7 +2,7 @@
 
 ## Sujet  
 
-Compilateur pour le langage SCALPA produit du code MIPS en sortie. Ce projet a été réalisé dans le cadre de l'UE Compilation à l'université de Strasbourg.
+Compilateur pour le langage SCALPA produit du code MIPS en sortie. Ce projet a été réalisé dans le cadre de l'UE Compilation à l'université de Strasbourg en langage C à l'aide des outils Flex et Bison .
 
 ## Authors :
 
@@ -52,5 +52,6 @@ L'éxécutable supporte les options suivantes :
 - -version : permet d'obtenir des information sur le compilateur scalpa
 - -tos : permet d'afficher la table des symboles en fin de compilation d'un programme
 - -o <fichier> : permet de rediriger la sortie du compilateur dans le fichier destination
+- -optim  : permet de faire des optimisations sur le programme d'entrée [suppression variables inutiles, code mort ...]
 
 © 2020
