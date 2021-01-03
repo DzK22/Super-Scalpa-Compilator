@@ -26,17 +26,6 @@ typedef struct symbol {
     };
 } symbol;
 
-typedef struct hash_item {
-    struct hash_item *next; //Pour gérer les collisions
-    void *data;             //Pour pouvoir refactorer les symboles plus tard sans avoir de pb de compil haha
-    char *key;              //Clé qui sera l'identificateur du symbol
-} hash_item;
-
-typedef struct h_table {
-    hash_item *stable[CAPACITY];
-    int count;
-} hashtable;
-
 void   sFree        (symbol *);
 symbol *sAlloc      (void);
 symbol *sAdd        (symbol **);
@@ -58,15 +47,5 @@ symbol *newVarArray (symbol **, char *, struct s_array *, symbol *, bool);
 
 void   stablePrint  (symbol *);
 void   stablePrintAll (symbol *);
-
-/************************/
-/*                      */
-/* HASHTABLE FUNCTIONS  */
-/*                      */
-/************************/
-unsigned long getHash (char *key);
-hashtable *initHashTable (void);
-// void freeHashTable (hashtable *htable);
-void *insertHashTable (hashtable *htable, char *key, void *data);
 
 #endif
