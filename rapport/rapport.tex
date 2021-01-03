@@ -273,10 +273,10 @@ Les fonctions fonctionnent comme ceci:
 Nous avons implémentés quelques fonctionnalités d'optimisation:
 \begin{itemize}
     \item La suppression des constantes dupliquées afin que le programme soit plus léger, autant sur le disque que dans la mémoire.
-    \item La modification des "arg1 + 0", "arg1 * 1", "arg1 * 0", "arg ^ 1" en simple affectations afin d'optimiser le temps processeur lors de l'éxecution.
+    \item La modification des "arg1 + 0", "arg1 * 1", "arg1 * 0", "arg $\wedge$ 1" en simple affectations afin d'optimiser le temps processeur lors de l'éxecution.
 \end{itemize}
 
-Les optimisations sont par défaut désactivées et peuvent êtres activées avec l'option \textbf{--opti}, mais sont automatiquement activées lors des tests (\textif{make text}).
+Les optimisations sont par défaut désactivées et peuvent êtres activées avec l'option \textbf{--opti}, mais sont automatiquement activées lors des tests (\textit{make text}).
 Lorsque les optimisations sont activées, quelques informations de debug sont affichées dans la sortie (le nombre de modifications (\textit{change}) par tour (\textit{loop}) d'optimisation).
 
 \end{document}
