@@ -948,7 +948,12 @@ int main (int argc, char **argv) {
     }
 
     if (version) {
-        printf(YELLOW "SSC - Super Scalpa Compilator by :\n"COL_RESET);
+        printf(YELLOW);
+        printf("**************************************\n");
+        printf("*   SSC - Super Scalpa Compilator:   *\n");
+        printf("**************************************\n\n");
+        printf("Authors: \n");
+        printf(COL_RESET);
         srand(time(NULL));
         arrShuffle(colors, 4);
         printf("%s", colors[0]);
