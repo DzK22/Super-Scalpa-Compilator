@@ -591,7 +591,7 @@ expr :  expr PLUS_ expr {
           $$.ptr->is_used = 1 ;
 
             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-                yferr("expr : expr MULT expr - Type error");
+                yferr("expr : expr MINUS_ expr - Type error");
 
             arithmeticExpression(Q_MINUS, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
@@ -636,9 +636,9 @@ expr :  expr PLUS_ expr {
           $$.ptr->is_used = 1 ;
 
             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-                yferr("expr : expr MULT expr - Type error");
+                yferr("expr : expr DIV expr - Type error");
             if ($3.ptr->ival == 0)
-                yferr("expr : expr MULT expr - Division by 0");
+                yferr("expr : expr DIV expr - Division by 0");
 
             arithmeticExpression(Q_DIV, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
@@ -661,7 +661,7 @@ expr :  expr PLUS_ expr {
           transIfArray(&($3.quad), &($3.ptr), $3.args);
 
           if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-              yferr("expr : expr MULT expr - Type error");
+              yferr("expr : expr EXP expr - Type error");
 
           $1.ptr->is_used = 1 ;
           $3.ptr->is_used = 1 ;
@@ -751,7 +751,7 @@ expr :  expr PLUS_ expr {
            transIfArray(&($3.quad), &($3.ptr), $3.args);
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-               yferr("expr : expr SUP_ expr - Type error");
+               yferr("expr : expr SUP_EQ expr - Type error");
                $1.ptr->is_used = 1 ;
                $3.ptr->is_used = 1 ;
                $$.ptr->is_used = 1 ;
@@ -763,7 +763,7 @@ expr :  expr PLUS_ expr {
            transIfArray(&($3.quad), &($3.ptr), $3.args);
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-               yferr("expr : expr SUP_ expr - Type error");
+               yferr("expr : expr INF_ expr - Type error");
                $1.ptr->is_used = 1 ;
                $3.ptr->is_used = 1 ;
                $$.ptr->is_used = 1 ;
@@ -775,7 +775,7 @@ expr :  expr PLUS_ expr {
            transIfArray(&($3.quad), &($3.ptr), $3.args);
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-               yferr("expr : expr SUP_ expr - Type error");
+               yferr("expr : expr INF_EQ expr - Type error");
                $1.ptr->is_used = 1 ;
                $3.ptr->is_used = 1 ;
                $$.ptr->is_used = 1 ;
@@ -787,7 +787,7 @@ expr :  expr PLUS_ expr {
            transIfArray(&($3.quad), &($3.ptr), $3.args);
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-               yferr("expr : expr SUP_ expr - Type error");
+               yferr("expr : expr EQUAL expr - Type error");
                $1.ptr->is_used = 1 ;
                $3.ptr->is_used = 1 ;
                $$.ptr->is_used = 1 ;
@@ -799,7 +799,7 @@ expr :  expr PLUS_ expr {
            transIfArray(&($3.quad), &($3.ptr), $3.args);
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
-               yferr("expr : expr SUP_ expr - Type error");
+               yferr("expr : expr DIFF expr - Type error");
                $1.ptr->is_used = 1 ;
                $3.ptr->is_used = 1 ;
                $$.ptr->is_used = 1 ;
