@@ -325,9 +325,28 @@ fundecl : FUNCTION_ IDENT_ PARLEFT_ {
                 quad *qdec = qGen(Q_FUNDEC, NULL, curfun, NULL);
                 quad *qend = qGen(Q_FUNEND, NULL, curfun, NULL);
 
-                curfun  = NULL;
                 $$.quad = qConcat(qdec, $11.quad);
                 $$.quad = qConcat($$.quad, qend);
+
+                // check if the function contains a return if it return other than S_UNIT
+                if (curfun->fdata->rtype != S_UNIT) {
+                    quad *tq = qdec;
+                    bool rfound = false;
+
+                    while (tq != NULL && tq != qend) {
+                        if (tq->op == Q_FUNRETURN) {
+                            rfound = true;
+                            break;
+                        }
+
+                        tq = tq->next;
+                    }
+
+                    if (!rfound)
+                        yferr("fundecl : Function should include a return instr but none are present");
+                }
+
+                curfun  = NULL;
             }
         ;
 
@@ -481,7 +500,6 @@ other_instr: lvalue AFFEC_ expr {
                 if (curfun == NULL)
                     yferr("instr : RETURN_ expr - Not in function");
 
-
                 transIfArray(&($2.quad), &($2.ptr), $2.args);
 
                 if ($2.ptr->type != curfun->fdata->rtype)
@@ -494,6 +512,9 @@ other_instr: lvalue AFFEC_ expr {
         | RETURN_ {
                 if (curfun == NULL)
                     yferr("instr : RETURN_ - Not in function");
+
+                if (curfun->fdata->rtype != S_UNIT)
+                    yferr("instr : RETURN_ - This function should return something");
 
                 $$.quad = qGen(Q_FUNRETURN, NULL, curfun, NULL);
             }
