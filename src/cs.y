@@ -22,6 +22,7 @@
     symbol *stable = NULL; // global tos
     quad *all_code = NULL; // all quads
     char *progName = NULL;
+    char *colors[4] = { PURPLE, CYAN, PINK, GREEN };
 
     #define yferr(str) { \
         snpt(snprintf(tbuf2, LEN, "%s (source line %d)", str, linecpt)); \
@@ -947,8 +948,17 @@ int main (int argc, char **argv) {
     }
 
     if (version) {
-        printf(YELLOW"Members:\n"COL_RESET);
-        printf(CYAN"Danyl El-kabir\nFrançois Grabenstaetter\nJérémy Bach\nNadjib Belaribi\n"COL_RESET);
+        fprintf(stdout, YELLOW"Members:\n"COL_RESET);
+        srand(time(NULL));
+        arrShuffle(colors, 4);
+        fprintf(stdout, "%s", colors[0]);
+        fprintf(stdout, "Danyl El-kabir\n"COL_RESET);
+        fprintf(stdout, "%s", colors[1]);
+        fprintf(stdout, "François Grabenstaetter\n"COL_RESET);
+        fprintf(stdout, "%s", colors[2]);
+        fprintf(stdout, "Jérémy Bach\n"COL_RESET);
+        fprintf(stdout, "%s", colors[3]);
+        fprintf(stdout, "Nadjib Belaribi\n"COL_RESET);
         exit(EXIT_FAILURE);
     }
 
