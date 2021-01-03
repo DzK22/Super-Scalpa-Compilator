@@ -103,9 +103,28 @@
 
 L'objectif de ce rapport est de résumer les capacités de notre compilateur SCALPA. Le compilateur génère du code MIPS à partir d'un pseudo code Pascal appellé SCALPA. Nous avons réalisé ce projet de manière incrémentale, en implémentant les différentes fonctions au fur et à mesure.
 
+\csection{Développement du compilateur}
+
+Comme cité précédemment, le développement de ce compilateur s'est fait de manière incrémentale en augmentant petit à petit les capacités du compilateur (en étendant la grammaire).
+
+Dans un premier temps, nous avons réalisé l'analyser lexicale permettant d'analyser un programme SCALPA.
+
+Ensuite, nous avons limité le compilateur aux opérations arithmétiques ainsi que les affectations des variables. Cette version minimale de la grammaire nous à permis de générer notre premier code MIPS et de pouvoir partir sur de bonnes bases.
+
+Une fois cette première étape complètement terminée, nous avons pu élaborer un jeu de tests pour les affectations et les opérations arithmétiques pour enfin ajouter de nouvelles fonctionnalités aux compilateur en étendant davantage la grammaire.
+
+C'est ainsi que nous avons ajouté le support des conditions avec les variables booléennes. L'ajout de ces conditions nous a permis d'ajouter le support des boucles while également.
+
+Par la suite, nous avons étendu la grammaire avec l'ajout du support des tableaux et des fonctions, tout en testant régulièrement nos implémentations.
+
+Après avoir testé le bon fonctionnement du compilateur dans sa plus grande partie, nous avons ajouté un module d'optimisation de code.
+
 \csection{Spécification complète de notre compilateur SCALPA}
 
 Le compilateur est donc capable de générer un programme MIPS R2000 (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
+
+Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
+
 Le programme écrit en SCALPA peut donc supporter :
 \begin{itemize}
     \item Des affectations d'entiers et booléens sur des variables ou des cases de tableaux.
