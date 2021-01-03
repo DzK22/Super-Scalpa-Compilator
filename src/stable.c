@@ -31,7 +31,6 @@ symbol *sAdd (symbol **tos) {
     }
 }
 
-//Juste Free l'id et sval (si string) quand hashTable sera prête
 void sFree (symbol *s) {
     symbol *prev;
 
@@ -259,18 +258,16 @@ symbol *search (symbol *gtos, symbol *curfun, char *id) {
 }
 
 void stablePrintAll (symbol *tos) {
-    printf("\n ### TOS GLOBAL ###\n");
+    printf(YELLOW"\n ### TOS GLOBAL ###\n"COL_RESET);
     stablePrint(tos);
 
     while (tos != NULL) {
         if (tos->type == S_FUNCTION) {
-            printf("\n ### TOS OF FUNCTION %s ###\n", tos->id);
+            printf(GREEN"\n ### TOS OF FUNCTION %s ###\n"COL_RESET, tos->id);
             stablePrint(tos->fdata->tos);
         }
         tos = tos->next;
     }
-
-    printf("\n");
 }
 
 void stablePrint (symbol *tos) {
@@ -280,11 +277,11 @@ void stablePrint (symbol *tos) {
         switch (tos->type) {
             case S_INT:
                 printf("INTEGER\t");
-                printf("%d\t",tos->ival) ;
+                printf("%d\n",tos->ival) ;
                 break;
             case S_BOOL:
                 printf("BOOLEAN\t");
-                printf("%d\t",tos->bval) ;
+                printf("%d\n",tos->bval) ;
                 break;
             case S_ARRAY:
                 printf("ARRAY\t"); // ajouter type de valeurs quand tableaux seront faits
@@ -299,13 +296,11 @@ void stablePrint (symbol *tos) {
                         //Others todo
                         break;
                 }
-                printf("NbDims %d\t",tos->arr->ndims) ;
+                printf("dimensions: %d, size: %d\t", tos->arr->ndims, tos->arr->size) ;
                 while (tos->arr->dims != NULL){
-                    printf("[%d .. %d]",tos->arr->dims->min,tos->arr->dims->max );
+                    printf("[min: %d .. max: %d]\n",tos->arr->dims->min,tos->arr->dims->max );
                     tos->arr->dims = tos->arr->dims->next ;
                 }
-
-                printf("\n");
 
                 break;
             case S_STRING:
@@ -320,13 +315,13 @@ void stablePrint (symbol *tos) {
                 printf("Function : returns => ");
                 switch (tos->fdata->rtype) {
                     case S_INT:
-                        printf("INTEGER\t");
+                        printf("INTEGER\n");
                         break;
                     case S_BOOL:
-                        printf("BOOLEAN\t");
+                        printf("BOOLEAN\n");
                         break;
                     case S_UNIT:
-                        printf("UNIT\t");
+                        printf("UNIT\n");
                         break;
                     default:
                         //Others todo
@@ -340,4 +335,5 @@ void stablePrint (symbol *tos) {
 
         tos = tos->next;
     }
+    printf("\n");
 }

@@ -1,5 +1,25 @@
 program mydebug
     var tab : array [1..10, 1..10,1..10] of bool;
+    var i, j, k, l : int;
+    var t : array [1..10, 1..10, 1..10] of int;
+    var s : array [1..10] of int;
+    function test (ref a : int, b : bool, c : int) : unit
+    begin
+        if b then
+        begin
+            while a <= c do
+            begin
+                write a;
+                write "\n";
+                a := a + 1;
+            end;
+        end
+        else
+        begin
+            write (c * a) ^ 2;
+            write "\n";
+        end;
+    end;
 begin
     tab[1,1,1] := true;
     tab[2,2,2] := false;
@@ -10,6 +30,15 @@ begin
     write "\n";
     write tab[3,3,3];
     write "\n";
-    write tab[1,1,1] or tab[2,2,2] and tab[3,3,3];
+    i := 1;
+    j := 2;
+    k := 3;
+    l := 4;
+    t[i,i,i] := 3;
+    s[j] := i;
+    s[k] := i;
+    s[l] := l;
+    write tab[1,1,1] or tab[2,2,2] and tab[t[s[j],s[k],s[j]],t[s[j],s[k],s[j]],t[s[k],s[k],s[k]]];
     write "\n";
+    test(s[j], tab[j,j,2], s[l]); (* AFFICHE 16 *)
 end

@@ -167,7 +167,7 @@
 
 %token <sval>    IDENT_
 %token <cte>     CTE_
-%type <gencode>  expr instr program sequence lvalue m fundecllist  fundecl
+%type <gencode>  expr instr program sequence lvalue m fundecllist fundecl matched unmatched other_instr
 %type <type>     atomictype
 %type <argl>     identlist varsdecl parlist par
 %type <exprl>    exprlist
@@ -325,9 +325,28 @@ fundecl : FUNCTION_ IDENT_ PARLEFT_ {
                 quad *qdec = qGen(Q_FUNDEC, NULL, curfun, NULL);
                 quad *qend = qGen(Q_FUNEND, NULL, curfun, NULL);
 
-                curfun  = NULL;
                 $$.quad = qConcat(qdec, $11.quad);
                 $$.quad = qConcat($$.quad, qend);
+
+                // check if the function contains a return if it return other than S_UNIT
+                if (curfun->fdata->rtype != S_UNIT) {
+                    quad *tq = qdec;
+                    bool rfound = false;
+
+                    while (tq != NULL && tq != qend) {
+                        if (tq->op == Q_FUNRETURN) {
+                            rfound = true;
+                            break;
+                        }
+
+                        tq = tq->next;
+                    }
+
+                    if (!rfound)
+                        yferr("fundecl : Function should include a return instr but none are present");
+                }
+
+                curfun  = NULL;
             }
         ;
 
@@ -370,10 +389,95 @@ par : IDENT_ DPOINT_ typename {
         }
     ;
 
-instr: lvalue AFFEC_ expr {
+instr: matched { $$ = $1; }
+     | unmatched { $$ = $1; }
+     ;
+
+matched: other_instr { $$ = $1; }
+        | IF_ expr THEN_ matched ELSE_ m matched m {
+                transIfArray(&($2.quad), &($2.ptr), $2.args);
+
+
+                if ($2.ptr->type != S_BOOL)
+                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
+
+                quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
+                qif->gfalse = $6.quad->res;
+                quad *gnext = qGen(Q_GOTO, $8.quad->res, NULL, NULL);
+
+                $$.quad = qConcat($2.quad, qif);
+                $$.quad = qConcat($$.quad, $4.quad);
+                $$.quad = qConcat($$.quad, gnext);
+                $$.quad = qConcat($$.quad, $6.quad);
+                $$.quad = qConcat($$.quad, $7.quad);
+                $$.quad = qConcat($$.quad, $8.quad);
+
+                $$.ptr  = NULL;
+                $$.args = NULL;
+            }
+        | WHILE_ m expr DO_ matched m {
                 transIfArray(&($3.quad), &($3.ptr), $3.args);
 
 
+                if ($3.ptr->type != S_BOOL)
+                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
+
+                quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
+                qif->gfalse = $6.quad->res;
+                quad *gnext = qGen(Q_GOTO, $2.quad->res, NULL, NULL);
+
+                $$.quad = qConcat($2.quad, $3.quad);
+                $$.quad = qConcat($$.quad, qif);
+                $$.quad = qConcat($$.quad, $5.quad);
+                $$.quad = qConcat($$.quad, gnext);
+                $$.quad = qConcat($$.quad, $6.quad);
+
+                $$.ptr  = NULL;
+                $$.args = NULL;
+            }
+      ;
+
+unmatched: IF_ expr THEN_ matched m {
+                transIfArray(&($2.quad), &($2.ptr), $2.args);
+
+                if ($2.ptr->type != S_BOOL)
+                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
+
+                quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
+                qif->gfalse = $5.quad->res;
+
+                $$.quad = qConcat($2.quad, qif);
+                $$.quad = qConcat($$.quad, $4.quad);
+                $$.quad = qConcat($$.quad, $5.quad);
+
+                $$.ptr  = NULL;
+                $$.args = NULL;
+            }
+            | IF_ expr THEN_ matched ELSE_ m unmatched m {
+                    transIfArray(&($2.quad), &($2.ptr), $2.args);
+
+
+                    if ($2.ptr->type != S_BOOL)
+                        yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
+
+                    quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
+                    qif->gfalse = $6.quad->res;
+                    quad *gnext = qGen(Q_GOTO, $8.quad->res, NULL, NULL);
+
+                    $$.quad = qConcat($2.quad, qif);
+                    $$.quad = qConcat($$.quad, $4.quad);
+                    $$.quad = qConcat($$.quad, gnext);
+                    $$.quad = qConcat($$.quad, $6.quad);
+                    $$.quad = qConcat($$.quad, $7.quad);
+                    $$.quad = qConcat($$.quad, $8.quad);
+
+                    $$.ptr  = NULL;
+                    $$.args = NULL;
+                }
+        ;
+
+other_instr: lvalue AFFEC_ expr {
+                transIfArray(&($3.quad), &($3.ptr), $3.args);
 
                 if ($1.ptr->type == S_ARRAY) {
                     if ($3.ptr->type != $1.ptr->arr->type)
@@ -396,7 +500,6 @@ instr: lvalue AFFEC_ expr {
                 if (curfun == NULL)
                     yferr("instr : RETURN_ expr - Not in function");
 
-
                 transIfArray(&($2.quad), &($2.ptr), $2.args);
 
                 if ($2.ptr->type != curfun->fdata->rtype)
@@ -409,6 +512,9 @@ instr: lvalue AFFEC_ expr {
         | RETURN_ {
                 if (curfun == NULL)
                     yferr("instr : RETURN_ - Not in function");
+
+                if (curfun->fdata->rtype != S_UNIT)
+                    yferr("instr : RETURN_ - This function should return something");
 
                 $$.quad = qGen(Q_FUNRETURN, NULL, curfun, NULL);
             }
@@ -451,65 +557,7 @@ instr: lvalue AFFEC_ expr {
                 $$.args = NULL;
 
             }
-        | IF_ expr THEN_ instr m {
-                transIfArray(&($2.quad), &($2.ptr), $2.args);
-
-
-                if ($2.ptr->type != S_BOOL)
-                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
-
-                quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gfalse = $5.quad->res;
-
-                $$.quad = qConcat($2.quad, qif);
-                $$.quad = qConcat($$.quad, $4.quad);
-                $$.quad = qConcat($$.quad, $5.quad);
-
-                $$.ptr  = NULL;
-                $$.args = NULL;
-            }
-        | IF_ expr THEN_ instr ELSE_ m instr m {
-                transIfArray(&($2.quad), &($2.ptr), $2.args);
-
-
-                if ($2.ptr->type != S_BOOL)
-                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
-
-                quad *qif   = qGen(Q_IF, NULL, $2.ptr, NULL);
-                qif->gfalse = $6.quad->res;
-                quad *gnext = qGen(Q_GOTO, $8.quad->res, NULL, NULL);
-
-                $$.quad = qConcat($2.quad, qif);
-                $$.quad = qConcat($$.quad, $4.quad);
-                $$.quad = qConcat($$.quad, gnext);
-                $$.quad = qConcat($$.quad, $6.quad);
-                $$.quad = qConcat($$.quad, $7.quad);
-                $$.quad = qConcat($$.quad, $8.quad);
-
-                $$.ptr  = NULL;
-                $$.args = NULL;
-            }
-        | WHILE_ m expr DO_ instr m {
-                transIfArray(&($3.quad), &($3.ptr), $3.args);
-
-
-                if ($3.ptr->type != S_BOOL)
-                    yferr("instr : IF_ expr THEN_ instre m - We need bool expr here");
-
-                quad *qif   = qGen(Q_IF, NULL, $3.ptr, NULL);
-                qif->gfalse = $6.quad->res;
-                quad *gnext = qGen(Q_GOTO, $2.quad->res, NULL, NULL);
-
-                $$.quad = qConcat($2.quad, $3.quad);
-                $$.quad = qConcat($$.quad, qif);
-                $$.quad = qConcat($$.quad, $5.quad);
-                $$.quad = qConcat($$.quad, gnext);
-                $$.quad = qConcat($$.quad, $6.quad);
-
-                $$.ptr  = NULL;
-                $$.args = NULL;
-            }
-      ;
+            ;
 
 sequence : instr DOTCOMMA_ sequence  {
                 $$.quad = qConcat($1.quad, $3.quad);
@@ -622,19 +670,12 @@ expr :  expr PLUS_ expr {
            if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr MULT expr - Type error");
 
-
-
-
-
             arithmeticExpression(Q_MULT, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | expr DIV_ expr {
           transIfArray(&($1.quad), &($1.ptr), $1.args);
           transIfArray(&($3.quad), &($3.ptr), $3.args);
-
-
-
 
             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr DIV expr - Type error");
@@ -651,9 +692,6 @@ expr :  expr PLUS_ expr {
           if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
               yferr("expr : expr MOD expr - Type error");
 
-
-
-
           arithmeticExpression(Q_MOD, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
 
@@ -663,10 +701,6 @@ expr :  expr PLUS_ expr {
 
           if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
               yferr("expr : expr EXP expr - Type error");
-
-
-
-
 
           arithmeticExpression(Q_EXP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
@@ -684,10 +718,6 @@ expr :  expr PLUS_ expr {
             quad *q   = qGen(Q_OR, ptr, $1.ptr, $3.ptr);
             $$.quad   = qConcat($1.quad, $3.quad);
             $$.quad   = qConcat($$.quad, q);
-
-
-
-
             $$.args = NULL;
           }
 
@@ -705,11 +735,6 @@ expr :  expr PLUS_ expr {
             quad *q = qGen(Q_AND, ptr, $1.ptr, $3.ptr);
             $$.quad = qConcat($1.quad, $3.quad);
             $$.quad = qConcat($$.quad, q);
-
-
-
-
-
             $$.args = NULL;
           }
 
@@ -727,9 +752,6 @@ expr :  expr PLUS_ expr {
             quad *q = qGen(Q_XOR, ptr, $1.ptr, $3.ptr);
             $$.quad = qConcat($1.quad, $3.quad);
             $$.quad = qConcat($$.quad, q);
-
-
-
             $$.args = NULL;
           }
 
@@ -739,10 +761,6 @@ expr :  expr PLUS_ expr {
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
-
-
-
-
 
              booleanExpression(Q_SUP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
@@ -754,9 +772,6 @@ expr :  expr PLUS_ expr {
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_EQ expr - Type error");
 
-
-
-
              booleanExpression(Q_SUPEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr INF_ expr {
@@ -765,9 +780,6 @@ expr :  expr PLUS_ expr {
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr INF_ expr - Type error");
-
-
-
 
              booleanExpression(Q_INF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
@@ -778,9 +790,6 @@ expr :  expr PLUS_ expr {
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr INF_EQ expr - Type error");
 
-
-
-
              booleanExpression(Q_INFEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr EQUAL_ expr {
@@ -790,9 +799,6 @@ expr :  expr PLUS_ expr {
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr EQUAL expr - Type error");
 
-
-
-
              booleanExpression(Q_EQUAL, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr DIFF_ expr {
@@ -801,9 +807,6 @@ expr :  expr PLUS_ expr {
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr DIFF expr - Type error");
-
-
-
 
              booleanExpression(Q_DIFF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
@@ -816,9 +819,6 @@ expr :  expr PLUS_ expr {
 
            symbol *ptr = newTmpBool(curtos(), 0);
            $$.ptr      = ptr;
-
-
-
            quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
            $$.quad = $2.quad;
            $$.quad = qConcat($$.quad, q);
