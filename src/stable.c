@@ -104,13 +104,27 @@ symbol *sAdd (symbol **tos) {
 
 //Juste Free l'id et sval (si string) quand hashTable sera prête
 void sFree (symbol *s) {
-    symbol *cur = s;
-    symbol *prev = NULL;
+    symbol *prev;
 
-    while (cur != NULL) {
-        sDel(prev, cur);
-        prev = cur;
-        cur  = cur->next;
+    while (s != NULL) {
+        prev = s;
+        s = s->next;
+        if (prev) {
+            if (prev->id)
+                free(prev->id);
+            if (prev->type == S_STRING)
+                free(prev->sval);
+            if (prev->type == S_ARRAY) {
+                freeDimProp(prev->arr->dims);
+                free(prev->arr);
+            }
+            if (prev->type == S_FUNCTION) {
+                listFree(prev->fdata->al);
+                sFree(prev->fdata->tos);
+                free(prev->fdata);
+            }
+            free(prev);
+        }
     }
 }
 
