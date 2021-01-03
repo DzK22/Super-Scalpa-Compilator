@@ -172,7 +172,7 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   if expr then instr & X & Conditionnelle simple \\
   if expr then instr else instr & X & Conditionnelle avec else \\
   while expr do instr & X & Conditionnelle while \\
-  & & expr peut être une condtion sur \\
+  & & expr est une condition booléenne \\
   & & des booléens ou des entiers \\
   \hline
 \end{tabular}
@@ -189,7 +189,7 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   tab$[$i,j$]$:=x & X & Affectation à une case d'un tableau \\
   tab$[$i,j$]$:=tab$[$k,l$]$ & X & Affectation à partir d'un tableau \\
   tab$[$i,j$]$ < tab$[$i,j$]$ & X & Comparaisons sur les éléments entiers d'un tableau \\
-  tab$[$i,j$]$ or tab$[$i,j$]$ & X & Opérations booléennes sur les éléments booléens d'un tableau \\
+  tab$[$i,j$]$ or tab$[$i,j$]$ & X & Opérations booléennes sur les éléments booléens \\ & & d'un tableau \\
   \hline
 \end{tabular}
 
@@ -252,12 +252,12 @@ Voici quelques points techniques que nous avons mis en oeuvre dans ce compilateu
     \item Lors d'un appel de fonction à l'intérieur même d'une fonction, les variables locales utilisées après l'appel de fonction sont sauvegardées dans la pile afin d'êtres restaurées.
 \end{itemize}
 
-\csection{Tableaux}
+\csubsection{Tableaux}
 
 La difficultées de la mise en place des tableaux était surtout au niveau du calcul de l'index avec les indices.\\
 Par exemple lors d'une affectation \textit{tab[i, j] := 15;} l'index (servant à calculer l'addresse correcte dans le tableau correspondant aux indices i et j) doit être déterminé lors de l'éxecution, en MIPS.
 
-\csection{Fonctions}
+\csubsection{Fonctions}
 
 Les fonctions fonctionnent comme ceci:
 \begin{enumerate}

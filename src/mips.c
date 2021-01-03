@@ -584,7 +584,6 @@ void qArith (FILE *f, qop op, symbol *res, symbol *argv1, symbol *argv2) {
                        pins3("li", "$t2", "1");
                        pins2("j", label2);
 
-                       // warning: seulement les puissances > 0 fonctionnent avec ce code
                        plab(label);
                        pins4("ble", "$t1", "$t3", label2);
                        pins4("mul", "$t2", "$t2", "$t0");
