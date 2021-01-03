@@ -338,13 +338,10 @@ void stablePrint (symbol *tos) {
             case S_INT:
                 printf("INTEGER\t");
                 printf("%d\t",tos->ival) ;
-                printf("used?%d\n ", tos->is_used);
-
                 break;
             case S_BOOL:
                 printf("BOOLEAN\t");
                 printf("%d\t",tos->bval) ;
-                printf("used?%d\n ", tos->is_used);
                 break;
             case S_ARRAY:
                 printf("ARRAY\t"); // ajouter type de valeurs quand tableaux seront faits
@@ -364,7 +361,6 @@ void stablePrint (symbol *tos) {
                     printf("[%d .. %d]",tos->arr->dims->min,tos->arr->dims->max );
                     tos->arr->dims = tos->arr->dims->next ;
                 }
-                printf("used?%d\t", tos->is_used);
 
                 printf("\n");
 
@@ -393,7 +389,6 @@ void stablePrint (symbol *tos) {
                         //Others todo
                         break;
                 }
-                printf("used?%d\n", tos->is_used);
 
                 break;
             default:
