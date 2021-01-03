@@ -649,19 +649,12 @@ expr :  expr PLUS_ expr {
            if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr MULT expr - Type error");
 
-
-
-
-
             arithmeticExpression(Q_MULT, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
           }
 
       | expr DIV_ expr {
           transIfArray(&($1.quad), &($1.ptr), $1.args);
           transIfArray(&($3.quad), &($3.ptr), $3.args);
-
-
-
 
             if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                 yferr("expr : expr DIV expr - Type error");
@@ -678,9 +671,6 @@ expr :  expr PLUS_ expr {
           if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
               yferr("expr : expr MOD expr - Type error");
 
-
-
-
           arithmeticExpression(Q_MOD, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
 
@@ -690,10 +680,6 @@ expr :  expr PLUS_ expr {
 
           if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
               yferr("expr : expr EXP expr - Type error");
-
-
-
-
 
           arithmeticExpression(Q_EXP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
       }
@@ -711,10 +697,6 @@ expr :  expr PLUS_ expr {
             quad *q   = qGen(Q_OR, ptr, $1.ptr, $3.ptr);
             $$.quad   = qConcat($1.quad, $3.quad);
             $$.quad   = qConcat($$.quad, q);
-
-
-
-
             $$.args = NULL;
           }
 
@@ -732,11 +714,6 @@ expr :  expr PLUS_ expr {
             quad *q = qGen(Q_AND, ptr, $1.ptr, $3.ptr);
             $$.quad = qConcat($1.quad, $3.quad);
             $$.quad = qConcat($$.quad, q);
-
-
-
-
-
             $$.args = NULL;
           }
 
@@ -754,9 +731,6 @@ expr :  expr PLUS_ expr {
             quad *q = qGen(Q_XOR, ptr, $1.ptr, $3.ptr);
             $$.quad = qConcat($1.quad, $3.quad);
             $$.quad = qConcat($$.quad, q);
-
-
-
             $$.args = NULL;
           }
 
@@ -766,10 +740,6 @@ expr :  expr PLUS_ expr {
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_ expr - Type error");
-
-
-
-
 
              booleanExpression(Q_SUP, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
@@ -781,9 +751,6 @@ expr :  expr PLUS_ expr {
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr SUP_EQ expr - Type error");
 
-
-
-
              booleanExpression(Q_SUPEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr INF_ expr {
@@ -792,9 +759,6 @@ expr :  expr PLUS_ expr {
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr INF_ expr - Type error");
-
-
-
 
              booleanExpression(Q_INF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
@@ -805,9 +769,6 @@ expr :  expr PLUS_ expr {
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr INF_EQ expr - Type error");
 
-
-
-
              booleanExpression(Q_INFEQ, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr EQUAL_ expr {
@@ -817,9 +778,6 @@ expr :  expr PLUS_ expr {
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr EQUAL expr - Type error");
 
-
-
-
              booleanExpression(Q_EQUAL, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
        | expr DIFF_ expr {
@@ -828,9 +786,6 @@ expr :  expr PLUS_ expr {
 
              if ($1.ptr->type != S_INT || $1.ptr->type != $3.ptr->type)
                yferr("expr : expr DIFF expr - Type error");
-
-
-
 
              booleanExpression(Q_DIFF, &($$.ptr), &($$.quad), $1.quad, $1.ptr, $3.quad, $3.ptr);
            }
@@ -843,9 +798,6 @@ expr :  expr PLUS_ expr {
 
            symbol *ptr = newTmpBool(curtos(), 0);
            $$.ptr      = ptr;
-
-
-
            quad *q = qGen(Q_NOT, ptr, $2.ptr, NULL);
            $$.quad = $2.quad;
            $$.quad = qConcat($$.quad, q);

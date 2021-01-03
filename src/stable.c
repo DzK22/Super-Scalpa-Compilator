@@ -31,7 +31,6 @@ symbol *sAdd (symbol **tos) {
     }
 }
 
-//Juste Free l'id et sval (si string) quand hashTable sera prête
 void sFree (symbol *s) {
     symbol *prev;
 

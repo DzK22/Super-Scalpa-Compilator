@@ -6,9 +6,7 @@
 #include "list.h"
 
 #define LEN       512
-#define CAPACITY  8192
 
-//Hash Item KEY = symbol->id
 typedef struct symbol {
     char   *id;
     bool   tmp; // is tmp var ? (true = cannot be modified by user)
