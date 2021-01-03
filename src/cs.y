@@ -129,7 +129,6 @@
     stype type;
     qop   op;
     struct arr_range *dimprop;
-    struct s_array *sarray;
 
     struct {
         struct symbol *ptr;
@@ -158,7 +157,8 @@
 
     struct {
         stype type;
-        struct s_array *sarray;
+        struct arr_range *rg;
+        stype ato_type; //For tabs
     } ctype;
 }
 
@@ -171,9 +171,8 @@
 %type <type>     atomictype
 %type <argl>     identlist varsdecl parlist par
 %type <exprl>    exprlist
-%type <sarray>   arraytype
 %type <dimprop>  rangelist
-%type <ctype>    typename
+%type <ctype>    typename arraytype
 
 %left   OR_ XOR_
 %left   AND_
@@ -188,7 +187,7 @@
 
 %%
 
-program: PROGRAM_ IDENT_ vardecllist fundecllist instr  {
+program: PROGRAM_ IDENT_ vardecllist fundecllist instr {
         symbol *ptr = newProg(&stable, $2);
         progName    = strdup($2);
         free($2);
@@ -224,7 +223,9 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                 default: yferr("varsdecl : VAR_ identlist DPOINT_ typename - wrong typename");
 
              }
+
              list *al = $2.al;
+             s_array *sa;
 
               while (al != NULL) {
                   switch ($4.type) {
@@ -235,7 +236,8 @@ varsdecl: VAR_ identlist DPOINT_ typename {
                           newVarInt(curtos(), al->id, 0, curfun, false);
                           break;
                       case S_ARRAY:
-                          newVarArray(curtos(), al->id, $4.sarray, curfun, false);
+                          sa = initArray($4.rg, $4.ato_type);
+                          newVarArray(curtos(), al->id, sa, curfun, false);
                           break;
                     default:
                         yferr("varsdecl identlist An arg has wrong type");
@@ -263,7 +265,8 @@ typename : atomictype {
           }
           | arraytype {
             $$.type   = S_ARRAY;
-            $$.sarray = $1;
+            $$.ato_type = $1.ato_type;
+            $$.rg = $1.rg;
           }
          ;
 
@@ -277,7 +280,8 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
                  if ($6 != S_INT && $6 != S_BOOL)
                     yferr("arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype - wrong array type");
 
-                 $$ = initArray($3, $6);
+                 $$.rg = $3;
+                 $$.ato_type = $6;
             }
           ;
 
@@ -364,11 +368,14 @@ parlist : %empty {
 
 par : IDENT_ DPOINT_ typename {
             symbol *s;
-
+            s_array *sa;
             switch ($3.type) {
-                case S_INT   : s = newVarInt(curtos(), $1, 0, curfun, false)           ; break ;
-                case S_BOOL  : s = newVarBool(curtos(), $1, 0, curfun, false)      ; break ;
-                case S_ARRAY : s = newVarArray(curtos(), $1, $3.sarray, curfun, false) ; break ;
+                case S_INT   : s = newVarInt(curtos(), $1, 0, curfun, false)  ; break ;
+                case S_BOOL  : s = newVarBool(curtos(), $1, 0, curfun, false) ; break ;
+                case S_ARRAY :
+                    sa = initArray($3.rg, $3.ato_type);
+                    s = newVarArray(curtos(), $1, sa, curfun, false);
+                    break;
                 default: yferr("par : IDENT_ DPOINT_ typename Incorrect typename");
             }
             free($1);
@@ -377,10 +384,14 @@ par : IDENT_ DPOINT_ typename {
 
     | REF_ IDENT_ DPOINT_ typename {
             symbol *s;
+            s_array *sa;
             switch ($4.type) {
-                case S_INT   : s = newVarInt(curtos(), $2, 0, curfun, true)              ; break ;
-                case S_BOOL  : s = newVarBool(curtos(), $2, 0, curfun, true)             ; break ;
-                case S_ARRAY : s = newVarArray(curtos(), $2, $4.sarray, curfun, true)    ; break ;
+                case S_INT   : s = newVarInt(curtos(), $2, 0, curfun, true)  ; break ;
+                case S_BOOL  : s = newVarBool(curtos(), $2, 0, curfun, true) ; break ;
+                case S_ARRAY :
+                    sa = initArray($4.rg, $4.ato_type);
+                    s = newVarArray(curtos(), $2, sa, curfun, true);
+                    break;
                 default: yferr("par : REF_ IDENT_ DPOINT_ typename Incorrect typename");
             }
 
