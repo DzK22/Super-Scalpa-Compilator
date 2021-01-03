@@ -119,31 +119,42 @@ Par la suite, nous avons étendu la grammaire avec l'ajout du support des tablea
 
 Après avoir testé le bon fonctionnement du compilateur dans sa plus grande partie, nous avons ajouté un module d'optimisation de code.
 
+\clearpage
+
 \csection{Spécification complète de notre compilateur SCALPA}
 
 Le compilateur est donc capable de générer un programme MIPS R2000 (utilisable sur un simulateur de processeur comme SPIM ou Mars) à partir d'un programme écrit en SCALPA.
 
 Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
 
-\begin{tabular}{c}
+\begin{center}
+\begin{tabular}{|l|l|l|}
   \hline
-  Expressions arithmétiques et affectations \\
+  \multicolumn{3}{|c|}{Expressions arithmétiques et affectations} \\
   \hline
-  Affectations et opérations sur les entiers \\
   Opérateur & Support & Commentaire \\
+  \hline
+  \multicolumn{3}{|c|}{Déclartions de variables} \\
+  \hline
+  var a, b: type & X & Déclaration multiple \\
+  \hline
+  \multicolumn{3}{|c|}{Affectations et opérations sur les entiers} \\
+  \hline
   := & X & Affectation entière\\
   + & X & Addition entière \\
   - & X & Soustraction entière \\
   -(unaire) & X & Moins unaire \\
   * & X & Multiplication \\
   / & X & Division \\
-  ^ & X & Opérateur exponentiel \\
+  $\wedge$ & X & Opérateur exponentiel \\
   \% & X & Modulo \\
   < ou > & X & Comparaisons entières strictes \\
   <= ou >= & X & Comparaisons entières \\
   = & X & Egalité entières \\
   <> & X & Différence entière \\
-  Affectations et opérations sur les booleens \\
+  \hline
+  \multicolumn{3}{|c|}{Affectations et opérations sur les booleens} \\
+  \hline
   := & X & Affectation booléenne \\
   and & X & Opération AND \\
   or & X & Opération OR \\
@@ -152,49 +163,80 @@ Voici une liste non exhaustive des capacités de notre compilateur SCALPA:
   \hline
 \end{tabular}
 
-\begin{tabular}{c}
+\begin{tabular}{|l|l|l|}
   \hline
-  Structures de controles\\
+  \multicolumn{3}{|c|}{Structures de controle} \\
   \hline
   Structure & Support & Commentaire \\
+  \hline
   if expr then instr & X & Conditionnelle simple \\
   if expr then instr else instr & X & Conditionnelle avec else \\
   while expr do instr & X & Conditionnelle while \\
+  & & expr peut être une condtion sur \\
+  & & des booléens ou des entiers \\
   \hline
 \end{tabular}
 
 
-\begin{tabular}{c}
+\begin{tabular}{|l|l|l|}
   \hline
-  Fonctionnalités des tableaux multidimensionnels \\
+  \multicolumn{3}{|c|}{Fonctionnalités des tableaux multidimensionnels} \\
   \hline
   Instruction & Support & Commentaire \\
-  array[-x1..y1, x2..y2] of type & X & Définition avec index et intervales \\
-  tabe[i,j]:=x & X & Affectation à une case d'un tableau \\
+  \hline
+  array $[$-x..y$]$ of type & X & Déclaration avec index et intervales \\
+  array $[$-x1..y1, -x2..y2, -x3..y3 $]$ of type & X & Déclaration multidimensionnelle \\
+  tab$[$i,j$]$:=x & X & Affectation à une case d'un tableau \\
+  tab$[$i,j$]$:=tab$[$k,l$]$ & X & Affectation à partir d'un tableau \\
+  tab$[$i,j$]$ < tab$[$i,j$]$ & X & Comparaisons sur les éléments de tableaux \\
+  tab$[$i,j$]$ or tab$[$i,j$]$ & X & Opérations booléennes sur les éléments de tableaux \\
   \hline
 \end{tabular}
 
-Le programme écrit en SCALPA peut donc supporter :
-\begin{itemize}
-    \item Des affectations d'entiers et booléens sur des variables ou des cases de tableaux.
-    \item Des opérations sur les entiers ou des variables entières (additions, multiplications, soustraction, division, modulo, puissance) tout en respectant les priorités de calcul. (opérations fonctionnelles avec les tableaux comme par exemple tab$[i]$ + tab$[j]$ ou encore tab[i,j,k] * tab[l,m,n] (tableaux multidimensionnels))
-    \item Des opérations sur les variables booleennes ou des constantes booleennes (OR, AND, XOR, NOT, opérations fonctionnelles avec les tableaux comme par exemple tab$[i]$ xor tab$[j]$)
-    \item Les opérations de comparaisons sur les entiers sont également implémentés et peuvent être utilisés comme conditions (<, >, <=, >=, =, <>, opérations fonctionnelles avec les tableaux comme par exemple tab$[i]$ xor tab$[j]$)
-    \item Des opérations sur des fonctions, fonctions récursives avec un passage de paramètres par valeur et par référence.
+\begin{tabular}{|l|l|l|}
+  \hline
+  \multicolumn{3}{|c|}{Fonctionnalités des fonctions} \\
+  \hline
+  Instruction & Support & Commentaire \\
+  \hline
+  function max (a: int, b: int): int  & X & Déclaration avec argument\\
+  & & et valeur de retour \\
+  function bsort (ref tab : array[1..10] & X & Passage d'un tableau en argument \\
+  of int, size : int) : unit  & & via référence (effet de bord)\\
+  function bsort (tab : array[1..10] of int, & X & Passage d'un tableau en argument \\
+   size : int) : unit  & & via copie \\
+  Fonctions récursives & X & \\
+  \hline
+\end{tabular}
 
-\end{itemize}
+\begin{tabular}{|l|l|l|}
+  \hline
+  \multicolumn{3}{|c|}{Commentaires} \\
+  \hline
+  Instruction & Support & Commentaire \\
+  \hline
+  (* *) & X & Commentaires simples \\
+  (* (* *) *) & X & Commentaires imbriqués \\
+  \hline
+\end{tabular}
 
-Ces opérations de comparaisons permettent de créer des conditions de type \textit{if cond then instr else instr } ou \textit{while cond do instr}. Les conditions sont implémentées et permettent de réaliser toutes sortes de boucles. Les conditions peuvent être des comparaisons sur des entiers, ou des opérations sur des booleens par exemple.
-Nous pouvons également imbriquer les conditions pour vérifier plusieurs assertions par exemple et distinguer des cas.
-Il est possible de simuler une boucle for avec un while, mais il aurait cependant été possible de l'implémenter directement.
+\begin{tabular}{|l|l|l|}
+  \hline
+  \multicolumn{3}{|c|}{Fonctions prédéfinies} \\
+  \hline
+  Instruction & Support & Commentaire \\
+  \hline
+  read var & X & Lecture d'une entrée dans une variable \\
+  write var & X & Affichage de la variable dans la console \\
+  write "str" & X & Affichage de constantes dans la console \\
+  write tab[i] ou read tab[i] & X & Opérations prédéfinies sur les tableaux \\
+  \hline
+\end{tabular}
 
-En ce qui concerne les tableaux, ils sont entièrement fonctionnels et permettent de faire des affectations ou des opérations sur des éléments du tableau en fonction du type de varaible du tableau. Les tableaux peuvent contenir des booleens ou des entiers et sont déclarés avec des intervales, ces intervales corresspondent aux index du tableau sur les dimensions.
-
-Les tableaux à multidimensions sont également fonctionnels à condition d'avoir le même type dans toutes les cases. Le contenu d'une case du tableau est interprété comme une variable de ce même type et permet donc de formuler des conditions et des opérations sur un contenu du tableau.
+\end{center}
 
 De plus l'analyse lexicale de notre compilateur se fait sans sensibilité à la casse, ce qui laisse une "marge d'erreur" au programmeur, s'il se trompe et écrit While, wHile ou whiLE...etc ce n'est pas grave notre compilateur saura comprendre son code.
 
-Pour finir, les fonctions peuvent être définies et utilisées dans le programme tout en prenant des arguments en entrée et en retournant des valeurs.
-Les arguemnts des fonctions peuvent être des entiers, des booleens ou des tableaux. Les tableaux peuvent être passés en copie ou en référence. Si le tableau est passé en argument par référence, la fonction modifiera le tableau par effet de bord sur le tableau inital. Les fonctions récursives sont également suportées et complètement fonctionelles.
+Il est également important de noter que les opérations sur entiers respectent l'ordre de priotités usuel sans avoir besoin de forcer l'ordre avec des parenthèses.
 
 \end{document}
