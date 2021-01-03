@@ -16,6 +16,7 @@
 #define PURPLE    "\e[0;35m"
 
 void arrShuffle(char **array, int size);
+void printName (void);
 
 #define ferr(str) { \
     fprintf(stderr, "Error in %s at line %d : %s\n", __FILE__, __LINE__, str); \

@@ -950,8 +950,9 @@ int main (int argc, char **argv) {
     if (version) {
         printf(YELLOW);
         printf("**************************************\n");
-        printf("*   SSC - Super Scalpa Compilator:   *\n");
+        printf("*   SSC - Super Scalpa Compilator    *\n");
         printf("**************************************\n\n");
+        printName();
         printf("Authors: \n");
         printf(COL_RESET);
         srand(time(NULL));
