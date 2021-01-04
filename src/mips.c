@@ -42,8 +42,9 @@
 
 #define pstore(reg, sym) \
     snpt(snprintf(tbuf, LEN, "%s", sym->type == S_BOOL ? "sb" : "sw")); \
+    snpt(snprintf(tbuf2, LEN, "%s", sym->type == S_BOOL ? "lb" : "lw")); \
     if (sym->ref) { \
-        pins3(tbuf, "$t9", sym->id); \
+        pins3(tbuf2, "$t9", sym->id); \
         pins3(tbuf, reg, "0($t9)"); \
     } else \
         pins3(tbuf, reg, sym->id);
