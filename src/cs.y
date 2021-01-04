@@ -126,6 +126,7 @@
     int   ival;
     bool  bval;
     char  *sval;
+    char signe;
     stype type;
     qop   op;
     struct arr_range *dimprop;
@@ -173,6 +174,7 @@
 %type <exprl>    exprlist
 %type <dimprop>  rangelist
 %type <ctype>    typename arraytype
+%type <signe>    sign
 
 %left   OR_ XOR_
 %left   AND_
@@ -285,26 +287,43 @@ arraytype : ARRAY_ BRALEFT_ rangelist BRARIGHT_ OF_ atomictype {
             }
           ;
 
-rangelist : CTE_ TWO_POINTS_ CTE_ {
-                if ($1.type != S_INT || $3.type != S_INT)
+rangelist : sign CTE_ TWO_POINTS_ sign CTE_ {
+                if ($2.type != S_INT || $5.type != S_INT)
                     yferr("rangelist : CTE_ TWO_POINTS_ CTE_ - wrong CTE_ type");
 
-                if ($1.ival > $3.ival)
+                int min = $2.ival, max = $5.ival;
+                if ($1 == '-')
+                    min = -min;
+
+                if ($4 == '-')
+                    max = -max;
+
+                if (min > max)
                     yferr("rangelist : CTE_ TWO_POINTS_ CTE_ - wrong range");
 
-                $$ = initDimProp($1.ival, $3.ival, NULL);
+                $$ = initDimProp(min, max, NULL);
             }
 
-        | CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist {
-            if ($1.type != S_INT || $3.type != S_INT)
+        | sign CTE_ TWO_POINTS_ sign CTE_ COMMA_ rangelist {
+            if ($2.type != S_INT || $5.type != S_INT)
                 yferr("rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong CTE_ type");
 
-            if ($1.ival > $3.ival)
+            int min = $2.ival, max = $5.ival;
+            if ($1 == '-')
+                min = -min;
+
+            if ($4 == '-')
+                max = -max;
+            if (min > max)
                 yferr("rangelist : CTE_ TWO_POINTS_ CTE_ COMMA_ rangelist - wrong range");
 
-            $$ = initDimProp($1.ival, $3.ival, $5);
+            $$ = initDimProp(min, max, $7);
         }
         ;
+
+sign : %empty                       {}
+      | MINUS_  {  $$ = '-'; }
+      ;
 
 fundecllist : %empty {
                     $$.quad = NULL;

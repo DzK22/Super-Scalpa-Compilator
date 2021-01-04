@@ -39,7 +39,7 @@ digit              [0-9]
 letter             [a-zA-Z]
 ident              {letter}("'"|"_"|{letter}|{digit})*
 
-cst_int            -?{digit}+
+cst_int            {digit}+
 cst_bool           "true"|"false"
 cst_string         ["][^\"\n]*["]
 
@@ -95,7 +95,7 @@ comment           \((\*([^*]|\*+[^*)]|\n)*)
 
 {F}{U}{N}{C}{T}{I}{O}{N}        { return FUNCTION_;                 }
 
-" "*                            {}
+[ \t]*                            {}
 
 {cst_int}                       { yylval.cte.type = S_INT;
                                   yylval.cte.ival = atoi(yytext);
